@@ -9,17 +9,22 @@ import androidx.room.Room
 
 class WorkoutRepository(private val workoutDao: WorkoutDao) {
 
-    suspend fun getOrCreateSession(date: String, timestamp: Long): WorkoutSession {
+    suspend fun getOrCreateSession(date: String, timestamp: Long, location: String? = null): WorkoutSession {
         val existing = workoutDao.getSessionByDate(date)
         if (existing != null) return existing
 
         val newSession = WorkoutSession(
             date = date,
             startTimeInMillis = timestamp,
-            isCompleted = false
+            isCompleted = false,
+            location = location
         )
         val id = workoutDao.insertSession(newSession)
         return newSession.copy(id = id)
+    }
+
+    suspend fun getSessionsWithSetCounts(): List<SessionSummary> {
+        return workoutDao.getSessionsWithSetCounts()
     }
 
     suspend fun logSet(entry: WorkoutLogEntry) {

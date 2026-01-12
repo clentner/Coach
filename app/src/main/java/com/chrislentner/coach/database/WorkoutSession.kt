@@ -10,5 +10,6 @@ data class WorkoutSession(
     val date: String, // YYYY-MM-DD
     val startTimeInMillis: Long,
     val endTimeInMillis: Long? = null,
-    val isCompleted: Boolean = false
+    val isCompleted: Boolean = false,
+    val location: String? = null
 )
