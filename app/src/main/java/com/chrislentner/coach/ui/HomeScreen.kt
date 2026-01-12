@@ -50,6 +50,12 @@ fun HomeScreen(
             Button(onClick = { navController.navigate("survey") }) {
                 Text("Edit Plan")
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Button(onClick = { navController.navigate("workout") }) {
+                Text("Start Workout")
+            }
         }
     }
 }
