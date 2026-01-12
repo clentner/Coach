@@ -12,8 +12,8 @@ data class User(
     val lastName: String?
 )
 
-@Database(entities = [User::class, WorkoutEntry::class], version = 2)
+@Database(entities = [User::class, ScheduleEntry::class], version = 3)
 abstract class AppDatabase : RoomDatabase() {
     // abstract fun userDao(): UserDao
-    abstract fun workoutDao(): WorkoutDao
+    abstract fun scheduleDao(): ScheduleDao
 }

@@ -8,9 +8,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.chrislentner.coach.database.WorkoutEntry
-import com.chrislentner.coach.database.WorkoutRepository
-import com.chrislentner.coach.worker.WorkoutReminderWorker
+import com.chrislentner.coach.database.ScheduleEntry
+import com.chrislentner.coach.database.ScheduleRepository
+import com.chrislentner.coach.worker.ScheduleReminderWorker
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import java.util.Calendar
@@ -24,7 +24,7 @@ import java.util.Locale
 @Composable
 fun SurveyScreen(
     navController: NavController,
-    repository: WorkoutRepository
+    repository: ScheduleRepository
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -36,14 +36,14 @@ fun SurveyScreen(
     var location by remember { mutableStateOf("Home") }
 
     LaunchedEffect(Unit) {
-        val lastWorkout = repository.getLastWorkout()
-        if (lastWorkout != null) {
+        val lastSchedule = repository.getLastSchedule()
+        if (lastSchedule != null) {
             val cal = Calendar.getInstance()
-            cal.timeInMillis = lastWorkout.timeInMillis
+            cal.timeInMillis = lastSchedule.timeInMillis
             initialHour = cal.get(Calendar.HOUR_OF_DAY)
             initialMinute = cal.get(Calendar.MINUTE)
-            duration = lastWorkout.durationMinutes.toFloat()
-            location = lastWorkout.location
+            duration = lastSchedule.durationMinutes.toFloat()
+            location = lastSchedule.location
         }
         isLoading = false
     }
@@ -107,23 +107,25 @@ fun SurveyScreen(
                         calendar.set(Calendar.MINUTE, timePickerState.minute)
                         calendar.set(Calendar.SECOND, 0)
 
-                        val entry = WorkoutEntry(
+                        val entry = ScheduleEntry(
                             date = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date()),
                             timeInMillis = calendar.timeInMillis,
                             durationMinutes = duration.toInt(),
                             location = location
                         )
-                        repository.saveWorkout(entry)
+                        repository.saveSchedule(entry)
 
                         // Schedule Reminder
                         val delay = calendar.timeInMillis - System.currentTimeMillis() - (10 * 60 * 1000)
                         if (delay > 0) {
                              val workManager = WorkManager.getInstance(context)
+                             // Cancel old work by tag (cleanup)
                              workManager.cancelAllWorkByTag("WorkoutReminder")
+                             workManager.cancelAllWorkByTag("ScheduleReminder")
 
-                             val reminderRequest = OneTimeWorkRequestBuilder<WorkoutReminderWorker>()
+                             val reminderRequest = OneTimeWorkRequestBuilder<ScheduleReminderWorker>()
                                  .setInitialDelay(delay, TimeUnit.MILLISECONDS)
-                                 .addTag("WorkoutReminder")
+                                 .addTag("ScheduleReminder")
                                  .build()
 
                              workManager.enqueue(reminderRequest)
@@ -135,7 +137,7 @@ fun SurveyScreen(
                     }
                 }
             ) {
-                Text("Save Workout")
+                Text("Save Schedule")
             }
         }
     }
