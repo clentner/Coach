@@ -58,16 +58,7 @@ object WorkoutPlanner {
             return List(3) {
                 WorkoutStep(
                     exerciseName = "Squats",
-                    targetReps = null, // "6s/rep" implies duration? Prompt says "85 lbs and 6s/rep".
-                                      // Usually means tempo. But we only have reps/duration fields.
-                                      // Let's assume 5 reps for now? Or is "6s/rep" the only constraint?
-                                      // "Time: 6s/rep".
-                                      // Let's put 6s as duration? No, that's per rep.
-                                      // I'll default to 5 reps for Squats at 6s/rep tempo if not specified.
-                                      // Wait, the prompt says "plan 3 sets... at... 6s/rep".
-                                      // It doesn't specify rep COUNT.
-                                      // I will assume 5 reps.
-                    targetReps = 5,
+                    targetReps = 5, // "6s/rep" implies tempo. Assuming 5 reps.
                     targetDurationSeconds = null,
                     loadDescription = "85 lbs @ 6s/rep"
                 )
