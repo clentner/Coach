@@ -9,6 +9,7 @@ import androidx.lifecycle.viewModelScope
 import com.chrislentner.coach.database.WorkoutLogEntry
 import com.chrislentner.coach.database.WorkoutRepository
 import com.chrislentner.coach.database.WorkoutSession
+import com.chrislentner.coach.database.ScheduleRepository
 import com.chrislentner.coach.planner.WorkoutPlanner
 import com.chrislentner.coach.planner.WorkoutStep
 import kotlinx.coroutines.launch
@@ -26,8 +27,6 @@ sealed class WorkoutUiState {
     ) : WorkoutUiState()
     data class FreeEntry(val session: WorkoutSession) : WorkoutUiState()
 }
-
-import com.chrislentner.coach.database.ScheduleRepository
 
 class WorkoutViewModel(
     private val repository: WorkoutRepository,
