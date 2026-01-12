@@ -3,7 +3,6 @@ package com.chrislentner.coach.ui
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.NotificationsOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -163,8 +162,9 @@ fun ActiveWorkoutView(
             modifier = Modifier.align(Alignment.TopEnd)
         ) {
             Icon(
-                imageVector = if (isMetronomeEnabled) Icons.Default.Notifications else Icons.Default.NotificationsOff,
-                contentDescription = if (isMetronomeEnabled) "Mute Metronome" else "Unmute Metronome"
+                imageVector = Icons.Default.Notifications,
+                contentDescription = if (isMetronomeEnabled) "Mute Metronome" else "Unmute Metronome",
+                tint = if (isMetronomeEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
             )
         }
     }
