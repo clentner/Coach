@@ -1,0 +1,141 @@
+package com.chrislentner.coach.ui
+
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewModelScope
+import com.chrislentner.coach.database.WorkoutLogEntry
+import com.chrislentner.coach.database.WorkoutRepository
+import com.chrislentner.coach.database.WorkoutSession
+import com.chrislentner.coach.planner.WorkoutPlanner
+import com.chrislentner.coach.planner.WorkoutStep
+import kotlinx.coroutines.launch
+import java.util.Calendar
+import java.util.Date
+
+sealed class WorkoutUiState {
+    object Loading : WorkoutUiState()
+    data class Active(
+        val session: WorkoutSession,
+        val currentStep: WorkoutStep?,
+        val remainingSteps: List<WorkoutStep>,
+        val completedStepsCount: Int,
+        val totalStepsCount: Int
+    ) : WorkoutUiState()
+    data class FreeEntry(val session: WorkoutSession) : WorkoutUiState()
+}
+
+class WorkoutViewModel(
+    private val repository: WorkoutRepository
+) : ViewModel() {
+
+    var uiState by mutableStateOf<WorkoutUiState>(WorkoutUiState.Loading)
+        private set
+
+    init {
+        initializeSession()
+    }
+
+    private fun initializeSession() {
+        viewModelScope.launch {
+            val now = Date()
+            val todayStr = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(now)
+
+            // 1. Get or Create Session
+            val session = repository.getOrCreateSession(todayStr, now.time)
+
+            // 2. Fetch History & Generate Plan
+            // We need history for Planner (e.g. yesterday's squats)
+            // But we also need *today's* logs to see what's done.
+
+            // Planner needs broad history (last few days).
+            // Let's fetch last 7 days for simplicity/safety of planner logic
+            val weekAgo = Calendar.getInstance()
+            weekAgo.add(Calendar.DAY_OF_YEAR, -7)
+            val history = repository.getHistorySince(weekAgo.timeInMillis)
+
+            val fullPlan = WorkoutPlanner.generatePlan(now, history)
+
+            // 3. Filter out completed sets for THIS session
+            val sessionLogs = repository.getLogsForSession(session.id)
+            val completedCount = sessionLogs.size
+
+            if (completedCount >= fullPlan.size) {
+                uiState = WorkoutUiState.FreeEntry(session)
+            } else {
+                val remaining = fullPlan.drop(completedCount)
+                uiState = WorkoutUiState.Active(
+                    session = session,
+                    currentStep = remaining.firstOrNull(),
+                    remainingSteps = remaining.drop(1),
+                    completedStepsCount = completedCount,
+                    totalStepsCount = fullPlan.size
+                )
+            }
+        }
+    }
+
+    fun completeCurrentStep() {
+        val state = uiState
+        if (state is WorkoutUiState.Active && state.currentStep != null) {
+            viewModelScope.launch {
+                val step = state.currentStep
+                val entry = WorkoutLogEntry(
+                    sessionId = state.session.id,
+                    exerciseName = step.exerciseName,
+                    targetReps = step.targetReps,
+                    targetDurationSeconds = step.targetDurationSeconds,
+                    loadDescription = step.loadDescription,
+                    actualReps = step.targetReps, // Defaulting to target
+                    actualDurationSeconds = step.targetDurationSeconds, // Defaulting
+                    rpe = null,
+                    notes = null,
+                    skipped = false,
+                    timestamp = System.currentTimeMillis()
+                )
+                repository.logSet(entry)
+
+                // Refresh state
+                // We could just optimistically update, but re-running init is safer to stay in sync
+                initializeSession()
+            }
+        }
+    }
+
+    fun logFreeEntry(exerciseName: String, load: String, reps: String) {
+        val state = uiState
+        if (state is WorkoutUiState.FreeEntry) {
+             viewModelScope.launch {
+                val entry = WorkoutLogEntry(
+                    sessionId = state.session.id,
+                    exerciseName = exerciseName,
+                    targetReps = reps.toIntOrNull(),
+                    targetDurationSeconds = null,
+                    loadDescription = load,
+                    actualReps = reps.toIntOrNull(),
+                    actualDurationSeconds = null,
+                    rpe = null,
+                    notes = "Free Entry",
+                    skipped = false,
+                    timestamp = System.currentTimeMillis()
+                )
+                repository.logSet(entry)
+                // Stay in Free Entry mode, maybe show a toast or clear inputs?
+                // For now, just logging it.
+            }
+        }
+    }
+}
+
+// Factory to inject Repo
+class WorkoutViewModelFactory(private val repository: WorkoutRepository) : ViewModelProvider.Factory {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(WorkoutViewModel::class.java)) {
+            @Suppress("UNCHECKED_CAST")
+            return WorkoutViewModel(repository) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
+    }
+}
