@@ -12,7 +12,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
-import com.chrislentner.coach.database.WorkoutRepository
+import com.chrislentner.coach.database.ScheduleRepository
 import com.chrislentner.coach.ui.CoachApp
 import com.chrislentner.coach.ui.theme.CoachTheme
 import com.chrislentner.coach.worker.BootReceiver
@@ -23,7 +23,7 @@ import java.util.Locale
 
 class MainActivity : ComponentActivity() {
 
-    private val repository by lazy { WorkoutRepository(applicationContext) }
+    private val repository by lazy { ScheduleRepository(applicationContext) }
 
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -59,8 +59,8 @@ class MainActivity : ComponentActivity() {
             val today = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
             // We use runBlocking here for simplicity in onCreate to determine initial state.
             // In a larger app, we'd use a ViewModel and expose state, showing a Splash/Loading first.
-            val todaysWorkout = runBlocking { repository.getWorkoutByDate(today) }
-            if (todaysWorkout == null) {
+            val todaysSchedule = runBlocking { repository.getScheduleByDate(today) }
+            if (todaysSchedule == null) {
                 startDestination = "survey"
             }
         }

@@ -16,10 +16,10 @@ import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34]) // Use a specific SDK version if needed, or rely on manifest
-class WorkoutDaoTest {
+class ScheduleDaoTest {
 
     private lateinit var database: AppDatabase
-    private lateinit var workoutDao: WorkoutDao
+    private lateinit var scheduleDao: ScheduleDao
 
     @Before
     fun setup() {
@@ -28,7 +28,7 @@ class WorkoutDaoTest {
             context,
             AppDatabase::class.java
         ).allowMainThreadQueries().build() // Allow main thread queries for testing
-        workoutDao = database.workoutDao()
+        scheduleDao = database.scheduleDao()
     }
 
     @After
@@ -37,66 +37,66 @@ class WorkoutDaoTest {
     }
 
     @Test
-    fun insertAndGetWorkoutByDate() = runBlocking {
-        val workout = WorkoutEntry(
+    fun insertAndGetScheduleByDate() = runBlocking {
+        val schedule = ScheduleEntry(
             date = "2023-10-27",
             timeInMillis = 1698364800000L,
             durationMinutes = 60,
             location = "Gym"
         )
 
-        workoutDao.insertOrUpdate(workout)
+        scheduleDao.insertOrUpdate(schedule)
 
-        val retrievedWorkout = workoutDao.getWorkoutByDate("2023-10-27")
-        assertNotNull(retrievedWorkout)
-        assertEquals(workout, retrievedWorkout)
+        val retrievedSchedule = scheduleDao.getScheduleByDate("2023-10-27")
+        assertNotNull(retrievedSchedule)
+        assertEquals(schedule, retrievedSchedule)
     }
 
     @Test
-    fun insertAndGetLastWorkout() = runBlocking {
-        val workout1 = WorkoutEntry(
+    fun insertAndGetLastSchedule() = runBlocking {
+        val schedule1 = ScheduleEntry(
             date = "2023-10-26",
             timeInMillis = 1698278400000L,
             durationMinutes = 45,
             location = "Home"
         )
-        val workout2 = WorkoutEntry(
+        val schedule2 = ScheduleEntry(
             date = "2023-10-27",
             timeInMillis = 1698364800000L,
             durationMinutes = 60,
             location = "Gym"
         )
 
-        workoutDao.insertOrUpdate(workout1)
-        workoutDao.insertOrUpdate(workout2)
+        scheduleDao.insertOrUpdate(schedule1)
+        scheduleDao.insertOrUpdate(schedule2)
 
-        val lastWorkout = workoutDao.getLastWorkout()
-        assertNotNull(lastWorkout)
-        assertEquals(workout2, lastWorkout)
+        val lastSchedule = scheduleDao.getLastSchedule()
+        assertNotNull(lastSchedule)
+        assertEquals(schedule2, lastSchedule)
     }
 
     @Test
-    fun getWorkoutByDateReturnsNullWhenNotFound() = runBlocking {
-        val workout = workoutDao.getWorkoutByDate("2023-10-27")
-        assertNull(workout)
+    fun getScheduleByDateReturnsNullWhenNotFound() = runBlocking {
+        val schedule = scheduleDao.getScheduleByDate("2023-10-27")
+        assertNull(schedule)
     }
 
     @Test
-    fun updateExistingWorkout() = runBlocking {
-        val workout = WorkoutEntry(
+    fun updateExistingSchedule() = runBlocking {
+        val schedule = ScheduleEntry(
             date = "2023-10-27",
             timeInMillis = 1698364800000L,
             durationMinutes = 60,
             location = "Gym"
         )
 
-        workoutDao.insertOrUpdate(workout)
+        scheduleDao.insertOrUpdate(schedule)
 
-        val updatedWorkout = workout.copy(durationMinutes = 90)
-        workoutDao.insertOrUpdate(updatedWorkout)
+        val updatedSchedule = schedule.copy(durationMinutes = 90)
+        scheduleDao.insertOrUpdate(updatedSchedule)
 
-        val retrievedWorkout = workoutDao.getWorkoutByDate("2023-10-27")
-        assertNotNull(retrievedWorkout)
-        assertEquals(90, retrievedWorkout?.durationMinutes)
+        val retrievedSchedule = scheduleDao.getScheduleByDate("2023-10-27")
+        assertNotNull(retrievedSchedule)
+        assertEquals(90, retrievedSchedule?.durationMinutes)
     }
 }

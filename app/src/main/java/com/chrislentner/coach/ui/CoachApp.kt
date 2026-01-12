@@ -5,11 +5,11 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.chrislentner.coach.database.WorkoutRepository
+import com.chrislentner.coach.database.ScheduleRepository
 
 @Composable
 fun CoachApp(
-    repository: WorkoutRepository,
+    repository: ScheduleRepository,
     startDestination: String = "home"
 ) {
     val navController = rememberNavController()

@@ -3,7 +3,7 @@ package com.chrislentner.coach.database
 import android.content.Context
 import androidx.room.Room
 
-class WorkoutRepository(private val context: Context) {
+class ScheduleRepository(private val context: Context) {
 
     private val db: AppDatabase by lazy {
         Room.databaseBuilder(
@@ -14,17 +14,17 @@ class WorkoutRepository(private val context: Context) {
             .build()
     }
 
-    private val dao: WorkoutDao by lazy { db.workoutDao() }
+    private val dao: ScheduleDao by lazy { db.scheduleDao() }
 
-    suspend fun getWorkoutByDate(date: String): WorkoutEntry? {
-        return dao.getWorkoutByDate(date)
+    suspend fun getScheduleByDate(date: String): ScheduleEntry? {
+        return dao.getScheduleByDate(date)
     }
 
-    suspend fun getLastWorkout(): WorkoutEntry? {
-        return dao.getLastWorkout()
+    suspend fun getLastSchedule(): ScheduleEntry? {
+        return dao.getLastSchedule()
     }
 
-    suspend fun saveWorkout(entry: WorkoutEntry) {
+    suspend fun saveSchedule(entry: ScheduleEntry) {
         dao.insertOrUpdate(entry)
     }
 }
