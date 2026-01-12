@@ -5,6 +5,13 @@ import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Transaction
 
+data class SessionSummary(
+    val id: Long,
+    val date: String,
+    val location: String?,
+    val setCount: Int
+)
+
 @Dao
 interface WorkoutDao {
     @Insert
@@ -25,4 +32,17 @@ interface WorkoutDao {
     // For planner history
     @Query("SELECT * FROM workout_logs WHERE timestamp >= :timestamp ORDER BY timestamp DESC")
     suspend fun getLogsSince(timestamp: Long): List<WorkoutLogEntry>
+
+    @Query("""
+        SELECT
+            s.id,
+            s.date,
+            s.location,
+            COUNT(l.id) as setCount
+        FROM workout_sessions s
+        LEFT JOIN workout_logs l ON s.id = l.sessionId
+        GROUP BY s.id
+        ORDER BY s.date DESC
+    """)
+    suspend fun getSessionsWithSetCounts(): List<SessionSummary>
 }

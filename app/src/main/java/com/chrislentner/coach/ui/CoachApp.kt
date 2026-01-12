@@ -37,10 +37,25 @@ fun CoachApp(
             SurveyScreen(navController = navController, repository = repository)
         }
         composable("workout") {
+            // repository is ScheduleRepository, passing it to factory
             val viewModel: WorkoutViewModel = viewModel(
-                factory = WorkoutViewModelFactory(workoutRepository)
+                factory = WorkoutViewModelFactory(workoutRepository, repository)
             )
             WorkoutScreen(navController = navController, viewModel = viewModel)
+        }
+        composable("past_workouts") {
+            val viewModel: PastWorkoutsViewModel = viewModel(
+                factory = PastWorkoutsViewModelFactory(workoutRepository)
+            )
+            PastWorkoutsScreen(navController = navController, viewModel = viewModel)
+        }
+        composable("workout_detail/{sessionId}") { backStackEntry ->
+            val sessionIdStr = backStackEntry.arguments?.getString("sessionId")
+            val sessionId = sessionIdStr?.toLongOrNull() ?: 0L
+            val viewModel: WorkoutDetailViewModel = viewModel(
+                factory = WorkoutDetailViewModelFactory(workoutRepository, sessionId)
+            )
+            WorkoutDetailScreen(navController = navController, viewModel = viewModel)
         }
     }
 }

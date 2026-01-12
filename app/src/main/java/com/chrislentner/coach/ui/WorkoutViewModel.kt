@@ -27,8 +27,11 @@ sealed class WorkoutUiState {
     data class FreeEntry(val session: WorkoutSession) : WorkoutUiState()
 }
 
+import com.chrislentner.coach.database.ScheduleRepository
+
 class WorkoutViewModel(
-    private val repository: WorkoutRepository
+    private val repository: WorkoutRepository,
+    private val scheduleRepository: ScheduleRepository? = null // Optional to avoid breaking tests/factories heavily immediately
 ) : ViewModel() {
 
     var uiState by mutableStateOf<WorkoutUiState>(WorkoutUiState.Loading)
@@ -43,8 +46,15 @@ class WorkoutViewModel(
             val now = Date()
             val todayStr = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(now)
 
+            // 0. Get scheduled location
+            var location: String? = null
+            if (scheduleRepository != null) {
+                val schedule = scheduleRepository.getScheduleByDate(todayStr)
+                location = schedule?.location
+            }
+
             // 1. Get or Create Session
-            val session = repository.getOrCreateSession(todayStr, now.time)
+            val session = repository.getOrCreateSession(todayStr, now.time, location)
 
             // 2. Fetch History & Generate Plan
             // We need history for Planner (e.g. yesterday's squats)
@@ -130,11 +140,14 @@ class WorkoutViewModel(
 }
 
 // Factory to inject Repo
-class WorkoutViewModelFactory(private val repository: WorkoutRepository) : ViewModelProvider.Factory {
+class WorkoutViewModelFactory(
+    private val repository: WorkoutRepository,
+    private val scheduleRepository: ScheduleRepository
+) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(WorkoutViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return WorkoutViewModel(repository) as T
+            return WorkoutViewModel(repository, scheduleRepository) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }
