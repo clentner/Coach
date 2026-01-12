@@ -16,7 +16,9 @@ import androidx.work.WorkManager
 import java.util.Calendar
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.launch
-import java.time.LocalDate
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -106,7 +108,7 @@ fun SurveyScreen(
                         calendar.set(Calendar.SECOND, 0)
 
                         val entry = WorkoutEntry(
-                            date = LocalDate.now().toString(),
+                            date = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date()),
                             timeInMillis = calendar.timeInMillis,
                             durationMinutes = duration.toInt(),
                             location = location

@@ -8,9 +8,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.chrislentner.coach.database.WorkoutRepository
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
+import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 
 @Composable
 fun HomeScreen(
@@ -20,7 +21,7 @@ fun HomeScreen(
     var workoutText by remember { mutableStateOf("Loading...") }
 
     LaunchedEffect(Unit) {
-        val today = LocalDate.now().toString()
+        val today = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
         val workout = repository.getWorkoutByDate(today)
         if (workout != null) {
             val cal = Calendar.getInstance()
