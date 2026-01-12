@@ -4,29 +4,36 @@ on:
   push:
     branches: [ "main" ]
   pull_request:
+    branches: [ "main" ]
 
 jobs:
   build:
+
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+    - uses: actions/checkout@v4
+    - name: set up JDK 21
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+        cache: gradle
 
-      - name: Set up JDK
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: "17"
-          cache: gradle
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+    - name: Build with Gradle
+      run: ./gradlew assembleDebug
 
-      - name: Build (Debug)
-        run: ./gradlew assembleDebug --no-daemon
+    - name: Run Unit Tests
+      run: ./gradlew test
 
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-debug
-          path: app/build/outputs/apk/debug/*.apk
+    - name: Run Lint
+      run: ./gradlew lint
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: app-debug
+        path: app/build/outputs/apk/debug/app-debug.apk
