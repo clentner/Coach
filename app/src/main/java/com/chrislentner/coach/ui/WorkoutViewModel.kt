@@ -36,8 +36,15 @@ class WorkoutViewModel(
     var uiState by mutableStateOf<WorkoutUiState>(WorkoutUiState.Loading)
         private set
 
+    var isMetronomeEnabled by mutableStateOf(true)
+        private set
+
     init {
         initializeSession()
+    }
+
+    fun toggleMetronome() {
+        isMetronomeEnabled = !isMetronomeEnabled
     }
 
     private fun initializeSession() {
