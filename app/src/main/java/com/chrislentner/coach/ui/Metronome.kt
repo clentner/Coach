@@ -7,7 +7,7 @@ import android.media.AudioTrack
 
 class Metronome {
     private val sampleRate = 44100
-    private val durationMs = 15 // Short click
+    private val durationMs = 50 // Longer click for better audibility
     private val numSamples = sampleRate * durationMs / 1000
     private val generatedSnd = ByteArray(2 * numSamples)
     private var audioTrack: AudioTrack? = null
@@ -34,8 +34,8 @@ class Metronome {
 
     private fun createAudioTrack() {
         val attributes = AudioAttributes.Builder()
-            .setUsage(AudioAttributes.USAGE_ASSISTANCE_SONIFICATION)
-            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+            .setUsage(AudioAttributes.USAGE_MEDIA)
+            .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
             .build()
 
         val format = AudioFormat.Builder()
