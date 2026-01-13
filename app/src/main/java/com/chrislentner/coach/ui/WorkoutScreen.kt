@@ -37,7 +37,12 @@ fun WorkoutScreen(
                     state = uiState,
                     isMetronomeEnabled = isMetronomeEnabled,
                     onToggleMetronome = { viewModel.toggleMetronome() },
-                    onCompleteStep = { viewModel.completeCurrentStep() }
+                    onCompleteStep = { viewModel.completeCurrentStep() },
+                    isTimerRunning = viewModel.isTimerRunning,
+                    timerStartTime = viewModel.timerStartTimestamp,
+                    timerAccumulatedTime = viewModel.timerAccumulatedTime,
+                    onToggleTimer = { viewModel.toggleTimer() },
+                    onResetTimer = { viewModel.resetTimer() }
                 )
             }
             is WorkoutUiState.FreeEntry -> {
@@ -55,7 +60,12 @@ fun ActiveWorkoutView(
     state: WorkoutUiState.Active,
     isMetronomeEnabled: Boolean,
     onToggleMetronome: () -> Unit,
-    onCompleteStep: () -> Unit
+    onCompleteStep: () -> Unit,
+    isTimerRunning: Boolean,
+    timerStartTime: Long?,
+    timerAccumulatedTime: Long,
+    onToggleTimer: () -> Unit,
+    onResetTimer: () -> Unit
 ) {
     val step = state.currentStep ?: return // Should not happen in Active state
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -79,94 +89,97 @@ fun ActiveWorkoutView(
         }
     }
 
-    // Top Right Icon for Metronome
-    // We want this floating or in a top bar arrangement.
-    // Since ActiveWorkoutView is inside a Box with Center alignment in parent, let's rearrange layout slightly
-    // or put the Icon in a Box overlapping this column.
-
-    Box(modifier = Modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier.fillMaxWidth().align(Alignment.Center),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Text(
-                text = "Step ${state.completedStepsCount + 1} / ${state.totalStepsCount}",
-                style = MaterialTheme.typography.labelLarge
-            )
-
-            Text(
-                text = step.exerciseName,
-                style = MaterialTheme.typography.displaySmall
-            )
-
-            Card(
-                modifier = Modifier.fillMaxWidth()
+    Column(modifier = Modifier.fillMaxSize()) {
+        Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+            Column(
+                modifier = Modifier.fillMaxWidth().align(Alignment.Center),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Column(
-                    modifier = Modifier.padding(16.dp).fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                Text(
+                    text = "Step ${state.completedStepsCount + 1} / ${state.totalStepsCount}",
+                    style = MaterialTheme.typography.labelLarge
+                )
+
+                Text(
+                    text = step.exerciseName,
+                    style = MaterialTheme.typography.displaySmall
+                )
+
+                Card(
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    if (step.targetReps != null) {
-                        Text("Reps: ${step.targetReps}", style = MaterialTheme.typography.headlineMedium)
+                    Column(
+                        modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        if (step.targetReps != null) {
+                            Text("Reps: ${step.targetReps}", style = MaterialTheme.typography.headlineMedium)
+                        }
+                        if (step.targetDurationSeconds != null) {
+                            Text("Duration: ${step.targetDurationSeconds}s", style = MaterialTheme.typography.headlineMedium)
+                        }
+                        Text("Load: ${step.loadDescription}", style = MaterialTheme.typography.titleLarge)
                     }
-                    if (step.targetDurationSeconds != null) {
-                         Text("Duration: ${step.targetDurationSeconds}s", style = MaterialTheme.typography.headlineMedium)
-                    }
-                    Text("Load: ${step.loadDescription}", style = MaterialTheme.typography.titleLarge)
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Huge Accept Button
+                Button(
+                    onClick = onCompleteStep,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(80.dp)
+                ) {
+                    Text("COMPLETE NEXT STEP", style = MaterialTheme.typography.titleLarge)
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Small Buttons (Disabled)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    Button(onClick = {}, enabled = false) { Text("Edit") }
+                    // Skip should record skipped entry in DB (Future impl)
+                    Button(onClick = {}, enabled = false) { Text("Skip") }
+                    Button(onClick = {}, enabled = false) { Text("Swap") }
+                }
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    Button(onClick = {}, enabled = false) { Text("Undo") }
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Huge Accept Button
-            Button(
-                onClick = onCompleteStep,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(80.dp)
+            // Volume Toggle Icon
+            // Only show if the step is relevant? Or always?
+            // Requirement: "functionality should be toggle-able... persisted throughout the workout"
+            // It implies the toggle is available generally or at least when metronome is active.
+            // Usually such settings are always available or available when applicable.
+            // Let's make it always available so user can preemptively turn it off.
+            IconButton(
+                onClick = onToggleMetronome,
+                modifier = Modifier.align(Alignment.TopEnd)
             ) {
-                Text("COMPLETE NEXT STEP", style = MaterialTheme.typography.titleLarge)
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Small Buttons (Disabled)
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                Button(onClick = {}, enabled = false) { Text("Edit") }
-                // Skip should record skipped entry in DB (Future impl)
-                Button(onClick = {}, enabled = false) { Text("Skip") }
-                Button(onClick = {}, enabled = false) { Text("Swap") }
-            }
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                Button(onClick = {}, enabled = false) { Text("Undo") }
-                // Rest Timer: Visual countdown (Future impl)
-                Button(onClick = {}, enabled = false) { Text("Rest Timer") }
+                Icon(
+                    imageVector = Icons.Default.Notifications,
+                    contentDescription = if (isMetronomeEnabled) "Mute Metronome" else "Unmute Metronome",
+                    tint = if (isMetronomeEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                )
             }
         }
 
-        // Volume Toggle Icon
-        // Only show if the step is relevant? Or always?
-        // Requirement: "functionality should be toggle-able... persisted throughout the workout"
-        // It implies the toggle is available generally or at least when metronome is active.
-        // Usually such settings are always available or available when applicable.
-        // Let's make it always available so user can preemptively turn it off.
-        IconButton(
-            onClick = onToggleMetronome,
-            modifier = Modifier.align(Alignment.TopEnd)
-        ) {
-            Icon(
-                imageVector = Icons.Default.Notifications,
-                contentDescription = if (isMetronomeEnabled) "Mute Metronome" else "Unmute Metronome",
-                tint = if (isMetronomeEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
-            )
-        }
+        RestTimer(
+            isRunning = isTimerRunning,
+            timerStartTime = timerStartTime,
+            timerAccumulatedTime = timerAccumulatedTime,
+            onToggle = onToggleTimer,
+            onReset = onResetTimer
+        )
     }
 }
 

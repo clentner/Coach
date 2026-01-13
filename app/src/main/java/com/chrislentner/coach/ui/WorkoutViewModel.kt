@@ -39,12 +39,47 @@ class WorkoutViewModel(
     var isMetronomeEnabled by mutableStateOf(true)
         private set
 
+    // Rest Timer State
+    var timerStartTimestamp by mutableStateOf<Long?>(null)
+        private set
+    var isTimerRunning by mutableStateOf(false)
+        private set
+    var timerAccumulatedTime by mutableStateOf(0L)
+        private set
+
     init {
         initializeSession()
     }
 
     fun toggleMetronome() {
         isMetronomeEnabled = !isMetronomeEnabled
+    }
+
+    fun toggleTimer() {
+        if (isTimerRunning) {
+            // Pause
+            val now = System.currentTimeMillis()
+            timerAccumulatedTime += now - (timerStartTimestamp ?: now)
+            timerStartTimestamp = null
+            isTimerRunning = false
+        } else {
+            // Start/Resume
+            timerStartTimestamp = System.currentTimeMillis()
+            isTimerRunning = true
+        }
+    }
+
+    fun resetTimer() {
+        isTimerRunning = false
+        timerStartTimestamp = null
+        timerAccumulatedTime = 0L
+    }
+
+    private fun startTimer() {
+        if (!isTimerRunning) {
+            timerStartTimestamp = System.currentTimeMillis()
+            isTimerRunning = true
+        }
     }
 
     private fun initializeSession() {
@@ -112,6 +147,10 @@ class WorkoutViewModel(
                     timestamp = System.currentTimeMillis()
                 )
                 repository.logSet(entry)
+
+                // Auto-start Rest Timer logic
+                resetTimer()
+                startTimer()
 
                 // Refresh state
                 // We could just optimistically update, but re-running init is safer to stay in sync
