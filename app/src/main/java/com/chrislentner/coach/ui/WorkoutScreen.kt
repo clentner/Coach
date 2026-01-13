@@ -42,7 +42,8 @@ fun WorkoutScreen(
                     timerStartTime = viewModel.timerStartTimestamp,
                     timerAccumulatedTime = viewModel.timerAccumulatedTime,
                     onToggleTimer = { viewModel.toggleTimer() },
-                    onResetTimer = { viewModel.resetTimer() }
+                    onResetTimer = { viewModel.resetTimer() },
+                    onUndo = { viewModel.undoLastStep() }
                 )
             }
             is WorkoutUiState.FreeEntry -> {
@@ -65,7 +66,8 @@ fun ActiveWorkoutView(
     timerStartTime: Long?,
     timerAccumulatedTime: Long,
     onToggleTimer: () -> Unit,
-    onResetTimer: () -> Unit
+    onResetTimer: () -> Unit,
+    onUndo: () -> Unit
 ) {
     val step = state.currentStep ?: return // Should not happen in Active state
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -151,16 +153,14 @@ fun ActiveWorkoutView(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly
                 ) {
-                    Button(onClick = {}, enabled = false) { Text("Undo") }
+                    Button(
+                        onClick = onUndo,
+                        enabled = state.completedStepsCount > 0
+                    ) { Text("Undo") }
                 }
             }
 
             // Volume Toggle Icon
-            // Only show if the step is relevant? Or always?
-            // Requirement: "functionality should be toggle-able... persisted throughout the workout"
-            // It implies the toggle is available generally or at least when metronome is active.
-            // Usually such settings are always available or available when applicable.
-            // Let's make it always available so user can preemptively turn it off.
             IconButton(
                 onClick = onToggleMetronome,
                 modifier = Modifier.align(Alignment.TopEnd)
