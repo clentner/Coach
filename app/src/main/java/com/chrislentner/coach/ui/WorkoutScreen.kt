@@ -37,7 +37,8 @@ fun WorkoutScreen(
                     state = uiState,
                     isMetronomeEnabled = isMetronomeEnabled,
                     onToggleMetronome = { viewModel.toggleMetronome() },
-                    onCompleteStep = { viewModel.completeCurrentStep() }
+                    onCompleteStep = { viewModel.completeCurrentStep() },
+                    onUndo = { viewModel.undoLastStep() }
                 )
             }
             is WorkoutUiState.FreeEntry -> {
@@ -55,7 +56,8 @@ fun ActiveWorkoutView(
     state: WorkoutUiState.Active,
     isMetronomeEnabled: Boolean,
     onToggleMetronome: () -> Unit,
-    onCompleteStep: () -> Unit
+    onCompleteStep: () -> Unit,
+    onUndo: () -> Unit
 ) {
     val step = state.currentStep ?: return // Should not happen in Active state
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -145,7 +147,10 @@ fun ActiveWorkoutView(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                Button(onClick = {}, enabled = false) { Text("Undo") }
+                Button(
+                    onClick = onUndo,
+                    enabled = state.completedStepsCount > 0
+                ) { Text("Undo") }
                 // Rest Timer: Visual countdown (Future impl)
                 Button(onClick = {}, enabled = false) { Text("Rest Timer") }
             }

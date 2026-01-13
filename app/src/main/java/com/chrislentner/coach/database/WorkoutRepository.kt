@@ -31,6 +31,10 @@ class WorkoutRepository(private val workoutDao: WorkoutDao) {
         workoutDao.insertLogEntry(entry)
     }
 
+    suspend fun deleteLog(entry: WorkoutLogEntry) {
+        workoutDao.deleteLogEntry(entry)
+    }
+
     suspend fun getLogsForSession(sessionId: Long): List<WorkoutLogEntry> {
         return workoutDao.getLogsForSession(sessionId)
     }
