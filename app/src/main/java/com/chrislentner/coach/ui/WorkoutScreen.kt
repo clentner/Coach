@@ -1,12 +1,18 @@
 package com.chrislentner.coach.ui
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
 import androidx.navigation.NavController
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 
 @Composable
 fun WorkoutScreen(
@@ -14,6 +20,7 @@ fun WorkoutScreen(
     viewModel: WorkoutViewModel
 ) {
     val uiState = viewModel.uiState
+    val isMetronomeEnabled = viewModel.isMetronomeEnabled
 
     Box(
         modifier = Modifier
@@ -28,6 +35,8 @@ fun WorkoutScreen(
             is WorkoutUiState.Active -> {
                 ActiveWorkoutView(
                     state = uiState,
+                    isMetronomeEnabled = isMetronomeEnabled,
+                    onToggleMetronome = { viewModel.toggleMetronome() },
                     onCompleteStep = { viewModel.completeCurrentStep() }
                 )
             }
@@ -44,73 +53,119 @@ fun WorkoutScreen(
 @Composable
 fun ActiveWorkoutView(
     state: WorkoutUiState.Active,
+    isMetronomeEnabled: Boolean,
+    onToggleMetronome: () -> Unit,
     onCompleteStep: () -> Unit
 ) {
     val step = state.currentStep ?: return // Should not happen in Active state
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val lifecycleState by lifecycleOwner.lifecycle.currentStateFlow.collectAsState()
 
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        Text(
-            text = "Step ${state.completedStepsCount + 1} / ${state.totalStepsCount}",
-            style = MaterialTheme.typography.labelLarge
-        )
-
-        Text(
-            text = step.exerciseName,
-            style = MaterialTheme.typography.displaySmall
-        )
-
-        Card(
-            modifier = Modifier.fillMaxWidth()
+    // Metronome Logic
+    LaunchedEffect(step, isMetronomeEnabled, lifecycleState) {
+        if (isMetronomeEnabled &&
+            lifecycleState == Lifecycle.State.RESUMED &&
+            step.loadDescription.contains(Regex("\\ds"))
         ) {
-            Column(
-                modifier = Modifier.padding(16.dp).fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally
+            val metronome = Metronome()
+            try {
+                while (isActive) {
+                    metronome.playClick()
+                    delay(1000)
+                }
+            } finally {
+                metronome.release()
+            }
+        }
+    }
+
+    // Top Right Icon for Metronome
+    // We want this floating or in a top bar arrangement.
+    // Since ActiveWorkoutView is inside a Box with Center alignment in parent, let's rearrange layout slightly
+    // or put the Icon in a Box overlapping this column.
+
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier.fillMaxWidth().align(Alignment.Center),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Text(
+                text = "Step ${state.completedStepsCount + 1} / ${state.totalStepsCount}",
+                style = MaterialTheme.typography.labelLarge
+            )
+
+            Text(
+                text = step.exerciseName,
+                style = MaterialTheme.typography.displaySmall
+            )
+
+            Card(
+                modifier = Modifier.fillMaxWidth()
             ) {
-                if (step.targetReps != null) {
-                    Text("Reps: ${step.targetReps}", style = MaterialTheme.typography.headlineMedium)
+                Column(
+                    modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    if (step.targetReps != null) {
+                        Text("Reps: ${step.targetReps}", style = MaterialTheme.typography.headlineMedium)
+                    }
+                    if (step.targetDurationSeconds != null) {
+                         Text("Duration: ${step.targetDurationSeconds}s", style = MaterialTheme.typography.headlineMedium)
+                    }
+                    Text("Load: ${step.loadDescription}", style = MaterialTheme.typography.titleLarge)
                 }
-                if (step.targetDurationSeconds != null) {
-                     Text("Duration: ${step.targetDurationSeconds}s", style = MaterialTheme.typography.headlineMedium)
-                }
-                Text("Load: ${step.loadDescription}", style = MaterialTheme.typography.titleLarge)
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Huge Accept Button
+            Button(
+                onClick = onCompleteStep,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(80.dp)
+            ) {
+                Text("COMPLETE NEXT STEP", style = MaterialTheme.typography.titleLarge)
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Small Buttons (Disabled)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                Button(onClick = {}, enabled = false) { Text("Edit") }
+                // Skip should record skipped entry in DB (Future impl)
+                Button(onClick = {}, enabled = false) { Text("Skip") }
+                Button(onClick = {}, enabled = false) { Text("Swap") }
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                Button(onClick = {}, enabled = false) { Text("Undo") }
+                // Rest Timer: Visual countdown (Future impl)
+                Button(onClick = {}, enabled = false) { Text("Rest Timer") }
             }
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Huge Accept Button
-        Button(
-            onClick = onCompleteStep,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(80.dp)
+        // Volume Toggle Icon
+        // Only show if the step is relevant? Or always?
+        // Requirement: "functionality should be toggle-able... persisted throughout the workout"
+        // It implies the toggle is available generally or at least when metronome is active.
+        // Usually such settings are always available or available when applicable.
+        // Let's make it always available so user can preemptively turn it off.
+        IconButton(
+            onClick = onToggleMetronome,
+            modifier = Modifier.align(Alignment.TopEnd)
         ) {
-            Text("COMPLETE NEXT STEP", style = MaterialTheme.typography.titleLarge)
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Small Buttons (Disabled)
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-            Button(onClick = {}, enabled = false) { Text("Edit") }
-            // Skip should record skipped entry in DB (Future impl)
-            Button(onClick = {}, enabled = false) { Text("Skip") }
-            Button(onClick = {}, enabled = false) { Text("Swap") }
-        }
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-            Button(onClick = {}, enabled = false) { Text("Undo") }
-            // Rest Timer: Visual countdown (Future impl)
-            Button(onClick = {}, enabled = false) { Text("Rest Timer") }
+            Icon(
+                imageVector = Icons.Default.Notifications,
+                contentDescription = if (isMetronomeEnabled) "Mute Metronome" else "Unmute Metronome",
+                tint = if (isMetronomeEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+            )
         }
     }
 }
