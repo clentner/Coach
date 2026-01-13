@@ -170,6 +170,12 @@ fun ActiveWorkoutView(
                     contentDescription = if (isMetronomeEnabled) "Mute Metronome" else "Unmute Metronome",
                     tint = if (isMetronomeEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
                 )
+                Button(
+                    onClick = onUndo,
+                    enabled = state.completedStepsCount > 0
+                ) { Text("Undo") }
+                // Rest Timer: Visual countdown (Future impl)
+                Button(onClick = {}, enabled = false) { Text("Rest Timer") }
             }
         }
 
