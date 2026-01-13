@@ -23,6 +23,9 @@ interface WorkoutDao {
     @Insert
     suspend fun insertLogEntry(entry: WorkoutLogEntry): Long
 
+    @androidx.room.Delete
+    suspend fun deleteLogEntry(entry: WorkoutLogEntry)
+
     @Query("SELECT * FROM workout_logs WHERE sessionId = :sessionId ORDER BY timestamp ASC")
     suspend fun getLogsForSession(sessionId: Long): List<WorkoutLogEntry>
 

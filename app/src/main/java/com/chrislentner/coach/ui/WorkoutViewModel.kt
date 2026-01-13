@@ -143,6 +143,24 @@ class WorkoutViewModel(
             }
         }
     }
+
+    fun undoLastStep() {
+        val state = uiState
+        val sessionId = when (state) {
+            is WorkoutUiState.Active -> state.session.id
+            is WorkoutUiState.FreeEntry -> state.session.id
+            else -> return
+        }
+
+        viewModelScope.launch {
+            val logs = repository.getLogsForSession(sessionId)
+            if (logs.isNotEmpty()) {
+                val lastLog = logs.last()
+                repository.deleteLog(lastLog)
+                initializeSession()
+            }
+        }
+    }
 }
 
 // Factory to inject Repo
