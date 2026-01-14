@@ -12,7 +12,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
+import com.chrislentner.coach.database.AppDatabase
 import com.chrislentner.coach.database.ScheduleRepository
+import com.chrislentner.coach.database.WorkoutRepository
 import com.chrislentner.coach.ui.CoachApp
 import com.chrislentner.coach.ui.theme.CoachTheme
 import com.chrislentner.coach.worker.BootReceiver
@@ -23,7 +25,9 @@ import java.util.Locale
 
 class MainActivity : ComponentActivity() {
 
-    private val repository by lazy { ScheduleRepository(applicationContext) }
+    private val database by lazy { AppDatabase.getDatabase(applicationContext) }
+    private val repository by lazy { ScheduleRepository(database.scheduleDao()) }
+    private val workoutRepository by lazy { WorkoutRepository(database.workoutDao()) }
 
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -71,7 +75,11 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    CoachApp(repository = repository, startDestination = startDestination)
+                    CoachApp(
+                        repository = repository,
+                        workoutRepository = workoutRepository,
+                        startDestination = startDestination
+                    )
                 }
             }
         }

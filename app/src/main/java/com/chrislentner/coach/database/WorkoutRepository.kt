@@ -1,10 +1,7 @@
 package com.chrislentner.coach.database
 
-import android.content.Context
-import androidx.room.Room
-
 // Normally we would use Dependency Injection (Hilt/Koin), but for this project we'll do manual DI or a singleton.
-// Assuming the AppDatabase is provided elsewhere (CoachApp probably builds it).
+// Assuming the AppDatabase is provided elsewhere.
 // But for now, let's just make a Repository class that wraps the Dao.
 
 class WorkoutRepository(private val workoutDao: WorkoutDao) {
