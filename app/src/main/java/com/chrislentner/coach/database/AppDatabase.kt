@@ -17,4 +17,23 @@ abstract class AppDatabase : RoomDatabase() {
     // abstract fun userDao(): UserDao
     abstract fun scheduleDao(): ScheduleDao
     abstract fun workoutDao(): WorkoutDao
+
+    companion object {
+        @Volatile
+        private var INSTANCE: AppDatabase? = null
+
+        fun getDatabase(context: android.content.Context): AppDatabase {
+            return INSTANCE ?: synchronized(this) {
+                val instance = androidx.room.Room.databaseBuilder(
+                    context.applicationContext,
+                    AppDatabase::class.java,
+                    "coach-database"
+                )
+                    .fallbackToDestructiveMigration()
+                    .build()
+                INSTANCE = instance
+                instance
+            }
+        }
+    }
 }

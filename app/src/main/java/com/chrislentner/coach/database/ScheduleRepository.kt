@@ -1,20 +1,6 @@
 package com.chrislentner.coach.database
 
-import android.content.Context
-import androidx.room.Room
-
-class ScheduleRepository(private val context: Context) {
-
-    private val db: AppDatabase by lazy {
-        Room.databaseBuilder(
-            context.applicationContext,
-            AppDatabase::class.java, "coach-database"
-        )
-            .fallbackToDestructiveMigration() // Simple migration strategy for this task
-            .build()
-    }
-
-    private val dao: ScheduleDao by lazy { db.scheduleDao() }
+class ScheduleRepository(private val dao: ScheduleDao) {
 
     suspend fun getScheduleByDate(date: String): ScheduleEntry? {
         return dao.getScheduleByDate(date)
