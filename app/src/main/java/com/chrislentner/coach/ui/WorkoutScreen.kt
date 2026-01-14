@@ -38,7 +38,12 @@ fun WorkoutScreen(
                     isMetronomeEnabled = isMetronomeEnabled,
                     onToggleMetronome = { viewModel.toggleMetronome() },
                     onCompleteStep = { viewModel.completeCurrentStep() },
-                    onUndo = { viewModel.undoLastStep() }
+                    onUndo = { viewModel.undoLastStep() },
+                    isTimerRunning = viewModel.isTimerRunning,
+                    timerStartTime = viewModel.timerStartTime,
+                    timerAccumulatedTime = viewModel.timerAccumulatedTime,
+                    onTimerToggle = { viewModel.toggleTimer() },
+                    onTimerReset = { viewModel.resetTimer() }
                 )
             }
             is WorkoutUiState.FreeEntry -> {
@@ -57,7 +62,12 @@ fun ActiveWorkoutView(
     isMetronomeEnabled: Boolean,
     onToggleMetronome: () -> Unit,
     onCompleteStep: () -> Unit,
-    onUndo: () -> Unit
+    onUndo: () -> Unit,
+    isTimerRunning: Boolean,
+    timerStartTime: Long?,
+    timerAccumulatedTime: Long,
+    onTimerToggle: () -> Unit,
+    onTimerReset: () -> Unit
 ) {
     val step = state.currentStep ?: return // Should not happen in Active state
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -88,72 +98,91 @@ fun ActiveWorkoutView(
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(
-            modifier = Modifier.fillMaxWidth().align(Alignment.Center),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            modifier = Modifier.fillMaxSize()
         ) {
-            Text(
-                text = "Step ${state.completedStepsCount + 1} / ${state.totalStepsCount}",
-                style = MaterialTheme.typography.labelLarge
-            )
-
-            Text(
-                text = step.exerciseName,
-                style = MaterialTheme.typography.displaySmall
-            )
-
-            Card(
-                modifier = Modifier.fillMaxWidth()
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
             ) {
+                // Content with original spacing logic if possible, or just spaced column
                 Column(
-                    modifier = Modifier.padding(16.dp).fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    if (step.targetReps != null) {
-                        Text("Reps: ${step.targetReps}", style = MaterialTheme.typography.headlineMedium)
+                    Text(
+                        text = "Step ${state.completedStepsCount + 1} / ${state.totalStepsCount}",
+                        style = MaterialTheme.typography.labelLarge
+                    )
+
+                    Text(
+                        text = step.exerciseName,
+                        style = MaterialTheme.typography.displaySmall
+                    )
+
+                    Card(
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            if (step.targetReps != null) {
+                                Text("Reps: ${step.targetReps}", style = MaterialTheme.typography.headlineMedium)
+                            }
+                            if (step.targetDurationSeconds != null) {
+                                Text("Duration: ${step.targetDurationSeconds}s", style = MaterialTheme.typography.headlineMedium)
+                            }
+                            Text("Load: ${step.loadDescription}", style = MaterialTheme.typography.titleLarge)
+                        }
                     }
-                    if (step.targetDurationSeconds != null) {
-                         Text("Duration: ${step.targetDurationSeconds}s", style = MaterialTheme.typography.headlineMedium)
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Huge Accept Button
+                    Button(
+                        onClick = onCompleteStep,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(80.dp)
+                    ) {
+                        Text("COMPLETE NEXT STEP", style = MaterialTheme.typography.titleLarge)
                     }
-                    Text("Load: ${step.loadDescription}", style = MaterialTheme.typography.titleLarge)
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    // Small Buttons (Disabled)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        Button(onClick = {}, enabled = false) { Text("Edit") }
+                        // Skip should record skipped entry in DB (Future impl)
+                        Button(onClick = {}, enabled = false) { Text("Skip") }
+                        Button(onClick = {}, enabled = false) { Text("Swap") }
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        Button(
+                            onClick = onUndo,
+                            enabled = state.completedStepsCount > 0
+                        ) { Text("Undo") }
+                    }
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Huge Accept Button
-            Button(
-                onClick = onCompleteStep,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(80.dp)
-            ) {
-                Text("COMPLETE NEXT STEP", style = MaterialTheme.typography.titleLarge)
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Small Buttons (Disabled)
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                Button(onClick = {}, enabled = false) { Text("Edit") }
-                // Skip should record skipped entry in DB (Future impl)
-                Button(onClick = {}, enabled = false) { Text("Skip") }
-                Button(onClick = {}, enabled = false) { Text("Swap") }
-            }
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                Button(
-                    onClick = onUndo,
-                    enabled = state.completedStepsCount > 0
-                ) { Text("Undo") }
-                // Rest Timer: Visual countdown (Future impl)
-                Button(onClick = {}, enabled = false) { Text("Rest Timer") }
-            }
+            RestTimer(
+                isRunning = isTimerRunning,
+                startTime = timerStartTime,
+                accumulatedTime = timerAccumulatedTime,
+                onToggle = onTimerToggle,
+                onReset = onTimerReset
+            )
         }
 
         // Volume Toggle Icon
