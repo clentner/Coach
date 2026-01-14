@@ -85,7 +85,6 @@ class SkipFeatureTest {
         val summaries = workoutDao.getSessionsWithSetCounts()
         assertEquals("Should return 1 session summary", 1, summaries.size)
 
-        // This assertion is expected to fail initially as currently it counts all logs (2)
         assertEquals("Set count should exclude skipped sets", 1, summaries[0].setCount)
     }
 }
