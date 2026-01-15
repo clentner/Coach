@@ -20,6 +20,18 @@ data class WorkoutStep(
 
 object WorkoutPlanner {
 
+    val DEFAULT_EXERCISES = listOf(
+        "Squats",
+        "Deadlift",
+        "Bench Press",
+        "Overhead Press",
+        "Pull Up",
+        "Dumbbell Row",
+        "Hamstring CRACR",
+        "Lunge",
+        "Plank"
+    )
+
     fun generatePlan(
         today: Date,
         history: List<WorkoutLogEntry>

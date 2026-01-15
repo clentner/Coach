@@ -1,8 +1,11 @@
 package com.chrislentner.coach.ui
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -23,6 +26,21 @@ fun WorkoutScreen(
 ) {
     val uiState = viewModel.uiState
     val isMetronomeEnabled = viewModel.isMetronomeEnabled
+
+    // Handle Exercise Swap Result
+    val currentBackStackEntry = navController.currentBackStackEntry
+    val savedStateHandle = currentBackStackEntry?.savedStateHandle
+    val selectedExerciseFlow = remember(savedStateHandle) {
+        savedStateHandle?.getStateFlow<String?>("selected_exercise", null)
+    }
+    val selectedExercise by selectedExerciseFlow?.collectAsState() ?: remember { mutableStateOf(null) }
+
+    LaunchedEffect(selectedExercise) {
+        selectedExercise?.let {
+            viewModel.updateCurrentStepExercise(it)
+            savedStateHandle?.remove<String>("selected_exercise")
+        }
+    }
 
     // Free Entry State (Hoisted to share with Metronome logic)
     var freeExercise by remember { mutableStateOf("") }
@@ -58,6 +76,12 @@ fun WorkoutScreen(
             activeStepDuration = (uiState as? WorkoutUiState.Active)?.currentStep?.targetDurationSeconds?.toString(),
             activeStepLoad = (uiState as? WorkoutUiState.Active)?.currentStep?.loadDescription,
             activeStepTempo = (uiState as? WorkoutUiState.Active)?.currentStep?.tempo,
+            // Editing Callbacks
+            onAdjustReps = { viewModel.adjustCurrentStepReps(it) },
+            onUpdateReps = { viewModel.updateCurrentStepReps(it) },
+            onAdjustLoad = { viewModel.adjustCurrentStepLoad(it) },
+            onUpdateLoad = { viewModel.updateCurrentStepLoad(it) },
+            onSwapExercise = { navController.navigate("exercise_selection") },
             // Metronome
             isMetronomeEnabled = isMetronomeEnabled,
             effectiveTempo = effectiveTempo,
@@ -112,6 +136,12 @@ fun SessionScreenContent(
     activeStepDuration: String?,
     activeStepLoad: String?,
     activeStepTempo: String?,
+    // Editing Actions
+    onAdjustReps: (Int) -> Unit,
+    onUpdateReps: (Int) -> Unit,
+    onAdjustLoad: (Boolean) -> Unit, // True = Increment, False = Decrement
+    onUpdateLoad: (String) -> Unit,
+    onSwapExercise: () -> Unit,
     // Metronome
     isMetronomeEnabled: Boolean,
     effectiveTempo: String?,
@@ -190,7 +220,8 @@ fun SessionScreenContent(
                         // Active Mode Display
                         Text(
                             text = activeStepName,
-                            style = MaterialTheme.typography.displaySmall
+                            style = MaterialTheme.typography.displaySmall,
+                            modifier = Modifier.clickable { onSwapExercise() }
                         )
 
                         Card(
@@ -203,13 +234,29 @@ fun SessionScreenContent(
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
                                 if (activeStepReps != null) {
-                                    Text("Reps: $activeStepReps", style = MaterialTheme.typography.headlineMedium)
+                                    EditableField(
+                                        value = activeStepReps,
+                                        label = "Reps",
+                                        onValueChange = { str ->
+                                            str.toIntOrNull()?.let { onUpdateReps(it) }
+                                        },
+                                        onIncrement = { onAdjustReps(1) },
+                                        onDecrement = { onAdjustReps(-1) },
+                                        keyboardType = KeyboardType.Number
+                                    )
                                 }
                                 if (activeStepDuration != null) {
                                     Text("Duration: ${activeStepDuration}s", style = MaterialTheme.typography.headlineMedium)
                                 }
                                 if (activeStepLoad != null) {
-                                    Text("Load: $activeStepLoad", style = MaterialTheme.typography.titleLarge)
+                                    EditableField(
+                                        value = activeStepLoad,
+                                        label = "Load",
+                                        onValueChange = { onUpdateLoad(it) },
+                                        onIncrement = { onAdjustLoad(true) },
+                                        onDecrement = { onAdjustLoad(false) },
+                                        keyboardType = KeyboardType.Text // Allows freeform
+                                    )
                                 }
                                 if (activeStepTempo != null) {
                                     Spacer(modifier = Modifier.height(8.dp))
@@ -283,9 +330,8 @@ fun SessionScreenContent(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceEvenly
                         ) {
-                            Button(onClick = {}, enabled = false) { Text("Edit") }
+                            // Edit and Swap buttons removed
                             Button(onClick = onSkipStep) { Text("Skip") }
-                            Button(onClick = {}, enabled = false) { Text("Swap") }
                         }
                     } else {
                         // Finish Workout Button for Free Mode
@@ -330,6 +376,76 @@ fun SessionScreenContent(
                 contentDescription = if (isMetronomeEnabled) "Mute Metronome" else "Unmute Metronome",
                 tint = if (isMetronomeEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
             )
+        }
+    }
+}
+
+@Composable
+fun EditableField(
+    value: String,
+    label: String,
+    onValueChange: (String) -> Unit,
+    onIncrement: () -> Unit,
+    onDecrement: () -> Unit,
+    keyboardType: KeyboardType = KeyboardType.Text
+) {
+    var isEditing by remember { mutableStateOf(false) }
+    var tempValue by remember { mutableStateOf(value) }
+
+    // Sync tempValue if value changes externally
+    LaunchedEffect(value) {
+        if (!isEditing) {
+            tempValue = value
+        }
+    }
+
+    if (isEditing) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            OutlinedTextField(
+                value = tempValue,
+                onValueChange = { tempValue = it },
+                label = { Text(label) },
+                keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+                modifier = Modifier.weight(1f)
+            )
+            IconButton(onClick = {
+                onValueChange(tempValue)
+                isEditing = false
+            }) {
+                Icon(Icons.Default.Check, contentDescription = "Accept")
+            }
+            IconButton(onClick = {
+                tempValue = value // Reset
+                isEditing = false
+            }) {
+                Icon(Icons.Default.Close, contentDescription = "Discard")
+            }
+        }
+    } else {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            IconButton(onClick = onDecrement) {
+                Text("-", style = MaterialTheme.typography.headlineSmall)
+            }
+
+            Text(
+                text = if (label == "Reps") "Reps: $value" else "Load: $value",
+                style = if (label == "Reps") MaterialTheme.typography.headlineMedium else MaterialTheme.typography.titleLarge,
+                modifier = Modifier
+                    .padding(horizontal = 8.dp)
+                    .clickable { isEditing = true }
+            )
+
+            IconButton(onClick = onIncrement) {
+                Text("+", style = MaterialTheme.typography.headlineSmall)
+            }
         }
     }
 }

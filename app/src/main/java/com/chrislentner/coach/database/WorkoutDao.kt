@@ -48,4 +48,7 @@ interface WorkoutDao {
         ORDER BY s.date DESC
     """)
     suspend fun getSessionsWithSetCounts(): List<SessionSummary>
+
+    @Query("SELECT exerciseName FROM workout_logs GROUP BY exerciseName ORDER BY MAX(timestamp) DESC LIMIT :limit")
+    suspend fun getRecentExerciseNames(limit: Int): List<String>
 }
