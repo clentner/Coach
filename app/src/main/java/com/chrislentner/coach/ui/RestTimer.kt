@@ -19,7 +19,7 @@ fun RestTimer(
     modifier: Modifier = Modifier
 ) {
     // Local state to drive UI updates when running
-    var now by remember { mutableStateOf(System.currentTimeMillis()) }
+    var now by remember(isRunning, startTime) { mutableStateOf(System.currentTimeMillis()) }
 
     LaunchedEffect(isRunning, startTime) {
         if (isRunning) {
