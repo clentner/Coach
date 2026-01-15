@@ -178,8 +178,7 @@ class WorkoutViewModel(
 
                 initializeSession()
 
-                resetTimer()
-                toggleTimer()
+                // Timer reset logic removed to avoid resetting rest timer when skipping
             }
         }
     }
