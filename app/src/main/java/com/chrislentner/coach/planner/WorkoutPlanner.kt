@@ -1,5 +1,6 @@
 package com.chrislentner.coach.planner
 
+import com.chrislentner.coach.database.Tempo
 import com.chrislentner.coach.database.WorkoutLogEntry
 import java.util.Calendar
 import java.util.Date
@@ -9,7 +10,8 @@ data class WorkoutStep(
     val exerciseName: String,
     val targetReps: Int?,
     val targetDurationSeconds: Int?,
-    val loadDescription: String
+    val loadDescription: String,
+    val tempo: Tempo? = null
 )
 
 object WorkoutPlanner {
@@ -60,7 +62,8 @@ object WorkoutPlanner {
                     exerciseName = "Squats",
                     targetReps = 5, // "6s/rep" implies tempo. Assuming 5 reps.
                     targetDurationSeconds = null,
-                    loadDescription = "85 lbs @ 6s/rep"
+                    loadDescription = "85 lbs",
+                    tempo = Tempo(down = 3, up = 3)
                 )
             }
         }

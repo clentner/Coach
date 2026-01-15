@@ -30,5 +30,6 @@ data class WorkoutLogEntry(
     val rpe: Int?, // 1-10
     val notes: String?,
     val skipped: Boolean = false,
+    val tempo: Tempo? = null,
     val timestamp: Long
 )

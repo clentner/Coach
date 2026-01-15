@@ -79,7 +79,7 @@ fun ActiveWorkoutView(
     LaunchedEffect(step, isMetronomeEnabled, lifecycleState) {
         if (isMetronomeEnabled &&
             lifecycleState == Lifecycle.State.RESUMED &&
-            step.loadDescription.contains(Regex("\\ds"))
+            step.tempo != null
         ) {
             val metronome = Metronome()
             try {
@@ -139,6 +139,15 @@ fun ActiveWorkoutView(
                                 Text("Duration: ${step.targetDurationSeconds}s", style = MaterialTheme.typography.headlineMedium)
                             }
                             Text("Load: ${step.loadDescription}", style = MaterialTheme.typography.titleLarge)
+                            if (step.tempo != null) {
+                                val t = step.tempo
+                                val parts = mutableListOf<String>()
+                                t.down?.let { parts.add("Down ${it}s") }
+                                t.holdBottom?.let { parts.add("Hold ${it}s") }
+                                t.up?.let { parts.add("Up ${it}s") }
+                                t.holdTop?.let { parts.add("Hold ${it}s") }
+                                Text("Tempo: ${parts.joinToString(", ")}", style = MaterialTheme.typography.titleLarge)
+                            }
                         }
                     }
 

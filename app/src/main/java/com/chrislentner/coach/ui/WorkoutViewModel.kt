@@ -139,6 +139,7 @@ class WorkoutViewModel(
                     rpe = null,
                     notes = null,
                     skipped = false,
+                    tempo = step.tempo,
                     timestamp = System.currentTimeMillis()
                 )
                 repository.logSet(entry)
@@ -170,6 +171,7 @@ class WorkoutViewModel(
                     rpe = null,
                     notes = null,
                     skipped = true,
+                    tempo = step.tempo,
                     timestamp = System.currentTimeMillis()
                 )
                 repository.logSet(entry)
