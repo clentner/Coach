@@ -30,8 +30,10 @@ fun WorkoutScreen(
     // Handle Exercise Swap Result
     val currentBackStackEntry = navController.currentBackStackEntry
     val savedStateHandle = currentBackStackEntry?.savedStateHandle
-    val selectedExercise by (savedStateHandle?.getStateFlow<String?>("selected_exercise", null))
-        ?.collectAsState() ?: mutableStateOf(null)
+    val selectedExerciseFlow = remember(savedStateHandle) {
+        savedStateHandle?.getStateFlow<String?>("selected_exercise", null)
+    }
+    val selectedExercise by selectedExerciseFlow?.collectAsState() ?: remember { mutableStateOf(null) }
 
     LaunchedEffect(selectedExercise) {
         selectedExercise?.let {
