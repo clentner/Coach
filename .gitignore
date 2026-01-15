@@ -7,3 +7,6 @@
 .externalNativeBuild
 .cxx
 local.properties
+.android_sdk/
+ci-debug.keystore
+app/build/
