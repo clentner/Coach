@@ -23,7 +23,7 @@ android {
 
     signingConfigs {
         getByName("debug") {
-            storeFile = file(System.getenv("CI_KEYSTORE_PATH") ?: "ci-debug.keystore")
+            storeFile = rootProject.file(System.getenv("CI_KEYSTORE_PATH") ?: "ci-debug.keystore")
             storePassword = System.getenv("CI_DEBUG_KEYSTORE_PASS")
             keyAlias = System.getenv("CI_DEBUG_KEY_ALIAS")
             keyPassword = System.getenv("CI_DEBUG_KEY_PASS")
