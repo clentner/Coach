@@ -8,8 +8,15 @@ data class WorkoutStep(
     val exerciseName: String,
     val targetReps: Int?,
     val targetDurationSeconds: Int?,
-    val loadDescription: String
-)
+    val loadDescription: String,
+    val tempo: String? = null
+) {
+    init {
+        if (tempo != null) {
+            require(tempo.matches(Regex("\\d{4}"))) { "Tempo must be a 4-digit string (e.g., '3030')" }
+        }
+    }
+}
 
 object WorkoutPlanner {
 
@@ -18,7 +25,7 @@ object WorkoutPlanner {
         history: List<WorkoutLogEntry>
     ): List<WorkoutStep> {
         // Placeholder logic:
-        // - if no squats in yesterday's session (or skipped yesterday): plan 3 sets of squats at 85 lbs and 6s/rep for today
+        // - if no squats in yesterday's session (or skipped yesterday): plan 3 sets of squats at 85 lbs and 3030 tempo for today
         // - else, if no CRACR in last 4 days, plan 2 sets of hamstring CRACR stretches today at 5 reps/leg
         // - else, plan 3 sets of 10 reps overhead press at 45 lbs
 
@@ -54,9 +61,10 @@ object WorkoutPlanner {
             return List(3) {
                 WorkoutStep(
                     exerciseName = "Squats",
-                    targetReps = 5, // "6s/rep" implies tempo. Assuming 5 reps.
+                    targetReps = 5,
                     targetDurationSeconds = null,
-                    loadDescription = "85 lbs @ 6s/rep"
+                    loadDescription = "85 lbs",
+                    tempo = "3030"
                 )
             }
         }
@@ -75,7 +83,8 @@ object WorkoutPlanner {
                     exerciseName = "Hamstring CRACR",
                     targetReps = 5, // "5 reps/leg" -> 5 reps. Note: "per leg" logic not handled in simple model.
                     targetDurationSeconds = null,
-                    loadDescription = "Bodyweight"
+                    loadDescription = "Bodyweight",
+                    tempo = null
                 )
             }
         }
@@ -86,7 +95,8 @@ object WorkoutPlanner {
                 exerciseName = "Overhead Press",
                 targetReps = 10,
                 targetDurationSeconds = null,
-                loadDescription = "45 lbs"
+                loadDescription = "45 lbs",
+                tempo = null
             )
         }
     }

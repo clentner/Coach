@@ -16,6 +16,7 @@ class WorkoutPlannerTest {
         return WorkoutLogEntry(
             id = 0, sessionId = 0, exerciseName = exercise,
             targetReps = 0, targetDurationSeconds = 0, loadDescription = "",
+            tempo = null,
             actualReps = 0, actualDurationSeconds = 0, rpe = 0, notes = "", skipped = false,
             timestamp = cal.timeInMillis
         )
@@ -27,7 +28,8 @@ class WorkoutPlannerTest {
         val plan = WorkoutPlanner.generatePlan(Date(), emptyList())
         assertEquals(3, plan.size)
         assertEquals("Squats", plan[0].exerciseName)
-        assertEquals("85 lbs @ 6s/rep", plan[0].loadDescription)
+        assertEquals("85 lbs", plan[0].loadDescription)
+        assertEquals("3030", plan[0].tempo)
     }
 
     @Test
