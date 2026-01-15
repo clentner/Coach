@@ -41,7 +41,7 @@ interface WorkoutDao {
             s.id,
             s.date,
             s.location,
-            COUNT(l.id) as setCount
+            COUNT(CASE WHEN l.skipped = 0 THEN 1 END) as setCount
         FROM workout_sessions s
         LEFT JOIN workout_logs l ON s.id = l.sessionId
         GROUP BY s.id

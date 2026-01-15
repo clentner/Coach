@@ -5,6 +5,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -58,22 +59,30 @@ fun WorkoutDetailScreen(
 
 @Composable
 fun LogEntryRow(log: WorkoutLogEntry) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
-        Text(log.exerciseName, modifier = Modifier.weight(2f))
-        Text(log.loadDescription, modifier = Modifier.weight(1f))
+    val contentColor = if (log.skipped) {
+        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+    } else {
+        MaterialTheme.colorScheme.onSurface
+    }
 
-        val actualText = if (log.actualReps != null) {
-            "${log.actualReps} reps"
-        } else if (log.actualDurationSeconds != null) {
-            "${log.actualDurationSeconds}s"
-        } else {
-            "-"
+    CompositionLocalProvider(LocalContentColor provides contentColor) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(log.exerciseName, modifier = Modifier.weight(2f))
+            Text(log.loadDescription, modifier = Modifier.weight(1f))
+
+            val actualText = if (log.actualReps != null) {
+                "${log.actualReps} reps"
+            } else if (log.actualDurationSeconds != null) {
+                "${log.actualDurationSeconds}s"
+            } else {
+                "-"
+            }
+            Text(actualText, modifier = Modifier.weight(1f))
         }
-        Text(actualText, modifier = Modifier.weight(1f))
     }
 }

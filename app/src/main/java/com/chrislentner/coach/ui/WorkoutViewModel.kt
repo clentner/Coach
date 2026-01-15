@@ -154,6 +154,34 @@ class WorkoutViewModel(
         }
     }
 
+    fun skipCurrentStep() {
+        val state = uiState
+        if (state is WorkoutUiState.Active && state.currentStep != null) {
+            viewModelScope.launch {
+                val step = state.currentStep
+                val entry = WorkoutLogEntry(
+                    sessionId = state.session.id,
+                    exerciseName = step.exerciseName,
+                    targetReps = step.targetReps,
+                    targetDurationSeconds = step.targetDurationSeconds,
+                    loadDescription = step.loadDescription,
+                    actualReps = step.targetReps, // Copy target
+                    actualDurationSeconds = step.targetDurationSeconds, // Copy target
+                    rpe = null,
+                    notes = null,
+                    skipped = true,
+                    timestamp = System.currentTimeMillis()
+                )
+                repository.logSet(entry)
+
+                initializeSession()
+
+                resetTimer()
+                toggleTimer()
+            }
+        }
+    }
+
     fun logFreeEntry(exerciseName: String, load: String, reps: String) {
         val state = uiState
         if (state is WorkoutUiState.FreeEntry) {

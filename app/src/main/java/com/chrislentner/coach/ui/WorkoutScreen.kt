@@ -38,6 +38,7 @@ fun WorkoutScreen(
                     isMetronomeEnabled = isMetronomeEnabled,
                     onToggleMetronome = { viewModel.toggleMetronome() },
                     onCompleteStep = { viewModel.completeCurrentStep() },
+                    onSkipStep = { viewModel.skipCurrentStep() },
                     onUndo = { viewModel.undoLastStep() },
                     isTimerRunning = viewModel.isTimerRunning,
                     timerStartTime = viewModel.timerStartTime,
@@ -62,6 +63,7 @@ fun ActiveWorkoutView(
     isMetronomeEnabled: Boolean,
     onToggleMetronome: () -> Unit,
     onCompleteStep: () -> Unit,
+    onSkipStep: () -> Unit,
     onUndo: () -> Unit,
     isTimerRunning: Boolean,
     timerStartTime: Long?,
@@ -160,8 +162,7 @@ fun ActiveWorkoutView(
                         horizontalArrangement = Arrangement.SpaceEvenly
                     ) {
                         Button(onClick = {}, enabled = false) { Text("Edit") }
-                        // Skip should record skipped entry in DB (Future impl)
-                        Button(onClick = {}, enabled = false) { Text("Skip") }
+                        Button(onClick = onSkipStep) { Text("Skip") }
                         Button(onClick = {}, enabled = false) { Text("Swap") }
                     }
                     Row(
