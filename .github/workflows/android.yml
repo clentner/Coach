@@ -10,7 +10,6 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
-    environment: debug
 
     steps:
     - uses: actions/checkout@v4
@@ -21,21 +20,11 @@ jobs:
         distribution: 'temurin'
         cache: gradle
 
-    - name: Decode Keystore
-      run: echo "$CI_DEBUG_KEYSTORE_B64" | base64 -d > ci-debug.keystore
-      env:
-        CI_DEBUG_KEYSTORE_B64: ${{ secrets.CI_DEBUG_KEYSTORE_B64 }}
-
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
 
     - name: Build with Gradle
       run: ./gradlew assembleDebug
-      env:
-        CI_KEYSTORE_PATH: "ci-debug.keystore"
-        CI_DEBUG_KEYSTORE_PASS: ${{ secrets.CI_DEBUG_KEYSTORE_PASS }}
-        CI_DEBUG_KEY_ALIAS: ${{ secrets.CI_DEBUG_KEY_ALIAS }}
-        CI_DEBUG_KEY_PASS: ${{ secrets.CI_DEBUG_KEY_PASS }}
 
     - name: Run Unit Tests
       run: ./gradlew test

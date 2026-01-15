@@ -12,8 +12,8 @@ data class User(
     val lastName: String?
 )
 
+@Database(entities = [User::class, ScheduleEntry::class, WorkoutSession::class, WorkoutLogEntry::class], version = 6)
 @androidx.room.TypeConverters(Converters::class)
-@Database(entities = [User::class, ScheduleEntry::class, WorkoutSession::class, WorkoutLogEntry::class], version = 5, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
     // abstract fun userDao(): UserDao
     abstract fun scheduleDao(): ScheduleDao

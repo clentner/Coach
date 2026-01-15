@@ -31,7 +31,7 @@ class MainActivity : ComponentActivity() {
 
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
-    ) { _: Boolean ->
+    ) { isGranted: Boolean ->
         // Handle permission granted/rejected if needed
     }
 

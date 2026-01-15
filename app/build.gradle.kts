@@ -12,7 +12,7 @@ android {
         applicationId = "com.chrislentner.coach"
         minSdk = 24
         targetSdk = 34
-        versionCode = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 1
+        versionCode = 1
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -21,21 +21,10 @@ android {
         }
     }
 
-    signingConfigs {
-        getByName("debug") {
-            storeFile = rootProject.file(System.getenv("CI_KEYSTORE_PATH") ?: "ci-debug.keystore")
-            storePassword = System.getenv("CI_DEBUG_KEYSTORE_PASS")
-            keyAlias = System.getenv("CI_DEBUG_KEY_ALIAS")
-            keyPassword = System.getenv("CI_DEBUG_KEY_PASS")
-        }
-    }
     buildTypes {
         release {
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-        }
-        debug {
-            signingConfig = signingConfigs.getByName("debug")
         }
     }
     compileOptions {

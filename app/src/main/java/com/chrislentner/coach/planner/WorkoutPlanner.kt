@@ -4,6 +4,7 @@ import com.chrislentner.coach.database.Tempo
 import com.chrislentner.coach.database.WorkoutLogEntry
 import java.util.Calendar
 import java.util.Date
+import java.util.concurrent.TimeUnit
 
 data class WorkoutStep(
     val exerciseName: String,
@@ -32,6 +33,9 @@ object WorkoutPlanner {
         // Or simply: check if any log entry in history falls in the "yesterday" window.
 
         // Let's define the windows relative to 'today'
+        val msPerDay = TimeUnit.DAYS.toMillis(1)
+        val todayMs = today.time
+
         // Find yesterday's start/end
         // NOTE: This simple subtraction assumes 'today' is effectively "now" or "start of today".
         // Ideally we'd normalize to midnight.

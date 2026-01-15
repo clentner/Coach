@@ -27,7 +27,9 @@ class WorkoutPlannerTest {
         val plan = WorkoutPlanner.generatePlan(Date(), emptyList())
         assertEquals(3, plan.size)
         assertEquals("Squats", plan[0].exerciseName)
-        assertEquals("85 lbs @ 6s/rep", plan[0].loadDescription)
+        assertEquals("85 lbs", plan[0].loadDescription)
+        assertEquals(3, plan[0].tempo?.down)
+        assertEquals(3, plan[0].tempo?.up)
     }
 
     @Test
@@ -36,6 +38,7 @@ class WorkoutPlannerTest {
         val plan = WorkoutPlanner.generatePlan(Date(), history)
         assertEquals(3, plan.size)
         assertEquals("Squats", plan[0].exerciseName)
+        assertEquals(3, plan[0].tempo?.down)
     }
 
     @Test
