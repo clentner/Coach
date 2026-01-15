@@ -226,6 +226,48 @@ class WorkoutViewModel(
             }
         }
     }
+
+    fun updateCurrentStepExercise(newName: String) {
+        val state = uiState
+        if (state is WorkoutUiState.Active && state.currentStep != null) {
+            val newStep = state.currentStep.copy(exerciseName = newName)
+            uiState = state.copy(currentStep = newStep)
+        }
+    }
+
+    fun updateCurrentStepLoad(newLoad: String) {
+        val state = uiState
+        if (state is WorkoutUiState.Active && state.currentStep != null) {
+            val newStep = state.currentStep.copy(loadDescription = newLoad)
+            uiState = state.copy(currentStep = newStep)
+        }
+    }
+
+    fun updateCurrentStepReps(newReps: Int) {
+        val state = uiState
+        if (state is WorkoutUiState.Active && state.currentStep != null) {
+            val newStep = state.currentStep.copy(targetReps = newReps)
+            uiState = state.copy(currentStep = newStep)
+        }
+    }
+
+    fun adjustCurrentStepLoad(increment: Boolean) {
+        val state = uiState
+        if (state is WorkoutUiState.Active && state.currentStep != null) {
+            val currentLoad = state.currentStep.loadDescription
+            val newLoad = com.chrislentner.coach.planner.LoadLogic.adjustLoad(currentLoad, increment)
+            updateCurrentStepLoad(newLoad)
+        }
+    }
+
+    fun adjustCurrentStepReps(increment: Int) {
+        val state = uiState
+        if (state is WorkoutUiState.Active && state.currentStep != null) {
+            val currentReps = state.currentStep.targetReps ?: 0
+            val newReps = (currentReps + increment).coerceAtLeast(1)
+            updateCurrentStepReps(newReps)
+        }
+    }
 }
 
 // Factory to inject Repo

@@ -45,5 +45,8 @@ fun CoachApp(
             )
             WorkoutDetailScreen(navController = navController, viewModel = viewModel)
         }
+        composable("exercise_selection") {
+            ExerciseSelectionScreen(navController = navController, repository = workoutRepository)
+        }
     }
 }

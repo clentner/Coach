@@ -39,4 +39,8 @@ class WorkoutRepository(private val workoutDao: WorkoutDao) {
     suspend fun getHistorySince(timestamp: Long): List<WorkoutLogEntry> {
         return workoutDao.getLogsSince(timestamp)
     }
+
+    suspend fun getRecentExerciseNames(limit: Int): List<String> {
+        return workoutDao.getRecentExerciseNames(limit)
+    }
 }
