@@ -134,6 +134,7 @@ class WorkoutViewModel(
                     targetReps = step.targetReps,
                     targetDurationSeconds = step.targetDurationSeconds,
                     loadDescription = step.loadDescription,
+                    tempo = step.tempo,
                     actualReps = step.targetReps, // Defaulting to target
                     actualDurationSeconds = step.targetDurationSeconds, // Defaulting
                     rpe = null,
@@ -165,6 +166,7 @@ class WorkoutViewModel(
                     targetReps = step.targetReps,
                     targetDurationSeconds = step.targetDurationSeconds,
                     loadDescription = step.loadDescription,
+                    tempo = step.tempo,
                     actualReps = step.targetReps, // Copy target
                     actualDurationSeconds = step.targetDurationSeconds, // Copy target
                     rpe = null,
@@ -192,6 +194,7 @@ class WorkoutViewModel(
                     targetReps = reps.toIntOrNull(),
                     targetDurationSeconds = null,
                     loadDescription = load,
+                    tempo = null,
                     actualReps = reps.toIntOrNull(),
                     actualDurationSeconds = null,
                     rpe = null,

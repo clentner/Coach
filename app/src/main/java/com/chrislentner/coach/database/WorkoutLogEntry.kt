@@ -25,10 +25,17 @@ data class WorkoutLogEntry(
     val targetReps: Int?,
     val targetDurationSeconds: Int?,
     val loadDescription: String, // e.g., "85 lbs" or "Blue Band"
+    val tempo: String? = null,
     val actualReps: Int?,
     val actualDurationSeconds: Int?,
     val rpe: Int?, // 1-10
     val notes: String?,
     val skipped: Boolean = false,
     val timestamp: Long
-)
+) {
+    init {
+        if (tempo != null) {
+            require(tempo.matches(Regex("\\d{4}"))) { "Tempo must be a 4-digit string (e.g., '3030')" }
+        }
+    }
+}
