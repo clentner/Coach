@@ -26,22 +26,16 @@ jobs:
       env:
         CI_DEBUG_KEYSTORE_B64: ${{ secrets.CI_DEBUG_KEYSTORE_B64 }}
 
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
+    - name: Grant execute permission for gradlew and scripts
+      run: chmod +x gradlew scripts/run_ci_tasks.sh
 
-    - name: Build with Gradle
-      run: ./gradlew assembleDebug
+    - name: Run CI Tasks
+      run: ./scripts/run_ci_tasks.sh
       env:
         CI_KEYSTORE_PATH: "ci-debug.keystore"
         CI_DEBUG_KEYSTORE_PASS: ${{ secrets.CI_DEBUG_KEYSTORE_PASS }}
         CI_DEBUG_KEY_ALIAS: ${{ secrets.CI_DEBUG_KEY_ALIAS }}
         CI_DEBUG_KEY_PASS: ${{ secrets.CI_DEBUG_KEY_PASS }}
-
-    - name: Run Unit Tests
-      run: ./gradlew test
-
-    - name: Run Lint
-      run: ./gradlew lint
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
