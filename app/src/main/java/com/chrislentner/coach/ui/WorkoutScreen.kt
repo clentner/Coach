@@ -1,6 +1,7 @@
 package com.chrislentner.coach.ui
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.*
@@ -8,6 +9,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.navigation.NavController
@@ -22,64 +24,129 @@ fun WorkoutScreen(
     val uiState = viewModel.uiState
     val isMetronomeEnabled = viewModel.isMetronomeEnabled
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        when (uiState) {
-            is WorkoutUiState.Loading -> {
-                CircularProgressIndicator()
-            }
-            is WorkoutUiState.Active -> {
-                ActiveWorkoutView(
-                    state = uiState,
-                    isMetronomeEnabled = isMetronomeEnabled,
-                    onToggleMetronome = { viewModel.toggleMetronome() },
-                    onCompleteStep = { viewModel.completeCurrentStep() },
-                    onSkipStep = { viewModel.skipCurrentStep() },
-                    onUndo = { viewModel.undoLastStep() },
-                    isTimerRunning = viewModel.isTimerRunning,
-                    timerStartTime = viewModel.timerStartTime,
-                    timerAccumulatedTime = viewModel.timerAccumulatedTime,
-                    onTimerToggle = { viewModel.toggleTimer() },
-                    onTimerReset = { viewModel.resetTimer() }
-                )
-            }
-            is WorkoutUiState.FreeEntry -> {
-                FreeEntryView(
-                    onLogEntry = { name, load, reps -> viewModel.logFreeEntry(name, load, reps) },
-                    onDone = { navController.navigate("home") { popUpTo("home") { inclusive = true } } }
-                )
-            }
+    // Free Entry State (Hoisted to share with Metronome logic)
+    var freeExercise by remember { mutableStateOf("") }
+    var freeLoad by remember { mutableStateOf("") }
+    var freeReps by remember { mutableStateOf("") }
+    var freeTempo by remember { mutableStateOf("") }
+
+    // Calculate effective tempo for metronome
+    val effectiveTempo = when (uiState) {
+        is WorkoutUiState.Active -> uiState.currentStep?.tempo
+        is WorkoutUiState.FreeEntry -> if (freeTempo.length == 4 && freeTempo.all { it.isDigit() }) freeTempo else null
+        else -> null
+    }
+
+    // Determine completed/total count for header
+    val (stepHeader, isFreeMode) = when (uiState) {
+        is WorkoutUiState.Active -> "Step ${uiState.completedStepsCount + 1} / ${uiState.totalStepsCount}" to false
+        is WorkoutUiState.FreeEntry -> "Free Entry Mode" to true
+        else -> "" to false
+    }
+
+    if (uiState is WorkoutUiState.Loading) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
         }
+    } else {
+        SessionScreenContent(
+            isFreeMode = isFreeMode,
+            stepHeader = stepHeader,
+            // Active Step Data
+            activeStepName = (uiState as? WorkoutUiState.Active)?.currentStep?.exerciseName,
+            activeStepReps = (uiState as? WorkoutUiState.Active)?.currentStep?.targetReps?.toString(),
+            activeStepDuration = (uiState as? WorkoutUiState.Active)?.currentStep?.targetDurationSeconds?.toString(),
+            activeStepLoad = (uiState as? WorkoutUiState.Active)?.currentStep?.loadDescription,
+            activeStepTempo = (uiState as? WorkoutUiState.Active)?.currentStep?.tempo,
+            // Metronome
+            isMetronomeEnabled = isMetronomeEnabled,
+            effectiveTempo = effectiveTempo,
+            onToggleMetronome = { viewModel.toggleMetronome() },
+            // Timer
+            isTimerRunning = viewModel.isTimerRunning,
+            timerStartTime = viewModel.timerStartTime,
+            timerAccumulatedTime = viewModel.timerAccumulatedTime,
+            onTimerToggle = { viewModel.toggleTimer() },
+            onTimerReset = { viewModel.resetTimer() },
+            // Actions
+            onCompleteStep = { viewModel.completeCurrentStep() },
+            onSkipStep = { viewModel.skipCurrentStep() },
+            onUndo = { viewModel.undoLastStep() },
+            canUndo = (uiState is WorkoutUiState.Active && uiState.completedStepsCount > 0) || (uiState is WorkoutUiState.FreeEntry),
+            onFinishWorkout = { navController.navigate("home") { popUpTo("home") { inclusive = true } } },
+            // Free Entry Data
+            freeExercise = freeExercise,
+            onFreeExerciseChange = { freeExercise = it },
+            freeLoad = freeLoad,
+            onFreeLoadChange = { freeLoad = it },
+            freeReps = freeReps,
+            onFreeRepsChange = { freeReps = it },
+            freeTempo = freeTempo,
+            onFreeTempoChange = { if (it.length <= 4 && it.all { c -> c.isDigit() }) freeTempo = it },
+            onLogFreeEntry = {
+                if (freeExercise.isNotBlank()) {
+                    viewModel.logFreeEntry(
+                        freeExercise,
+                        freeLoad,
+                        freeReps,
+                        if (freeTempo.length == 4) freeTempo else null
+                    )
+                    // Reset fields
+                    freeExercise = ""
+                    freeLoad = ""
+                    freeReps = ""
+                    freeTempo = ""
+                }
+            }
+        )
     }
 }
 
 @Composable
-fun ActiveWorkoutView(
-    state: WorkoutUiState.Active,
+fun SessionScreenContent(
+    isFreeMode: Boolean,
+    stepHeader: String,
+    // Active Step
+    activeStepName: String?,
+    activeStepReps: String?,
+    activeStepDuration: String?,
+    activeStepLoad: String?,
+    activeStepTempo: String?,
+    // Metronome
     isMetronomeEnabled: Boolean,
+    effectiveTempo: String?,
     onToggleMetronome: () -> Unit,
-    onCompleteStep: () -> Unit,
-    onSkipStep: () -> Unit,
-    onUndo: () -> Unit,
+    // Timer
     isTimerRunning: Boolean,
     timerStartTime: Long?,
     timerAccumulatedTime: Long,
     onTimerToggle: () -> Unit,
-    onTimerReset: () -> Unit
+    onTimerReset: () -> Unit,
+    // Actions
+    onCompleteStep: () -> Unit,
+    onSkipStep: () -> Unit,
+    onUndo: () -> Unit,
+    canUndo: Boolean,
+    onFinishWorkout: () -> Unit,
+    // Free Entry
+    freeExercise: String,
+    onFreeExerciseChange: (String) -> Unit,
+    freeLoad: String,
+    onFreeLoadChange: (String) -> Unit,
+    freeReps: String,
+    onFreeRepsChange: (String) -> Unit,
+    freeTempo: String,
+    onFreeTempoChange: (String) -> Unit,
+    onLogFreeEntry: () -> Unit
 ) {
-    val step = state.currentStep ?: return // Should not happen in Active state
     val lifecycleOwner = LocalLifecycleOwner.current
     val lifecycleState by lifecycleOwner.lifecycle.currentStateFlow.collectAsState()
 
     // Metronome Logic
-    LaunchedEffect(step, isMetronomeEnabled, lifecycleState) {
+    LaunchedEffect(effectiveTempo, isMetronomeEnabled, lifecycleState) {
         if (isMetronomeEnabled &&
             lifecycleState == Lifecycle.State.RESUMED &&
-            step.tempo != null
+            effectiveTempo != null
         ) {
             val metronome = Metronome()
             try {
@@ -93,15 +160,15 @@ fun ActiveWorkoutView(
         }
     }
 
-    // Top Right Icon for Metronome
-    // We want this floating or in a top bar arrangement.
-    // Since ActiveWorkoutView is inside a Box with Center alignment in parent, let's rearrange layout slightly
-    // or put the Icon in a Box overlapping this column.
-
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
         Column(
             modifier = Modifier.fillMaxSize()
         ) {
+            // Content Area
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -109,73 +176,136 @@ fun ActiveWorkoutView(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                // Content with original spacing logic if possible, or just spaced column
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(
-                        text = "Step ${state.completedStepsCount + 1} / ${state.totalStepsCount}",
+                        text = stepHeader,
                         style = MaterialTheme.typography.labelLarge
                     )
 
-                    Text(
-                        text = step.exerciseName,
-                        style = MaterialTheme.typography.displaySmall
-                    )
+                    if (!isFreeMode && activeStepName != null) {
+                        // Active Mode Display
+                        Text(
+                            text = activeStepName,
+                            style = MaterialTheme.typography.displaySmall
+                        )
 
-                    Card(
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(16.dp).fillMaxWidth(),
-                            horizontalAlignment = Alignment.CenterHorizontally
+                        Card(
+                            modifier = Modifier.fillMaxWidth()
                         ) {
-                            if (step.targetReps != null) {
-                                Text("Reps: ${step.targetReps}", style = MaterialTheme.typography.headlineMedium)
-                            }
-                            if (step.targetDurationSeconds != null) {
-                                Text("Duration: ${step.targetDurationSeconds}s", style = MaterialTheme.typography.headlineMedium)
-                            }
-                            Text("Load: ${step.loadDescription}", style = MaterialTheme.typography.titleLarge)
-                            if (step.tempo != null) {
-                                Spacer(modifier = Modifier.height(8.dp))
-                                TempoDisplay(step.tempo)
+                            Column(
+                                modifier = Modifier
+                                    .padding(16.dp)
+                                    .fillMaxWidth(),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                if (activeStepReps != null) {
+                                    Text("Reps: $activeStepReps", style = MaterialTheme.typography.headlineMedium)
+                                }
+                                if (activeStepDuration != null) {
+                                    Text("Duration: ${activeStepDuration}s", style = MaterialTheme.typography.headlineMedium)
+                                }
+                                if (activeStepLoad != null) {
+                                    Text("Load: $activeStepLoad", style = MaterialTheme.typography.titleLarge)
+                                }
+                                if (activeStepTempo != null) {
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    TempoDisplay(activeStepTempo)
+                                }
                             }
                         }
+                    } else {
+                        // Free Entry Mode Inputs
+                        OutlinedTextField(
+                            value = freeExercise,
+                            onValueChange = onFreeExerciseChange,
+                            label = { Text("Exercise Name") },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            OutlinedTextField(
+                                value = freeLoad,
+                                onValueChange = onFreeLoadChange,
+                                label = { Text("Load") },
+                                modifier = Modifier.weight(1f)
+                            )
+                            OutlinedTextField(
+                                value = freeReps,
+                                onValueChange = onFreeRepsChange,
+                                label = { Text("Reps") },
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+
+                        OutlinedTextField(
+                            value = freeTempo,
+                            onValueChange = onFreeTempoChange,
+                            label = { Text("Tempo (e.g. 3030)") },
+                            isError = freeTempo.isNotEmpty() && freeTempo.length != 4,
+                            supportingText = {
+                                if (freeTempo.isNotEmpty() && freeTempo.length != 4) {
+                                    Text("Must be exactly 4 digits")
+                                }
+                            },
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            modifier = Modifier.fillMaxWidth()
+                        )
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Huge Accept Button
+                    // Main Action Button
                     Button(
-                        onClick = onCompleteStep,
+                        onClick = if (isFreeMode) onLogFreeEntry else onCompleteStep,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(80.dp)
                     ) {
-                        Text("COMPLETE NEXT STEP", style = MaterialTheme.typography.titleLarge)
+                        Text(
+                            text = if (isFreeMode) "Log Set" else "COMPLETE NEXT STEP",
+                            style = MaterialTheme.typography.titleLarge
+                        )
                     }
 
                     Spacer(modifier = Modifier.height(16.dp))
 
-                    // Small Buttons (Disabled)
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceEvenly
-                    ) {
-                        Button(onClick = {}, enabled = false) { Text("Edit") }
-                        Button(onClick = onSkipStep) { Text("Skip") }
-                        Button(onClick = {}, enabled = false) { Text("Swap") }
+                    // Secondary Buttons
+                    if (!isFreeMode) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceEvenly
+                        ) {
+                            Button(onClick = {}, enabled = false) { Text("Edit") }
+                            Button(onClick = onSkipStep) { Text("Skip") }
+                            Button(onClick = {}, enabled = false) { Text("Swap") }
+                        }
+                    } else {
+                        // Finish Workout Button for Free Mode
+                        Button(
+                            onClick = onFinishWorkout,
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("Done (Finish Workout)")
+                        }
                     }
+
+                    // Undo Row
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceEvenly
                     ) {
                         Button(
                             onClick = onUndo,
-                            enabled = state.completedStepsCount > 0
+                            enabled = canUndo
                         ) { Text("Undo") }
                     }
                 }
@@ -190,12 +320,7 @@ fun ActiveWorkoutView(
             )
         }
 
-        // Volume Toggle Icon
-        // Only show if the step is relevant? Or always?
-        // Requirement: "functionality should be toggle-able... persisted throughout the workout"
-        // It implies the toggle is available generally or at least when metronome is active.
-        // Usually such settings are always available or available when applicable.
-        // Let's make it always available so user can preemptively turn it off.
+        // Metronome Toggle (Top Right)
         IconButton(
             onClick = onToggleMetronome,
             modifier = Modifier.align(Alignment.TopEnd)
@@ -205,72 +330,6 @@ fun ActiveWorkoutView(
                 contentDescription = if (isMetronomeEnabled) "Mute Metronome" else "Unmute Metronome",
                 tint = if (isMetronomeEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
             )
-        }
-    }
-}
-
-@Composable
-fun FreeEntryView(
-    onLogEntry: (String, String, String) -> Unit,
-    onDone: () -> Unit
-) {
-    var exercise by remember { mutableStateOf("") }
-    var load by remember { mutableStateOf("") }
-    var reps by remember { mutableStateOf("") }
-
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        Text("Workout Plan Complete!", style = MaterialTheme.typography.headlineSmall)
-        Text("Free Entry Mode", style = MaterialTheme.typography.labelMedium)
-
-        OutlinedTextField(
-            value = exercise,
-            onValueChange = { exercise = it },
-            label = { Text("Exercise Name") },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedTextField(
-                value = load,
-                onValueChange = { load = it },
-                label = { Text("Load") },
-                modifier = Modifier.weight(1f)
-            )
-            OutlinedTextField(
-                value = reps,
-                onValueChange = { reps = it },
-                label = { Text("Reps") },
-                modifier = Modifier.weight(1f)
-            )
-        }
-
-        Button(
-            onClick = {
-                if (exercise.isNotBlank()) {
-                    onLogEntry(exercise, load, reps)
-                    // Reset fields
-                    exercise = ""
-                    load = ""
-                    reps = ""
-                }
-            },
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Log Set")
-        }
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        Button(
-            onClick = onDone,
-            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Done (Finish Workout)")
         }
     }
 }
