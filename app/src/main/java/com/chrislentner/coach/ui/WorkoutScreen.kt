@@ -249,6 +249,12 @@ fun SessionScreenContent(
                             value = freeTempo,
                             onValueChange = onFreeTempoChange,
                             label = { Text("Tempo (e.g. 3030)") },
+                            isError = freeTempo.isNotEmpty() && freeTempo.length != 4,
+                            supportingText = {
+                                if (freeTempo.isNotEmpty() && freeTempo.length != 4) {
+                                    Text("Must be exactly 4 digits")
+                                }
+                            },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             modifier = Modifier.fillMaxWidth()
                         )

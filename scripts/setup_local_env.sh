@@ -44,4 +44,16 @@ else
     echo "Keystore already exists."
 fi
 
+# Local Properties setup
+if [ ! -f "local.properties" ]; then
+    echo "Creating local.properties..."
+    echo "sdk.dir=$ANDROID_HOME" > local.properties
+else
+    # Verify if sdk.dir exists, if not append it?
+    # Simpler to just warn or overwrite if explicitly requested, but for now let's just ensure it's there if missing.
+    if ! grep -q "sdk.dir" local.properties; then
+        echo "sdk.dir=$ANDROID_HOME" >> local.properties
+    fi
+fi
+
 echo "Local environment setup complete."
