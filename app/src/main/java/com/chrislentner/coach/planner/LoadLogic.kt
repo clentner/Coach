@@ -1,5 +1,10 @@
 package com.chrislentner.coach.planner
 
+import kotlin.math.abs
+import kotlin.math.ceil
+import kotlin.math.floor
+import kotlin.math.round
+
 object LoadLogic {
     private val NUMBER_REGEX = Regex("(\\d+(\\.\\d+)?)")
 
@@ -14,23 +19,54 @@ object LoadLogic {
         }
 
         // Determine step size
-        val step = when {
-            value >= 50 -> 5.0
-            value >= 15 -> 2.5
-            else -> 1.0
+        // Asymmetrical boundaries:
+        // Increment: >= 50 (5), >= 15 (2.5), else (1)
+        // Decrement: > 50 (5), > 15 (2.5), else (1)
+        val step = if (increment) {
+            when {
+                value >= 50 -> 5.0
+                value >= 15 -> 2.5
+                else -> 1.0
+            }
+        } else {
+            when {
+                value > 50 -> 5.0
+                value > 15 -> 2.5
+                else -> 1.0
+            }
+        }
+
+        val quotient = value / step
+        // Check if value is effectively a multiple of step
+        // We use a small epsilon for floating point comparison
+        val isAligned = abs(quotient - round(quotient)) < 1e-6
+
+        val newValueRaw = if (isAligned) {
+            if (increment) value + step else value - step
+        } else {
+            // Snap to grid
+            if (increment) {
+                // Next grid point (ceil)
+                ceil(quotient) * step
+            } else {
+                // Previous grid point (floor)
+                floor(quotient) * step
+            }
         }
 
         var newValueRaw = if (increment) value + step else value - step
         if (newValueRaw < 0.0) {
             newValueRaw = 0.0
         }
+        // Clean up floating point noise (e.g. 17 * 2.5 = 42.5 is exact, but good practice)
+        val cleanedValue = round(newValueRaw * 100) / 100.0
 
         // If the result is a whole number, print as integer (e.g. 105).
         // If it has a decimal part (42.5), print as decimal.
-        val newValueStr = if (newValueRaw % 1.0 == 0.0) {
-            newValueRaw.toInt().toString()
+        val newValueStr = if (cleanedValue % 1.0 == 0.0) {
+            cleanedValue.toInt().toString()
         } else {
-            newValueRaw.toString()
+            cleanedValue.toString()
         }
 
         return text.replaceRange(match.range, newValueStr)
