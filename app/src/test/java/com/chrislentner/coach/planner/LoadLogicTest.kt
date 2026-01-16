@@ -57,4 +57,13 @@ class LoadLogicTest {
         assertEquals("", LoadLogic.adjustLoad("", true))
         assertEquals("abc", LoadLogic.adjustLoad("abc", true))
     }
+
+    @Test
+    fun `adjustLoad does not decrement below 0`() {
+        assertEquals("0", LoadLogic.adjustLoad("0", false))
+        assertEquals("0 lbs", LoadLogic.adjustLoad("0 lbs", false))
+
+        // Test clamping (0.5 - 1.0 = -0.5 -> 0.0)
+        assertEquals("0", LoadLogic.adjustLoad("0.5", false))
+    }
 }
