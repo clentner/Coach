@@ -115,4 +115,42 @@ class WorkoutViewModelTest {
 
         assertFalse(viewModel.isMetronomeEnabled)
     }
+
+    @Test
+    fun `skipCurrentStep preserves running timer`() {
+        // Start the timer
+        viewModel.toggleTimer()
+        assertTrue(viewModel.isTimerRunning)
+        val initialStartTime = viewModel.timerStartTime
+        assertNotNull(initialStartTime)
+
+        // Advance time slightly to ensure we can distinguish between initial and potentially reset time
+        Thread.sleep(10)
+
+        // Skip the current step
+        viewModel.skipCurrentStep()
+        shadowOf(Looper.getMainLooper()).idle()
+
+        // Verify timer is still running and start time hasn't changed
+        assertTrue("Timer should still be running after skip", viewModel.isTimerRunning)
+        assertEquals("Timer start time should not change after skip", initialStartTime, viewModel.timerStartTime)
+    }
+
+    @Test
+    fun `skipCurrentStep preserves stopped timer`() {
+        // Ensure timer is stopped
+        if (viewModel.isTimerRunning) {
+            viewModel.toggleTimer()
+        }
+        assertFalse(viewModel.isTimerRunning)
+        assertNull(viewModel.timerStartTime)
+
+        // Skip the current step
+        viewModel.skipCurrentStep()
+        shadowOf(Looper.getMainLooper()).idle()
+
+        // Verify timer is still stopped
+        assertFalse("Timer should remain stopped after skip", viewModel.isTimerRunning)
+        assertNull("Timer start time should remain null after skip", viewModel.timerStartTime)
+    }
 }

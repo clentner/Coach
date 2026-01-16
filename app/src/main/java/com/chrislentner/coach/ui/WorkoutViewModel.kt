@@ -178,8 +178,7 @@ class WorkoutViewModel(
 
                 initializeSession()
 
-                resetTimer()
-                toggleTimer()
+                // Timer should NOT be reset or started on skip
             }
         }
     }
