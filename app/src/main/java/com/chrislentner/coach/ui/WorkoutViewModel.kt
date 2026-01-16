@@ -251,6 +251,18 @@ class WorkoutViewModel(
         }
     }
 
+    fun updateCurrentStepTempo(newTempo: String?) {
+        val state = uiState
+        if (state is WorkoutUiState.Active && state.currentStep != null) {
+            val newStep = state.currentStep.copy(tempo = newTempo)
+            uiState = state.copy(currentStep = newStep)
+
+            if (newTempo == null) {
+                isMetronomeEnabled = false
+            }
+        }
+    }
+
     fun adjustCurrentStepLoad(increment: Boolean) {
         val state = uiState
         if (state is WorkoutUiState.Active && state.currentStep != null) {

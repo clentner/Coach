@@ -81,6 +81,7 @@ fun WorkoutScreen(
             onUpdateReps = { viewModel.updateCurrentStepReps(it) },
             onAdjustLoad = { viewModel.adjustCurrentStepLoad(it) },
             onUpdateLoad = { viewModel.updateCurrentStepLoad(it) },
+            onUpdateTempo = { viewModel.updateCurrentStepTempo(it) },
             onSwapExercise = { navController.navigate("exercise_selection") },
             // Metronome
             isMetronomeEnabled = isMetronomeEnabled,
@@ -141,6 +142,7 @@ fun SessionScreenContent(
     onUpdateReps: (Int) -> Unit,
     onAdjustLoad: (Boolean) -> Unit, // True = Increment, False = Decrement
     onUpdateLoad: (String) -> Unit,
+    onUpdateTempo: (String?) -> Unit,
     onSwapExercise: () -> Unit,
     // Metronome
     isMetronomeEnabled: Boolean,
@@ -258,10 +260,11 @@ fun SessionScreenContent(
                                         keyboardType = KeyboardType.Text // Allows freeform
                                     )
                                 }
-                                if (activeStepTempo != null) {
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    TempoDisplay(activeStepTempo)
-                                }
+                                Spacer(modifier = Modifier.height(8.dp))
+                                TempoEditableField(
+                                    tempo = activeStepTempo,
+                                    onUpdateTempo = onUpdateTempo
+                                )
                             }
                         }
                     } else {
@@ -381,6 +384,99 @@ fun SessionScreenContent(
 }
 
 @Composable
+fun InlineInputRow(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    onAccept: () -> Unit,
+    onCancel: () -> Unit,
+    isValid: Boolean = true,
+    keyboardType: KeyboardType = KeyboardType.Text
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        OutlinedTextField(
+            value = value,
+            onValueChange = onValueChange,
+            label = { Text(label) },
+            keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
+            modifier = Modifier.weight(1f),
+            isError = !isValid
+        )
+        IconButton(
+            onClick = onAccept,
+            enabled = isValid
+        ) {
+            Icon(Icons.Default.Check, contentDescription = "Accept")
+        }
+        IconButton(onClick = onCancel) {
+            Icon(Icons.Default.Close, contentDescription = "Discard")
+        }
+    }
+}
+
+@Composable
+fun TempoEditableField(
+    tempo: String?,
+    onUpdateTempo: (String?) -> Unit
+) {
+    var isEditing by remember { mutableStateOf(false) }
+    var tempValue by remember { mutableStateOf(tempo ?: "") }
+
+    LaunchedEffect(tempo) {
+        if (!isEditing) {
+            tempValue = tempo ?: ""
+        }
+    }
+
+    if (isEditing) {
+        val isValid = tempValue.isEmpty() || (tempValue.length == 4 && tempValue.all { it.isDigit() })
+
+        InlineInputRow(
+            value = tempValue,
+            onValueChange = { newValue ->
+                if (newValue.length <= 4 && newValue.all { it.isDigit() }) {
+                    tempValue = newValue
+                }
+            },
+            label = "Tempo (e.g. 3030)",
+            onAccept = {
+                if (isValid) {
+                    onUpdateTempo(if (tempValue.isEmpty()) null else tempValue)
+                    isEditing = false
+                }
+            },
+            onCancel = {
+                tempValue = tempo ?: ""
+                isEditing = false
+            },
+            isValid = isValid,
+            keyboardType = KeyboardType.Number
+        )
+    } else {
+        Box(
+            modifier = Modifier
+                .clickable { isEditing = true }
+                .padding(8.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            if (tempo != null) {
+                TempoDisplay(tempo)
+            } else {
+                Text(
+                    text = "No Tempo",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                )
+            }
+        }
+    }
+}
+
+@Composable
 fun EditableField(
     value: String,
     label: String,
@@ -400,31 +496,20 @@ fun EditableField(
     }
 
     if (isEditing) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.Center,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            OutlinedTextField(
-                value = tempValue,
-                onValueChange = { tempValue = it },
-                label = { Text(label) },
-                keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
-                modifier = Modifier.weight(1f)
-            )
-            IconButton(onClick = {
+        InlineInputRow(
+            value = tempValue,
+            onValueChange = { tempValue = it },
+            label = label,
+            onAccept = {
                 onValueChange(tempValue)
                 isEditing = false
-            }) {
-                Icon(Icons.Default.Check, contentDescription = "Accept")
-            }
-            IconButton(onClick = {
-                tempValue = value // Reset
+            },
+            onCancel = {
+                tempValue = value
                 isEditing = false
-            }) {
-                Icon(Icons.Default.Close, contentDescription = "Discard")
-            }
-        }
+            },
+            keyboardType = keyboardType
+        )
     } else {
         Row(
             verticalAlignment = Alignment.CenterVertically,
