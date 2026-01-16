@@ -9,6 +9,10 @@ object LoadLogic {
         val valueStr = match.value
         val value = valueStr.toDoubleOrNull() ?: return text
 
+        if (!increment && value <= 0.0) {
+            return text
+        }
+
         // Determine step size
         val step = when {
             value >= 50 -> 5.0
@@ -16,7 +20,10 @@ object LoadLogic {
             else -> 1.0
         }
 
-        val newValueRaw = if (increment) value + step else value - step
+        var newValueRaw = if (increment) value + step else value - step
+        if (newValueRaw < 0.0) {
+            newValueRaw = 0.0
+        }
 
         // If the result is a whole number, print as integer (e.g. 105).
         // If it has a decimal part (42.5), print as decimal.
