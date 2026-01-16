@@ -3,6 +3,7 @@ package com.chrislentner.coach.planner
 import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.floor
+import kotlin.math.max
 import kotlin.math.round
 
 object LoadLogic {
@@ -13,6 +14,10 @@ object LoadLogic {
 
         val valueStr = match.value
         val value = valueStr.toDoubleOrNull() ?: return text
+
+        if (!increment && value <= 0) {
+            return text
+        }
 
         // Determine step size
         // Asymmetrical boundaries:
@@ -50,8 +55,11 @@ object LoadLogic {
             }
         }
 
+        // Clamp to 0
+        val clampedValue = max(0.0, newValueRaw)
+
         // Clean up floating point noise (e.g. 17 * 2.5 = 42.5 is exact, but good practice)
-        val cleanedValue = round(newValueRaw * 100) / 100.0
+        val cleanedValue = round(clampedValue * 100) / 100.0
 
         // If the result is a whole number, print as integer (e.g. 105).
         // If it has a decimal part (42.5), print as decimal.

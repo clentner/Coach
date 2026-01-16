@@ -110,4 +110,16 @@ class LoadLogicTest {
         assertEquals("", LoadLogic.adjustLoad("", true))
         assertEquals("abc", LoadLogic.adjustLoad("abc", true))
     }
+
+    @Test
+    fun `adjustLoad should not decrement below 0`() {
+        assertEquals("0", LoadLogic.adjustLoad("0", false))
+        assertEquals("0.0", LoadLogic.adjustLoad("0.0", false))
+    }
+
+    @Test
+    fun `adjustLoad should clamp negative results to 0`() {
+        // e.g. 0.5, step 1 -> -0.5 -> 0
+        assertEquals("0", LoadLogic.adjustLoad("0.5", false))
+    }
 }
