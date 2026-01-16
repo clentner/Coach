@@ -333,8 +333,11 @@ fun SessionScreenContent(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceEvenly
                         ) {
-                            // Edit and Swap buttons removed
                             Button(onClick = onSkipStep) { Text("Skip") }
+                            Button(
+                                onClick = onUndo,
+                                enabled = canUndo
+                            ) { Text("Undo") }
                         }
                     } else {
                         // Finish Workout Button for Free Mode
@@ -345,17 +348,18 @@ fun SessionScreenContent(
                         ) {
                             Text("Done (Finish Workout)")
                         }
-                    }
 
-                    // Undo Row
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceEvenly
-                    ) {
-                        Button(
-                            onClick = onUndo,
-                            enabled = canUndo
-                        ) { Text("Undo") }
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceEvenly
+                        ) {
+                            Button(
+                                onClick = onUndo,
+                                enabled = canUndo
+                            ) { Text("Undo") }
+                        }
                     }
                 }
             }
