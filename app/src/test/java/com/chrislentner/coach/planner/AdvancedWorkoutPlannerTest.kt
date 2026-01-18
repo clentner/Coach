@@ -45,25 +45,87 @@ class AdvancedWorkoutPlannerTest {
 
         val plan = planner.generatePlan(today, history, schedule)
 
-        // Expected:
-        // 1. BlockA (10 mins, 0.6 fatigue). Deficit T1 (Sets 10) -> 8.
-        // 2. Try BlockA again? Fatigue 0.6+0.6=1.2 > 1.0. Rejected.
-        // 3. BlockB (10 mins, 0 fatigue). Deficit T2 (Mins 30) -> 20.
-        // 4. Try BlockB again? Deficit T2 (20). Fits. OK.
-        // 5. BlockB (10 mins). Deficit T2 -> 10.
-        // Total time: 10 + 10 + 10 = 30.
+        // Updated logic with prior_load_lt:
+        // Threshold 1.0. BlockA load 0.4 (2 sets * 0.4? No, assume prescription fatigue_loads is per prescription block or per set?
+        // Logic: for each log -> load. BlockA has 2 sets -> 2 logs. Each log maps to 0.4 load. Total 0.8.
+        // 1. BlockA (load 0.8). Prior load 0. Accepted.
+        // 2. BlockA (load 0.8). Prior load 0.8. 0.8 < 1.0. Accepted.
+        // 3. BlockA (load 0.8). Prior load 1.6. 1.6 >= 1.0. Rejected.
+        // Wait, 1st BlockA contributes 0.8 load to accumulated.
+        // So before 2nd BlockA: Accumulated = 0.8.
+        // 0.8 < 1.0. Accepted.
+        // Before 3rd BlockA: Accumulated = 0.8 + 0.8 = 1.6.
+        // 1.6 >= 1.0. Rejected.
 
-        // Steps count:
-        // BlockA (2 sets) -> 2 steps.
-        // BlockB (1 set) -> 1 step.
-        // BlockB (1 set) -> 1 step.
-        // Total 4 steps.
+        // So result:
+        // BlockA (2 steps)
+        // BlockA (2 steps)
+        // Remaining time: 10 mins.
+        // BlockB (10 mins, load 0). Accepted.
 
-        assertEquals(4, plan.size)
+        // Total steps: 2 + 2 + 1 = 5 steps.
+
+        assertEquals(5, plan.size)
         assertEquals("ex_a", plan[0].exerciseName)
-        assertEquals("ex_a", plan[1].exerciseName)
-        assertEquals("ex_b", plan[2].exerciseName)
-        assertEquals("ex_b", plan[3].exerciseName)
+        assertEquals("ex_a", plan[2].exerciseName)
+        assertEquals("ex_b", plan[4].exerciseName)
+    }
+
+    @Test
+    fun `generatePlan respects prior_load_lt by excluding candidate load`() {
+        val yaml = """
+            version: 3
+            targets:
+              - id: t1
+                window_days: 7
+                type: sets
+                goal: 10
+            fatigue_constraints:
+              knee:
+                - kind: prior_load_lt
+                  window_hours: 24
+                  threshold: 0.8
+                  applies_to_blocks_with_tag: [knee_heavy]
+                  reason: "Limit knee load"
+            priority_order:
+              - p1
+            priorities:
+              p1:
+                blocks:
+                  - block_name: big_block
+                    size_minutes: [10]
+                    location: anywhere
+                    tags: [knee_heavy]
+                    contributes_to:
+                      - { target: t1 }
+                    prescription:
+                      - exercise: big_lift
+                        sets: 1
+                        fatigue_loads:
+                          knee: 1.0
+            selection:
+              strategy: greedy_strict
+        """.trimIndent()
+
+        val mapper = ObjectMapper(YAMLFactory()).registerKotlinModule()
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+        val config = mapper.readValue(yaml, CoachConfig::class.java)
+
+        val ha = HistoryAnalyzer(config)
+        val pe = ProgressionEngine(ha)
+        val p = AdvancedWorkoutPlanner(config, ha, pe)
+
+        val today = Date()
+        val history = emptyList<WorkoutLogEntry>()
+        val schedule = ScheduleEntry("2023-10-27", today.time, 10, "anywhere")
+
+        val plan = p.generatePlan(today, history, schedule)
+
+        // Prior load is 0. Candidate load is 1.0. Threshold is 0.8.
+        // Old logic: 1.0 >= 0.8 -> Rejected.
+        // New logic: 0.0 < 0.8 -> Accepted.
+        assertEquals(1, plan.size)
+        assertEquals("big_lift", plan[0].exerciseName)
     }
 
     @Test
