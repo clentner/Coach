@@ -10,7 +10,7 @@ import com.chrislentner.coach.database.WorkoutLogEntry
 import com.chrislentner.coach.database.WorkoutRepository
 import com.chrislentner.coach.database.WorkoutSession
 import com.chrislentner.coach.database.ScheduleRepository
-import com.chrislentner.coach.planner.WorkoutPlanner
+import com.chrislentner.coach.planner.AdvancedWorkoutPlanner
 import com.chrislentner.coach.planner.WorkoutStep
 import kotlinx.coroutines.launch
 import java.util.Calendar
@@ -30,7 +30,8 @@ sealed class WorkoutUiState {
 
 class WorkoutViewModel(
     private val repository: WorkoutRepository,
-    private val scheduleRepository: ScheduleRepository? = null // Optional to avoid breaking tests/factories heavily immediately
+    private val scheduleRepository: ScheduleRepository? = null,
+    private val planner: AdvancedWorkoutPlanner? = null // Optional for incremental migration/testing
 ) : ViewModel() {
 
     var uiState by mutableStateOf<WorkoutUiState>(WorkoutUiState.Loading)
@@ -97,12 +98,28 @@ class WorkoutViewModel(
             // But we also need *today's* logs to see what's done.
 
             // Planner needs broad history (last few days).
-            // Let's fetch last 7 days for simplicity/safety of planner logic
+            // Let's fetch last 14 days for simplicity/safety of planner logic
             val weekAgo = Calendar.getInstance()
-            weekAgo.add(Calendar.DAY_OF_YEAR, -7)
+            weekAgo.add(Calendar.DAY_OF_YEAR, -14)
             val history = repository.getHistorySince(weekAgo.timeInMillis)
 
-            val fullPlan = WorkoutPlanner.generatePlan(now, history)
+            // Get Schedule for Today (Planner requires it)
+            // If scheduleRepository is null or no schedule, we can't plan accurately.
+            // But getOrCreateSession implies we might have session without schedule?
+            // "Inputs: yaml spec, historic exercises, time available today, location today".
+            // We need ScheduleEntry.
+
+            val fullPlan = if (planner != null && scheduleRepository != null) {
+                val schedule = scheduleRepository.getScheduleByDate(todayStr)
+                if (schedule != null) {
+                     planner.generatePlan(now, history, schedule)
+                } else {
+                     emptyList() // Or fallback?
+                }
+            } else {
+                 // Fallback to legacy planner if new one not provided (e.g. tests)
+                 com.chrislentner.coach.planner.WorkoutPlanner.generatePlan(now, history)
+            }
 
             // 3. Filter out completed sets for THIS session
             val sessionLogs = repository.getLogsForSession(session.id)
@@ -284,12 +301,13 @@ class WorkoutViewModel(
 // Factory to inject Repo
 class WorkoutViewModelFactory(
     private val repository: WorkoutRepository,
-    private val scheduleRepository: ScheduleRepository
+    private val scheduleRepository: ScheduleRepository,
+    private val planner: AdvancedWorkoutPlanner?
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(WorkoutViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return WorkoutViewModel(repository, scheduleRepository) as T
+            return WorkoutViewModel(repository, scheduleRepository, planner) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

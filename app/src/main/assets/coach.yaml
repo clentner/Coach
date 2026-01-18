@@ -89,9 +89,6 @@ priorities:
         size_minutes: 30
         location: gym
         tags: [rehab, strength, patellar_tendon, knee_heavy, compound_heavy]
-        fatigue_loads:
-          knee: 1.0
-          cns: 1.0
         contributes_to:
           - { target: patellar_hsr_squat_sets }
         prescription:
@@ -99,6 +96,9 @@ priorities:
             sets: 4
             reps: 8
             tempo: "3030"
+            fatigue_loads:
+              knee: 1.0
+              cns: 1.0
         progression:
           type: linear_load
           every_n_sessions: 2
@@ -110,9 +110,6 @@ priorities:
         size_minutes: 30
         location: gym
         tags: [rehab, strength, patellar_tendon, knee_heavy]
-        fatigue_loads:
-          knee: 1.0
-          cns: 0.5
         contributes_to:
           - { target: patellar_hsr_sl_press_sets }
         prescription:
@@ -120,6 +117,9 @@ priorities:
             sets: 4
             reps: 9
             tempo: "3030"
+            fatigue_loads:
+              knee: 1.0
+              cns: 0.5
         progression:
           type: linear_load
           every_n_sessions: 2
@@ -131,15 +131,15 @@ priorities:
         size_minutes: 20
         location: gym
         tags: [rehab, cardio, patellar_tendon, zone2, knee_light]
-        fatigue_loads:
-          knee: "$performed_minutes * 0.5 / 20"
-          cns: "$performed_minutes * 0.25 / 30"
         contributes_to:
           - { target: patellar_stairmaster_minutes }
           - { target: zone2_minutes }
         prescription:
           - exercise: stairmaster
             target: Z2
+            fatigue_loads:
+              knee: "$performed_minutes * 0.5 / 20"
+              cns: "$performed_minutes * 0.25 / 30"
         progression:
           type: per_session_minutes
           parameters:
@@ -153,7 +153,6 @@ priorities:
         size_minutes: 8
         location: anywhere
         tags: [rehab, hip_abductor]
-        fatigue_loads: {}
         contributes_to:
           - { target: hip_abductor_sets }
         prescription:
@@ -164,7 +163,6 @@ priorities:
         size_minutes: 8
         location: anywhere
         tags: [rehab, hip_abductor]
-        fatigue_loads: {}
         contributes_to:
           - { target: hip_abductor_sets }
         prescription:
@@ -178,7 +176,6 @@ priorities:
         size_minutes: 45
         location: anywhere
         tags: [mobility]
-        fatigue_loads: {}
         contributes_to:
           - { target: mobility_minutes }
         prescription:
@@ -209,7 +206,6 @@ priorities:
         size_minutes: 10
         location: anywhere
         tags: [rehab, forearm]
-        fatigue_loads: {}
         contributes_to:
           - { target: fcu_rehab_sets }
         prescription:
@@ -224,7 +220,6 @@ priorities:
         size_minutes: 10
         location: anywhere
         tags: [rehab, forearm]
-        fatigue_loads: {}
         contributes_to:
           - { target: fcu_rehab_sets }
         prescription:
@@ -239,7 +234,6 @@ priorities:
         size_minutes: 6
         location: anywhere
         tags: [maintenance, core, hip_flexor]
-        fatigue_loads: {}
         contributes_to:
           - { target: hip_flexor_sets }
         prescription:
@@ -251,7 +245,6 @@ priorities:
         size_minutes: 6
         location: anywhere
         tags: [maintenance, hip_flexor]
-        fatigue_loads: {}
         contributes_to:
           - { target: hip_flexor_sets }
         prescription:
@@ -271,27 +264,27 @@ priorities:
         size_minutes: [20, 30, 45]
         location: anywhere
         tags: [cardio, zone2, knee_light]
-        fatigue_loads:
-          knee: "$performed_minutes * 0.3 / 30"
-          cns: "$performed_minutes * 0.25 / 30"
         contributes_to:
           - { target: zone2_minutes }
         prescription:
           - exercise: bike_or_row_or_treadmill
             target: Z2
+            fatigue_loads:
+              knee: "$performed_minutes * 0.3 / 30"
+              cns: "$performed_minutes * 0.25 / 30"
 
       - block_name: zone4_intervals
         size_minutes: 20
         location: anywhere
         tags: [cardio, zone4, knee_light]
-        fatigue_loads:
-          knee: "$performed_minutes * 0.4 / 20"
-          cns: 1.0
         contributes_to:
           - { target: zone4_minutes }
         prescription:
           - exercise: bike_preferred
             interval_protocol: "4x4"
+            fatigue_loads:
+              knee: "$performed_minutes * 0.4 / 20"
+              cns: 1.0
 
   strength_full_body:
     blocks:
@@ -299,9 +292,6 @@ priorities:
         size_minutes: 20
         location: gym
         tags: [strength, aesthetics, compound_heavy]
-        fatigue_loads:
-          knee: 0.6
-          cns: 1.0
         contributes_to:
           - { target: full_body_strength_sets }
         prescription:
@@ -309,14 +299,14 @@ priorities:
             sets: 3
             reps: 5
             rpe: 7
+            fatigue_loads:
+              knee: 0.6
+              cns: 1.0
 
       - block_name: bench_press
         size_minutes: 20
         location: gym
         tags: [strength, aesthetics, upper_body, compound_heavy]
-        fatigue_loads:
-          knee: 0.0
-          cns: 0.5
         contributes_to:
           - { target: full_body_strength_sets }
         prescription:
@@ -324,14 +314,14 @@ priorities:
             sets: 3
             reps: 6
             rpe: 7
+            fatigue_loads:
+              knee: 0.0
+              cns: 0.5
 
       - block_name: overhead_press
         size_minutes: 20
         location: gym
         tags: [strength, aesthetics, upper_body, compound_heavy]
-        fatigue_loads:
-          knee: 0.0
-          cns: 0.5
         contributes_to:
           - { target: full_body_strength_sets }
         prescription:
@@ -339,7 +329,9 @@ priorities:
             sets: 3
             reps: 6
             rpe: 7
+            fatigue_loads:
+              knee: 0.0
+              cns: 0.5
 
 selection:
   strategy: greedy_strict
-  

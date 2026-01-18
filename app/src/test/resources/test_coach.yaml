@@ -1,0 +1,62 @@
+version: 3
+
+targets:
+  - id: t1_sets
+    window_days: 7
+    type: sets
+    goal: 10
+
+  - id: t2_minutes
+    window_days: 7
+    type: minutes
+    goal: 30
+
+fatigue_constraints:
+  knee:
+    - kind: prior_load_lt
+      window_hours: 24
+      threshold: 1.0
+      applies_to_blocks_with_tag: [knee_heavy]
+      reason: "Limit knee load"
+
+priority_order:
+  - p1
+  - p2
+
+priorities:
+  p1:
+    blocks:
+      - block_name: block_a
+        size_minutes: [10]
+        location: anywhere
+        tags: [knee_heavy]
+        contributes_to:
+          - { target: t1_sets }
+        prescription:
+          - exercise: ex_a
+            sets: 2
+            reps: 5
+            fatigue_loads:
+              knee: 0.4
+        progression:
+          type: linear_load
+          every_n_sessions: 1
+          parameters:
+            start_load_lbs: 100
+            increment_load_lbs: 10
+
+  p2:
+    blocks:
+      - block_name: block_b
+        size_minutes: [10]
+        location: anywhere
+        tags: []
+        contributes_to:
+          - { target: t2_minutes }
+        prescription:
+          - exercise: ex_b
+            target: Z2
+            fatigue_loads: {}
+
+selection:
+  strategy: greedy_strict
