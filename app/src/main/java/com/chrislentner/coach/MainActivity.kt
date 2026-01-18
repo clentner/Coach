@@ -15,6 +15,10 @@ import androidx.core.content.ContextCompat
 import com.chrislentner.coach.database.AppDatabase
 import com.chrislentner.coach.database.ScheduleRepository
 import com.chrislentner.coach.database.WorkoutRepository
+import com.chrislentner.coach.planner.AdvancedWorkoutPlanner
+import com.chrislentner.coach.planner.ConfigLoader
+import com.chrislentner.coach.planner.HistoryAnalyzer
+import com.chrislentner.coach.planner.ProgressionEngine
 import com.chrislentner.coach.ui.CoachApp
 import com.chrislentner.coach.ui.theme.CoachTheme
 import com.chrislentner.coach.worker.BootReceiver
@@ -52,6 +56,12 @@ class MainActivity : ComponentActivity() {
             }
         }
 
+        // Initialize Planner
+        val config = ConfigLoader.load(applicationContext)
+        val historyAnalyzer = HistoryAnalyzer(config)
+        val progressionEngine = ProgressionEngine(historyAnalyzer)
+        val planner = AdvancedWorkoutPlanner(config, historyAnalyzer, progressionEngine)
+
         // Determine start destination
         var startDestination = "home"
 
@@ -78,6 +88,7 @@ class MainActivity : ComponentActivity() {
                     CoachApp(
                         repository = repository,
                         workoutRepository = workoutRepository,
+                        planner = planner,
                         startDestination = startDestination
                     )
                 }

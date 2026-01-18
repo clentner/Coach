@@ -8,11 +8,13 @@ import androidx.navigation.compose.rememberNavController
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.chrislentner.coach.database.ScheduleRepository
 import com.chrislentner.coach.database.WorkoutRepository
+import com.chrislentner.coach.planner.AdvancedWorkoutPlanner
 
 @Composable
 fun CoachApp(
     repository: ScheduleRepository,
     workoutRepository: WorkoutRepository,
+    planner: AdvancedWorkoutPlanner,
     startDestination: String = "home"
 ) {
     val navController = rememberNavController()
@@ -27,7 +29,7 @@ fun CoachApp(
         composable("workout") {
             // repository is ScheduleRepository, passing it to factory
             val viewModel: WorkoutViewModel = viewModel(
-                factory = WorkoutViewModelFactory(workoutRepository, repository)
+                factory = WorkoutViewModelFactory(workoutRepository, repository, planner)
             )
             WorkoutScreen(navController = navController, viewModel = viewModel)
         }
