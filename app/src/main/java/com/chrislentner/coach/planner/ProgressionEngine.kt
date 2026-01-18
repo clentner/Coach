@@ -24,7 +24,7 @@ class ProgressionEngine(private val historyAnalyzer: HistoryAnalyzer) {
         return when (progression.type) {
             "linear_load" -> calculateLinearLoad(block, progression, pastSessions)
             "per_session_minutes" -> calculatePerSessionMinutes(block, progression, pastSessions)
-            else -> ProgressionResult()
+            else -> throw IllegalArgumentException("Unknown progression type: ${progression.type}")
         }
     }
 
