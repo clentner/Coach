@@ -9,6 +9,10 @@ import kotlin.math.round
 object LoadLogic {
     private val NUMBER_REGEX = Regex("(\\d+(\\.\\d+)?)")
 
+    fun hasNumericComponent(text: String): Boolean {
+        return NUMBER_REGEX.containsMatchIn(text)
+    }
+
     fun adjustLoad(text: String, increment: Boolean): String {
         val match = NUMBER_REGEX.find(text) ?: return text
 

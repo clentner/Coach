@@ -1,9 +1,33 @@
 package com.chrislentner.coach.planner
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class LoadLogicTest {
+
+    // --- hasNumericComponent Tests ---
+
+    @Test
+    fun `hasNumericComponent returns true for numeric strings`() {
+        assertTrue(LoadLogic.hasNumericComponent("50"))
+        assertTrue(LoadLogic.hasNumericComponent("12.5"))
+    }
+
+    @Test
+    fun `hasNumericComponent returns true for mixed strings containing numbers`() {
+        assertTrue(LoadLogic.hasNumericComponent("50 lbs"))
+        assertTrue(LoadLogic.hasNumericComponent("Weight: 10 kg"))
+    }
+
+    @Test
+    fun `hasNumericComponent returns false for non-numeric strings`() {
+        assertFalse(LoadLogic.hasNumericComponent("Bodyweight"))
+        assertFalse(LoadLogic.hasNumericComponent("No load"))
+        assertFalse(LoadLogic.hasNumericComponent(""))
+        assertFalse(LoadLogic.hasNumericComponent("   "))
+    }
 
     // --- Increment Tests ---
 
