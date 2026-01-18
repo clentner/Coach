@@ -1,128 +1,104 @@
-version: 1
+version: 3
 
-# Time windows used for deficit calculations
-windows:
-  week: 7d
-  mobility_cycle: 5d
-
-# Shared fatigue buckets. Blocks add fatigue to one or more buckets.
-fatigue_buckets:
-  knee:
-    decay_half_life_hours: 36
-    # Back-to-back guardrail: if current fatigue_level > threshold, blocks that load this bucket are invalid.
-    # Calibrated so a “typical” knee day (adds ~1.0) is blocked at ~24h but allowed by ~48h.
-    no_back_to_back_threshold: 0.55
-    penalty_alpha: 2.0
-
-  hip_abductor:
-    decay_half_life_hours: 48
-    no_back_to_back_threshold: 0.75
-    penalty_alpha: 1.5
-
-  hip_flexor:
-    decay_half_life_hours: 48
-    no_back_to_back_threshold: 0.85
-    penalty_alpha: 1.0
-
-  cns:
-    decay_half_life_hours: 48
-    no_back_to_back_threshold: 0.80
-    penalty_alpha: 1.8
-
-  forearm:
-    decay_half_life_hours: 72
-    no_back_to_back_threshold: 0.85
-    penalty_alpha: 1.2
-
-# Targets are the atomic "things you want to get done".
-# Planner computes deficits per target, then chooses blocks that reduce the largest weighted deficit
-# while respecting fatigue/location/time constraints.
-#
-# target.type controls how completion is counted (performed-based):
-# - sessions: completing a block contributes 1 session
-# - sets: contributes $performed_sets from the completion record
-# - minutes: contributes $performed_minutes from the completion record
-#
-# contributes_to entries omit "amount"; target.type determines how much is credited from what was actually performed.
-#
-# performed_sets convention (default auto-credit when user doesn't edit):
-# - If prescription is a single exercise with "sets": performed_sets defaults to that value.
-# - If prescription is a list of items each with "sets": performed_sets defaults to the sum of those sets.
-# - If a list item has no "sets" (e.g., timed holds), it contributes 0 sets.
-# - If user edits mid-workout, the app writes an explicit performed_sets in the completion record.
-#
-# NOTE: You can later add min_spacing_hours / max_per_window here if you prefer target-level rules.
 targets:
-  - id: patellar_hsr_squat
-    window: week
-    type: sessions
-    goal: 1
+  - id: patellar_hsr_squat_sets
+    window_days: 7
+    type: sets
+    goal: 4
 
-  - id: patellar_hsr_sl_press
-    window: week
-    type: sessions
-    goal: 1
+  - id: patellar_hsr_sl_press_sets
+    window_days: 7
+    type: sets
+    goal: 4
 
-  - id: patellar_stairmaster
-    window: week
-    type: sessions
-    goal: 1
+  - id: patellar_stairmaster_minutes
+    window_days: 7
+    type: minutes
+    goal: 20
 
   - id: hip_abductor_sets
-    window: week
+    window_days: 7
     type: sets
     goal: 8
 
-  - id: mobility_minutes
-    window: mobility_cycle
-    type: minutes
-    goal: 45
-
-  - id: fcu_rehab_sessions
-    window: week
-    type: sessions
-    goal: 3
-
   - id: hip_flexor_sets
-    window: week
+    window_days: 7
     type: sets
     goal: 6
 
+  - id: mobility_minutes
+    window_days: 5
+    type: minutes
+    goal: 45
+
+  - id: fcu_rehab_sets
+    window_days: 7
+    type: sets
+    goal: 18
+
   - id: zone2_minutes
-    window: week
+    window_days: 7
     type: minutes
     goal: 90
 
-  - id: zone4_sessions
-    window: week
-    type: sessions
-    goal: 1
+  - id: zone4_minutes
+    window_days: 7
+    type: minutes
+    goal: 20
 
-  - id: full_body_strength_sessions
-    window: week
-    type: sessions
-    goal: 2
+  - id: full_body_strength_sets
+    window_days: 7
+    type: sets
+    goal: 18
 
-# Priorities are just groupings + weights (how much you care about closing deficits on their targets).
-# Blocks declare which targets they satisfy via contributes_to.
+fatigue_constraints:
+  knee:
+    - kind: prior_load_lt
+      window_hours: 36
+      threshold: 0.75
+      applies_to_blocks_with_tag: [knee_heavy]
+      reason: "Squats/leg press only if knee load (36h) < 0.75"
+
+    - kind: prior_load_lt
+      window_hours: 24
+      threshold: 1.0
+      applies_to_blocks_with_tag: [knee_light]
+      reason: "Cardio / light knee work only if knee load (24h) < 1.0"
+
+  cns:
+    - kind: prior_load_lt
+      window_hours: 72
+      threshold: 2.0
+      # Now specifically restricts heavy compounds when systemically fatigued
+      applies_to_blocks_with_tag: [compound_heavy]
+      reason: "Heavy compounds only if CNS load (72h) < 2.0"
+
+priority_order:
+  - patellar_tendon
+  - hip_abductors
+  - mobility
+  - fcu_rehab
+  - hip_flexors
+  - cardio
+  - strength_full_body
+
 priorities:
-
   patellar_tendon:
-    weight: 4
     blocks:
-      - id: hsr_squat
+      - block_name: hsr_squat
         size_minutes: 30
         location: gym
-        min_hours_between: 48
-        tags: [rehab, strength, patellar_tendon, knee, heavy_lower]
-        fatigue: { knee: 1.2, cns: 0.6 }
+        tags: [rehab, strength, patellar_tendon, knee_heavy, compound_heavy]
+        fatigue_loads:
+          knee: 1.0
+          cns: 1.0
         contributes_to:
-          - { target: patellar_hsr_squat }
+          - { target: patellar_hsr_squat_sets }
         prescription:
-          exercise: squat
-          sets: 4
-          reps: 8
-          tempo: "3030"
+          - exercise: squat
+            sets: 4
+            reps: 8
+            tempo: "3030"
         progression:
           type: linear_load
           every_n_sessions: 2
@@ -130,19 +106,20 @@ priorities:
             start_load_lbs: 85
             increment_load_lbs: 5
 
-      - id: hsr_single_leg_press
+      - block_name: hsr_single_leg_press
         size_minutes: 30
         location: gym
-        min_hours_between: 48
-        tags: [rehab, strength, patellar_tendon, knee]
-        fatigue: { knee: 1.1, cns: 0.4 }
+        tags: [rehab, strength, patellar_tendon, knee_heavy]
+        fatigue_loads:
+          knee: 1.0
+          cns: 0.5
         contributes_to:
-          - { target: patellar_hsr_sl_press }
+          - { target: patellar_hsr_sl_press_sets }
         prescription:
-          exercise: single_leg_press
-          sets: 4
-          reps: 9
-          tempo: "3030"
+          - exercise: single_leg_press
+            sets: 4
+            reps: 9
+            tempo: "3030"
         progression:
           type: linear_load
           every_n_sessions: 2
@@ -150,17 +127,19 @@ priorities:
             start_load_lbs: 140
             increment_load_lbs: 10
 
-      - id: stairmaster_rehab
+      - block_name: stairmaster_rehab
         size_minutes: 20
         location: gym
-        tags: [rehab, cardio, patellar_tendon, knee, zone2]
-        fatigue: { knee: 0.8 }
+        tags: [rehab, cardio, patellar_tendon, zone2, knee_light]
+        fatigue_loads:
+          knee: "$performed_minutes * 0.5 / 20"
+          cns: "$performed_minutes * 0.25 / 30"
         contributes_to:
-          - { target: patellar_stairmaster }
+          - { target: patellar_stairmaster_minutes }
           - { target: zone2_minutes }
         prescription:
-          modality: stairmaster
-          target: Z2
+          - exercise: stairmaster
+            target: Z2
         progression:
           type: per_session_minutes
           parameters:
@@ -169,194 +148,198 @@ priorities:
             max_minutes: 40
 
   hip_abductors:
-    weight: 3
     blocks:
-      - id: banded_x_walks
+      - block_name: banded_x_walks
         size_minutes: 8
+        location: anywhere
         tags: [rehab, hip_abductor]
-        fatigue: { hip_abductor: 0.4 }
+        fatigue_loads: {}
         contributes_to:
           - { target: hip_abductor_sets }
         prescription:
-          exercise: banded_x_walks
-          sets: 2
+          - exercise: banded_x_walks
+            sets: 2
 
-      - id: banded_clamshells
+      - block_name: banded_clamshells
         size_minutes: 8
+        location: anywhere
         tags: [rehab, hip_abductor]
-        fatigue: { hip_abductor: 0.4 }
+        fatigue_loads: {}
         contributes_to:
           - { target: hip_abductor_sets }
         prescription:
-          exercise: banded_clamshells
-          sets: 2
+          - exercise: banded_clamshells
+            sets: 2
+            per_side: true
 
   mobility:
-    weight: 2
     blocks:
-      - id: full_mobility
+      - block_name: full_mobility
         size_minutes: 45
+        location: anywhere
         tags: [mobility]
-        fatigue: {}
+        fatigue_loads: {}
         contributes_to:
           - { target: mobility_minutes }
         prescription:
-          - id: foot_foam_roll
+          - exercise: foot_foam_roll
             seconds: 90
             per_side: true
-          - id: calf_stretch
+          - exercise: calf_stretch
             sets: 3
             per_side: true
-          - id: sciatic_floss
+          - exercise: sciatic_floss
             sets: 3
             reps: 8
             tempo: "3030"
             per_side: true
-          - id: pike_block_crush
+          - exercise: pike_block_crush
             sets: 1
             reps: 3
             seconds_per_rep: 10
-            per_side: true
-          - id: pike_lift_cracrk
+          - exercise: pike_lift_cracrk
             sets: 3
             reps: 5
             tempo: "5050"
             per_side: true
 
   fcu_rehab:
-    weight: 2
     blocks:
-      - id: wrist_isometrics
+      - block_name: wrist_isometrics
         size_minutes: 10
+        location: anywhere
         tags: [rehab, forearm]
-        fatigue: { forearm: 0.3 }
+        fatigue_loads: {}
         contributes_to:
-          - { target: fcu_rehab_sessions }
+          - { target: fcu_rehab_sets }
         prescription:
-          - id: wrist_flexion_iso
+          - exercise: wrist_flexion_iso
             sets: 5
             seconds: 30
-          - id: wrist_extension_iso
+          - exercise: wrist_extension_iso
             sets: 5
             seconds: 30
 
-      - id: wrist_flexion_eccentrics
+      - block_name: wrist_flexion_eccentrics
         size_minutes: 10
+        location: anywhere
         tags: [rehab, forearm]
-        fatigue: { forearm: 0.4 }
+        fatigue_loads: {}
         contributes_to:
-          - { target: fcu_rehab_sessions }
+          - { target: fcu_rehab_sets }
         prescription:
-          - id: wrist_flexion_eccentric
+          - exercise: wrist_flexion_eccentric
             sets: 3
             reps: 15
             tempo: "4010"
 
   hip_flexors:
-    weight: 1
     blocks:
-      - id: deadbugs
+      - block_name: deadbugs
         size_minutes: 6
+        location: anywhere
         tags: [maintenance, core, hip_flexor]
-        fatigue: { hip_flexor: 0.2 }
+        fatigue_loads: {}
         contributes_to:
           - { target: hip_flexor_sets }
         prescription:
-          exercise: deadbug
-          sets: 3
-          reps: 10
+          - exercise: deadbug
+            sets: 3
+            reps: 10
 
-      - id: straight_leg_raises
+      - block_name: straight_leg_raises
         size_minutes: 6
+        location: anywhere
         tags: [maintenance, hip_flexor]
-        fatigue: { hip_flexor: 0.3 }
+        fatigue_loads: {}
         contributes_to:
           - { target: hip_flexor_sets }
         prescription:
-          exercise: straight_leg_raise
-          sets: 3
-          reps: 10
-          per_side: true
+          - exercise: straight_leg_raise
+            sets: 3
+            reps: 10
+            per_side: true
 
   cardio:
-    weight: 1
     blocks:
-      - id: zone2_cardio
+      - block_name: zone2_cardio
+        # LOGIC:
+        # 1. Filter sizes that fit in today_time_available.
+        # 2. Of those, filter for 'necessary' sizes:
+        #    (size <= target_deficit) OR (size is the smallest available > target_deficit).
+        # 3. Choose the largest size remaining.
         size_minutes: [20, 30, 45]
-        tags: [cardio, zone2, knee]
-        fatigue: { knee: 0.4 }
+        location: anywhere
+        tags: [cardio, zone2, knee_light]
+        fatigue_loads:
+          knee: "$performed_minutes * 0.3 / 30"
+          cns: "$performed_minutes * 0.25 / 30"
         contributes_to:
           - { target: zone2_minutes }
         prescription:
-          modality: bike_or_row_or_treadmill
-          target: Z2
+          - exercise: bike_or_row_or_treadmill
+            target: Z2
 
-      - id: zone4_intervals
+      - block_name: zone4_intervals
         size_minutes: 20
-        min_hours_between: 72
-        tags: [cardio, zone4, knee]
-        fatigue: { knee: 0.9, cns: 0.8 }
+        location: anywhere
+        tags: [cardio, zone4, knee_light]
+        fatigue_loads:
+          knee: "$performed_minutes * 0.4 / 20"
+          cns: 1.0
         contributes_to:
-          - { target: zone4_sessions }
+          - { target: zone4_minutes }
         prescription:
-          modality: bike_preferred
-          protocol: "4x4"
+          - exercise: bike_preferred
+            interval_protocol: "4x4"
 
   strength_full_body:
-    weight: 1
     blocks:
-      - id: full_body_strength
-        size_minutes: 60
+      - block_name: deadlift
+        size_minutes: 20
         location: gym
-        tags: [strength, aesthetics, cns]
-        fatigue: { cns: 1.0, knee: 0.6 }
+        tags: [strength, aesthetics, compound_heavy]
+        fatigue_loads:
+          knee: 0.6
+          cns: 1.0
         contributes_to:
-          - { target: full_body_strength_sessions }
+          - { target: full_body_strength_sets }
         prescription:
-          - id: deadlift
+          - exercise: deadlift
             sets: 3
             reps: 5
             rpe: 7
-          - id: bench_press
+
+      - block_name: bench_press
+        size_minutes: 20
+        location: gym
+        tags: [strength, aesthetics, upper_body, compound_heavy]
+        fatigue_loads:
+          knee: 0.0
+          cns: 0.5
+        contributes_to:
+          - { target: full_body_strength_sets }
+        prescription:
+          - exercise: bench_press
             sets: 3
             reps: 6
             rpe: 7
-          - id: overhead_press
+
+      - block_name: overhead_press
+        size_minutes: 20
+        location: gym
+        tags: [strength, aesthetics, upper_body, compound_heavy]
+        fatigue_loads:
+          knee: 0.0
+          cns: 0.5
+        contributes_to:
+          - { target: full_body_strength_sets }
+        prescription:
+          - exercise: overhead_press
             sets: 3
             reps: 6
             rpe: 7
 
 selection:
-  # Deficit is computed per target:
-  #   deficit = goal - done_in_window
-  #
-  # Base urgency (before fatigue) can be:
-  #   base_urgency(block) =
-  #       sum_over_contributes_to( deficit(target) / goal(target) ) * priority_weight
-  #
-  # Contribution is implied by target.type:
-  # - sessions: +1 per completed block
-  # - minutes: +$performed_minutes
-  # - sets: +$performed_sets
-  #
-  # Fatigue model (performed-based, shared across priorities):
-  # 1) Bucket fatigue level decays exponentially:
-  #      fatigue_level(bucket, now) = sum_i( added_i * 2^(-(dt_hours_i / half_life_hours)) )
-  #    where added_i = completed_block_i.fatigue[bucket]
-  #
-  # 2) Back-to-back guardrail:
-  #      INVALID if fatigue_level(bucket) > no_back_to_back_threshold(bucket)
-  #      for any bucket the candidate block loads (block.fatigue[bucket] > 0)
-  #
-  # 3) Soft penalty multiplier:
-  #      fatigue_multiplier(block) = exp( - sum_over_buckets(
-  #           penalty_alpha(bucket) * fatigue_level(bucket) * block.fatigue[bucket]
-  #      ))
-  #
-  # Final score:
-  #   score = base_urgency * fatigue_multiplier
-  strategy: greedy_fill
-  scoring:
-    formula: base_urgency * fatigue_multiplier
-  fatigue_multiplier:
-    type: exponential_bucketed
+  strategy: greedy_strict
+  
