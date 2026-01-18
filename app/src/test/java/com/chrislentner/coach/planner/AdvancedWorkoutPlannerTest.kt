@@ -45,30 +45,30 @@ class AdvancedWorkoutPlannerTest {
 
         val plan = planner.generatePlan(today, history, schedule)
 
-        // Updated logic with prior_load_lt:
-        // Threshold 1.0. BlockA load 0.4 (2 sets * 0.4? No, assume prescription fatigue_loads is per prescription block or per set?
-        // Logic: for each log -> load. BlockA has 2 sets -> 2 logs. Each log maps to 0.4 load. Total 0.8.
-        // 1. BlockA (load 0.8). Prior load 0. Accepted.
-        // 2. BlockA (load 0.8). Prior load 0.8. 0.8 < 1.0. Accepted.
-        // 3. BlockA (load 0.8). Prior load 1.6. 1.6 >= 1.0. Rejected.
-        // Wait, 1st BlockA contributes 0.8 load to accumulated.
-        // So before 2nd BlockA: Accumulated = 0.8.
-        // 0.8 < 1.0. Accepted.
-        // Before 3rd BlockA: Accumulated = 0.8 + 0.8 = 1.6.
-        // 1.6 >= 1.0. Rejected.
+        // Updated logic: prior_load_lt excludes candidate + fatigue load normalized by sets.
+        // BlockA: 2 sets. Load 0.4 (configured).
+        // Normalized load per set = 0.4 / 2 = 0.2.
+        // Load per block = 2 * 0.2 = 0.4.
 
-        // So result:
-        // BlockA (2 steps)
-        // BlockA (2 steps)
-        // Remaining time: 10 mins.
-        // BlockB (10 mins, load 0). Accepted.
+        // Threshold 1.0.
+        // 1. BlockA. Load 0.4. Prior 0. Accepted.
+        // 2. BlockA. Load 0.4. Prior 0.4. 0.4 < 1.0. Accepted.
+        // 3. BlockA. Load 0.4. Prior 0.8. 0.8 < 1.0. Accepted.
+        // 4. BlockA. Load 0.4. Prior 1.2. 1.2 >= 1.0. Rejected.
 
-        // Total steps: 2 + 2 + 1 = 5 steps.
+        // But also check time available. 30 mins.
+        // BlockA is 10 mins.
+        // 1. BlockA (10 mins). Remaining 20.
+        // 2. BlockA (10 mins). Remaining 10.
+        // 3. BlockA (10 mins). Remaining 0.
+        // Plan full.
 
-        assertEquals(5, plan.size)
+        // Total steps: 3 blocks * 2 sets = 6 steps.
+
+        assertEquals(6, plan.size)
         assertEquals("ex_a", plan[0].exerciseName)
         assertEquals("ex_a", plan[2].exerciseName)
-        assertEquals("ex_b", plan[4].exerciseName)
+        assertEquals("ex_a", plan[4].exerciseName)
     }
 
     @Test
