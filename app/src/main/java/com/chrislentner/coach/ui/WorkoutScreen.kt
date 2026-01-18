@@ -16,6 +16,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.navigation.NavController
+import com.chrislentner.coach.planner.LoadLogic
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 
@@ -257,6 +258,7 @@ fun SessionScreenContent(
                                         onValueChange = { onUpdateLoad(it) },
                                         onIncrement = { onAdjustLoad(true) },
                                         onDecrement = { onAdjustLoad(false) },
+                                        canAdjust = LoadLogic.hasNumericComponent(activeStepLoad),
                                         keyboardType = KeyboardType.Text // Allows freeform
                                     )
                                 }
@@ -487,6 +489,7 @@ fun EditableField(
     onValueChange: (String) -> Unit,
     onIncrement: () -> Unit,
     onDecrement: () -> Unit,
+    canAdjust: Boolean = true,
     keyboardType: KeyboardType = KeyboardType.Text
 ) {
     var isEditing by remember { mutableStateOf(false) }
@@ -520,8 +523,10 @@ fun EditableField(
             horizontalArrangement = Arrangement.Center,
             modifier = Modifier.fillMaxWidth()
         ) {
-            IconButton(onClick = onDecrement) {
-                Text("-", style = MaterialTheme.typography.headlineSmall)
+            if (canAdjust) {
+                IconButton(onClick = onDecrement) {
+                    Text("-", style = MaterialTheme.typography.headlineSmall)
+                }
             }
 
             Text(
@@ -532,8 +537,10 @@ fun EditableField(
                     .clickable { isEditing = true }
             )
 
-            IconButton(onClick = onIncrement) {
-                Text("+", style = MaterialTheme.typography.headlineSmall)
+            if (canAdjust) {
+                IconButton(onClick = onIncrement) {
+                    Text("+", style = MaterialTheme.typography.headlineSmall)
+                }
             }
         }
     }
