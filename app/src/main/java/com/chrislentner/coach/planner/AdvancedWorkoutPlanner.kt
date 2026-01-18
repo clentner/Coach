@@ -72,7 +72,8 @@ class AdvancedWorkoutPlanner(
     ): PlannedBlock? {
 
         for (priorityGroupKey in config.priorityOrder) {
-            val group = config.priorities[priorityGroupKey] ?: continue
+            val group = config.priorities[priorityGroupKey]
+                ?: throw IllegalStateException("Priority group '$priorityGroupKey' defined in priority_order but not found in priorities.")
 
             for (block in group.blocks) {
                 if (block.location != "anywhere" && block.location != location) continue
