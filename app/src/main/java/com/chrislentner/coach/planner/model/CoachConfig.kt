@@ -45,6 +45,7 @@ data class Block(
     @JsonProperty("block_name")
     val blockName: String,
     @JsonProperty("size_minutes")
+    @JsonDeserialize(using = SizeMinutesDeserializer::class)
     val sizeMinutes: List<Int>, // Always normalized to a list
     val location: String,
     val tags: List<String> = emptyList(),

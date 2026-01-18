@@ -57,10 +57,16 @@ class MainActivity : ComponentActivity() {
         }
 
         // Initialize Planner
-        val config = ConfigLoader.load(applicationContext)
-        val historyAnalyzer = HistoryAnalyzer(config)
-        val progressionEngine = ProgressionEngine(historyAnalyzer)
-        val planner = AdvancedWorkoutPlanner(config, historyAnalyzer, progressionEngine)
+        var planner: AdvancedWorkoutPlanner? = null
+        try {
+            val config = ConfigLoader.load(applicationContext)
+            val historyAnalyzer = HistoryAnalyzer(config)
+            val progressionEngine = ProgressionEngine(historyAnalyzer)
+            planner = AdvancedWorkoutPlanner(config, historyAnalyzer, progressionEngine)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            // Ideally notify user, but for now just logging and fallback to null planner
+        }
 
         // Determine start destination
         var startDestination = "home"

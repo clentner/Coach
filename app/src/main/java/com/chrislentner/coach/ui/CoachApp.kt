@@ -14,7 +14,7 @@ import com.chrislentner.coach.planner.AdvancedWorkoutPlanner
 fun CoachApp(
     repository: ScheduleRepository,
     workoutRepository: WorkoutRepository,
-    planner: AdvancedWorkoutPlanner,
+    planner: AdvancedWorkoutPlanner?,
     startDestination: String = "home"
 ) {
     val navController = rememberNavController()

@@ -302,7 +302,7 @@ class WorkoutViewModel(
 class WorkoutViewModelFactory(
     private val repository: WorkoutRepository,
     private val scheduleRepository: ScheduleRepository,
-    private val planner: AdvancedWorkoutPlanner
+    private val planner: AdvancedWorkoutPlanner?
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(WorkoutViewModel::class.java)) {
