@@ -1,54 +1,72 @@
 package com.chrislentner.coach.ui
 
 import androidx.compose.runtime.Composable
-import androidx.navigation.NavHostController
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.navArgument
 import com.chrislentner.coach.database.ScheduleRepository
 import com.chrislentner.coach.database.WorkoutRepository
 import com.chrislentner.coach.planner.AdvancedWorkoutPlanner
 
 @Composable
 fun CoachApp(
-    repository: ScheduleRepository,
-    workoutRepository: WorkoutRepository,
-    planner: AdvancedWorkoutPlanner?,
-    startDestination: String = "home"
+    workoutRepo: WorkoutRepository,
+    scheduleRepo: ScheduleRepository,
+    planner: AdvancedWorkoutPlanner?
 ) {
     val navController = rememberNavController()
-
-    NavHost(navController = navController, startDestination = startDestination) {
+    NavHost(navController = navController, startDestination = "home") {
         composable("home") {
-            HomeScreen(navController = navController, repository = repository)
-        }
-        composable("survey") {
-            SurveyScreen(navController = navController, repository = repository)
+            HomeScreen(navController)
         }
         composable("workout") {
-            // repository is ScheduleRepository, passing it to factory
             val viewModel: WorkoutViewModel = viewModel(
-                factory = WorkoutViewModelFactory(workoutRepository, repository, planner)
+                factory = WorkoutViewModelFactory(workoutRepo, scheduleRepo, planner)
             )
-            WorkoutScreen(navController = navController, viewModel = viewModel)
+            WorkoutScreen(navController, viewModel)
         }
         composable("past_workouts") {
             val viewModel: PastWorkoutsViewModel = viewModel(
-                factory = PastWorkoutsViewModelFactory(workoutRepository)
+                factory = PastWorkoutsViewModelFactory(workoutRepo)
             )
-            PastWorkoutsScreen(navController = navController, viewModel = viewModel)
+            PastWorkoutsScreen(navController, viewModel)
         }
-        composable("workout_detail/{sessionId}") { backStackEntry ->
-            val sessionIdStr = backStackEntry.arguments?.getString("sessionId")
-            val sessionId = sessionIdStr?.toLongOrNull() ?: 0L
+        composable(
+            "workout_detail/{sessionId}",
+            arguments = listOf(navArgument("sessionId") { type = NavType.LongType })
+        ) { backStackEntry ->
+            val sessionId = backStackEntry.arguments?.getLong("sessionId")
+            requireNotNull(sessionId) { "SessionId parameter not found" }
+
             val viewModel: WorkoutDetailViewModel = viewModel(
-                factory = WorkoutDetailViewModelFactory(workoutRepository, sessionId)
+                factory = WorkoutDetailViewModelFactory(workoutRepo, sessionId)
             )
-            WorkoutDetailScreen(navController = navController, viewModel = viewModel)
+            WorkoutDetailScreen(navController, viewModel)
+        }
+        composable(
+            route = "historical_workout?sessionId={sessionId}",
+            arguments = listOf(navArgument("sessionId") {
+                type = NavType.LongType
+                defaultValue = -1L
+            })
+        ) { backStackEntry ->
+            val sessionId = backStackEntry.arguments?.getLong("sessionId")
+            val viewModel: HistoricalWorkoutViewModel = viewModel(
+                factory = HistoricalWorkoutViewModelFactory(workoutRepo, if (sessionId == -1L) null else sessionId)
+            )
+            HistoricalWorkoutScreen(navController, viewModel)
         }
         composable("exercise_selection") {
-            ExerciseSelectionScreen(navController = navController, repository = workoutRepository)
+            val viewModel: ExerciseSelectionViewModel = viewModel(
+                factory = ExerciseSelectionViewModelFactory(workoutRepo)
+            )
+            ExerciseSelectionScreen(navController, viewModel)
+        }
+        composable("survey") {
+            SurveyScreen(navController)
         }
     }
 }
