@@ -30,8 +30,8 @@ import java.util.Locale
 class MainActivity : ComponentActivity() {
 
     private val database by lazy { AppDatabase.getDatabase(applicationContext) }
-    private val repository by lazy { ScheduleRepository(database.scheduleDao()) }
-    private val workoutRepository by lazy { WorkoutRepository(database.workoutDao()) }
+    private val scheduleRepo by lazy { ScheduleRepository(database.scheduleDao()) }
+    private val workoutRepo by lazy { WorkoutRepository(database.workoutDao()) }
 
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -68,23 +68,6 @@ class MainActivity : ComponentActivity() {
             // Ideally notify user, but for now just logging and fallback to null planner
         }
 
-        // Determine start destination
-        var startDestination = "home"
-
-        // Check if opened from notification
-        if (intent.getStringExtra("navigate_to") == "survey") {
-            startDestination = "survey"
-        } else {
-            // Check if we have a workout for today
-            val today = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
-            // We use runBlocking here for simplicity in onCreate to determine initial state.
-            // In a larger app, we'd use a ViewModel and expose state, showing a Splash/Loading first.
-            val todaysSchedule = runBlocking { repository.getScheduleByDate(today) }
-            if (todaysSchedule == null) {
-                startDestination = "survey"
-            }
-        }
-
         setContent {
             CoachTheme {
                 Surface(
@@ -92,10 +75,9 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     CoachApp(
-                        repository = repository,
-                        workoutRepository = workoutRepository,
-                        planner = planner,
-                        startDestination = startDestination
+                        workoutRepo = workoutRepo,
+                        scheduleRepo = scheduleRepo,
+                        planner = planner
                     )
                 }
             }

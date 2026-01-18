@@ -20,7 +20,7 @@ fun CoachApp(
     val navController = rememberNavController()
     NavHost(navController = navController, startDestination = "home") {
         composable("home") {
-            HomeScreen(navController)
+            HomeScreen(navController, scheduleRepo)
         }
         composable("workout") {
             val viewModel: WorkoutViewModel = viewModel(
@@ -66,7 +66,7 @@ fun CoachApp(
             ExerciseSelectionScreen(navController, viewModel)
         }
         composable("survey") {
-            SurveyScreen(navController)
+            SurveyScreen(navController, scheduleRepo)
         }
     }
 }

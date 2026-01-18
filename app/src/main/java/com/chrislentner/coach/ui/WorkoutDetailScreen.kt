@@ -32,7 +32,7 @@ fun WorkoutDetailScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = { navController.navigate("historical_workout/${viewModel.sessionId}") }) {
+            FloatingActionButton(onClick = { navController.navigate("historical_workout?sessionId=${viewModel.sessionId}") }) {
                 Icon(Icons.Default.Add, contentDescription = "Add Exercise")
             }
         }

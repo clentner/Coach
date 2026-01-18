@@ -13,24 +13,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.chrislentner.coach.database.WorkoutRepository
-import com.chrislentner.coach.planner.WorkoutPlanner
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ExerciseSelectionScreen(
     navController: NavController,
-    repository: WorkoutRepository
+    viewModel: ExerciseSelectionViewModel
 ) {
     var searchText by remember { mutableStateOf("") }
-    var suggestions by remember { mutableStateOf(emptyList<String>()) }
-
-    LaunchedEffect(Unit) {
-        val recents = repository.getRecentExerciseNames(20)
-        val defaults = WorkoutPlanner.DEFAULT_EXERCISES
-        // Prioritize recents, then defaults. Remove duplicates.
-        suggestions = (recents + defaults).distinct()
-    }
+    val suggestions by viewModel.suggestions.collectAsState()
 
     // Filter suggestions based on search text
     val filteredSuggestions = remember(searchText, suggestions) {
