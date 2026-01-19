@@ -16,6 +16,11 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -26,6 +31,21 @@ fun EditExerciseScreen(
     navController: NavController,
     viewModel: EditExerciseViewModel
 ) {
+    // Handle Exercise Selection Result
+    val currentBackStackEntry = navController.currentBackStackEntry
+    val savedStateHandle = currentBackStackEntry?.savedStateHandle
+    val selectedExerciseFlow = remember(savedStateHandle) {
+        savedStateHandle?.getStateFlow<String?>("selected_exercise", null)
+    }
+    val selectedExercise by selectedExerciseFlow?.collectAsState() ?: remember { mutableStateOf(null) }
+
+    LaunchedEffect(selectedExercise) {
+        selectedExercise?.let {
+            viewModel.exerciseName = it
+            savedStateHandle?.remove<String>("selected_exercise")
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -47,6 +67,7 @@ fun EditExerciseScreen(
             ExerciseEntryForm(
                 exerciseName = viewModel.exerciseName,
                 onExerciseNameChange = { viewModel.exerciseName = it },
+                onExerciseNameClick = { navController.navigate("exercise_selection") },
                 load = viewModel.load,
                 onLoadChange = { viewModel.load = it },
                 reps = viewModel.reps,

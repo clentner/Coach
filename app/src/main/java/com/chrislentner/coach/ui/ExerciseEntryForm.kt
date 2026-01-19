@@ -1,5 +1,6 @@
 package com.chrislentner.coach.ui
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -22,7 +23,8 @@ fun ExerciseEntryForm(
     onRepsChange: (String) -> Unit,
     tempo: String,
     onTempoChange: (String) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onExerciseNameClick: (() -> Unit)? = null
 ) {
     Column(
         modifier = modifier,
@@ -30,9 +32,18 @@ fun ExerciseEntryForm(
     ) {
         OutlinedTextField(
             value = exerciseName,
-            onValueChange = onExerciseNameChange,
+            onValueChange = {
+                if (onExerciseNameClick == null) {
+                    onExerciseNameChange(it)
+                }
+            },
             label = { Text("Exercise Name") },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(enabled = onExerciseNameClick != null) {
+                    onExerciseNameClick?.invoke()
+                },
+            readOnly = (onExerciseNameClick != null)
         )
 
         Row(
