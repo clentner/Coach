@@ -5,6 +5,8 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import androidx.navigation.NavType
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.chrislentner.coach.database.ScheduleRepository
 import com.chrislentner.coach.database.WorkoutRepository
@@ -49,6 +51,22 @@ fun CoachApp(
         }
         composable("exercise_selection") {
             ExerciseSelectionScreen(navController = navController, repository = workoutRepository)
+        }
+        composable(
+            "edit_exercise/{sessionId}?logId={logId}",
+            arguments = listOf(
+                navArgument("sessionId") { type = NavType.LongType },
+                navArgument("logId") { type = NavType.LongType; defaultValue = -1L }
+            )
+        ) { backStackEntry ->
+            val sessionId = backStackEntry.arguments?.getLong("sessionId") ?: 0L
+            val logIdArg = backStackEntry.arguments?.getLong("logId") ?: -1L
+            val logId = if (logIdArg == -1L) null else logIdArg
+
+            val viewModel: EditExerciseViewModel = viewModel(
+                factory = EditExerciseViewModelFactory(workoutRepository, sessionId, logId)
+            )
+            EditExerciseScreen(navController = navController, viewModel = viewModel)
         }
     }
 }

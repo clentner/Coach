@@ -12,7 +12,7 @@ import kotlinx.coroutines.launch
 
 class WorkoutDetailViewModel(
     private val repository: WorkoutRepository,
-    private val sessionId: Long
+    val sessionId: Long
 ) : ViewModel() {
 
     var logs by mutableStateOf<List<WorkoutLogEntry>>(emptyList())

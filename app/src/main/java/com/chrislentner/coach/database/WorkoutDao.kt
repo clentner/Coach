@@ -20,8 +20,17 @@ interface WorkoutDao {
     @Query("SELECT * FROM workout_sessions WHERE date = :date LIMIT 1")
     suspend fun getSessionByDate(date: String): WorkoutSession?
 
+    @Query("SELECT * FROM workout_sessions WHERE id = :id LIMIT 1")
+    suspend fun getSessionById(id: Long): WorkoutSession?
+
+    @Query("SELECT * FROM workout_logs WHERE id = :id LIMIT 1")
+    suspend fun getLogById(id: Long): WorkoutLogEntry?
+
     @Insert
     suspend fun insertLogEntry(entry: WorkoutLogEntry): Long
+
+    @androidx.room.Update
+    suspend fun updateLogEntry(entry: WorkoutLogEntry)
 
     @androidx.room.Delete
     suspend fun deleteLogEntry(entry: WorkoutLogEntry)

@@ -31,6 +31,18 @@ class PastWorkoutsViewModel(
         }
     }
 
+    fun createSession(millis: Long, onCreated: (Long) -> Unit) {
+        viewModelScope.launch {
+            val date = Date(millis)
+            val formatter = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+            formatter.timeZone = java.util.TimeZone.getTimeZone("UTC")
+            val dateStr = formatter.format(date)
+
+            val session = repository.getOrCreateSession(dateStr, millis)
+            onCreated(session.id)
+        }
+    }
+
     fun formatDate(dateStr: String): String {
         // Input: YYYY-MM-DD
         // Output: "Oct 24" (current year) or "Oct 24, 2023" (other years)

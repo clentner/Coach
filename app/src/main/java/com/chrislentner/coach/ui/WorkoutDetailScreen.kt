@@ -1,8 +1,11 @@
 package com.chrislentner.coach.ui
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -28,6 +31,15 @@ fun WorkoutDetailScreen(
                     }
                 }
             )
+        },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = {
+                    navController.navigate("edit_exercise/${viewModel.sessionId}")
+                }
+            ) {
+                Icon(Icons.Default.Add, contentDescription = "Add Exercise")
+            }
         }
     ) { innerPadding ->
         LazyColumn(
@@ -50,7 +62,12 @@ fun WorkoutDetailScreen(
             }
 
             items(viewModel.logs) { log ->
-                LogEntryRow(log = log)
+                LogEntryRow(
+                    log = log,
+                    onClick = {
+                        navController.navigate("edit_exercise/${viewModel.sessionId}?logId=${log.id}")
+                    }
+                )
                 HorizontalDivider()
             }
         }
@@ -58,7 +75,7 @@ fun WorkoutDetailScreen(
 }
 
 @Composable
-fun LogEntryRow(log: WorkoutLogEntry) {
+fun LogEntryRow(log: WorkoutLogEntry, onClick: () -> Unit) {
     val contentColor = if (log.skipped) {
         MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
     } else {
@@ -69,6 +86,7 @@ fun LogEntryRow(log: WorkoutLogEntry) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .clickable(onClick = onClick)
                 .padding(16.dp),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
