@@ -48,7 +48,7 @@ class HistoryAnalyzer(private val config: CoachConfig) {
                     valOrFormula.toDouble()
                 } else if (valOrFormula is String) {
                     val minutes = (log.actualDurationSeconds ?: 0) / 60.0
-                    MathEvaluator.evaluate(valOrFormula, mapOf("performed_minutes" to minutes))
+                    MathEvaluator.evaluate(valOrFormula, mapOf("performed_minutes" to minutes, "\$performed_minutes" to minutes))
                 } else {
                     0.0
                 }

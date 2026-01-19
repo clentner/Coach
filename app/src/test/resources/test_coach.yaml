@@ -37,7 +37,7 @@ priorities:
             sets: 2
             reps: 5
             fatigue_loads:
-              knee: 0.4
+              knee: 0.5
         progression:
           type: linear_load
           every_n_sessions: 1
