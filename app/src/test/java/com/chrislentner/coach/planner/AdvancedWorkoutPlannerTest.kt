@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.util.Date
@@ -58,12 +59,42 @@ class AdvancedWorkoutPlannerTest {
         // BlockB (1 set) -> 1 step.
         // BlockB (1 set) -> 1 step.
         // Total 4 steps.
+        // UPDATE: Due to unique exercise constraint, BlockB (ex_b) cannot be selected again.
+        // So we stop after one BlockB.
+        // Total time: 10 + 10 = 20.
+        // Steps: BlockA(2) + BlockB(1) = 3.
 
-        assertEquals(4, plan.size)
+        assertEquals(3, plan.size)
         assertEquals("ex_a", plan[0].exerciseName)
         assertEquals("ex_a", plan[1].exerciseName)
         assertEquals("ex_b", plan[2].exerciseName)
-        assertEquals("ex_b", plan[3].exerciseName)
+    }
+
+    @Test
+    fun `generatePlan does not repeat exercises in the same session`() {
+        val today = Date()
+        val history = emptyList<WorkoutLogEntry>()
+        // Schedule enough time for Block A (10) + Block B (10) + Block B (10) = 30 mins
+        // Block A limits on fatigue, so it might appear once.
+        // Block B has no fatigue limits, so without uniqueness check, it would appear multiple times to fill the 30 mins.
+        val schedule = ScheduleEntry("2023-10-27", today.time, 30, "anywhere")
+
+        val plan = planner.generatePlan(today, history, schedule)
+
+        // Block A uses "ex_a". Block B uses "ex_b".
+        // With uniqueness enforcement:
+        // 1. Block A (ex_a) selected.
+        // 2. Block B (ex_b) selected.
+        // 3. Block B (ex_b) REJECTED.
+
+        // Verify we have ex_a and ex_b
+        val exercises = plan.map { it.exerciseName }
+        assertTrue(exercises.contains("ex_a"))
+        assertTrue(exercises.contains("ex_b"))
+
+        // Count occurrences
+        val exBCount = exercises.count { it == "ex_b" }
+        assertEquals("Exercise 'ex_b' should strictly appear once", 1, exBCount)
     }
 
     @Test

@@ -70,6 +70,7 @@ class AdvancedWorkoutPlanner(
         plannedBlocks: List<PlannedBlock>,
         today: Date
     ): PlannedBlock? {
+        val plannedExercises = plannedBlocks.flatMap { it.steps.map { step -> step.exerciseName } }.toSet()
 
         for (priorityGroupKey in config.priorityOrder) {
             val group = config.priorities[priorityGroupKey]
@@ -77,6 +78,9 @@ class AdvancedWorkoutPlanner(
 
             for (block in group.blocks) {
                 if (block.location != "anywhere" && !block.location.equals(location, ignoreCase = true)) continue
+
+                val blockExercises = block.prescription.map { it.exercise }.toSet()
+                if (blockExercises.any { it in plannedExercises }) continue
 
                 val helpsDeficit = block.contributesTo.any { (deficits[it.target] ?: 0.0) > 0.0 }
                 if (!helpsDeficit) continue
