@@ -6,6 +6,10 @@ package com.chrislentner.coach.database
 
 class WorkoutRepository(private val workoutDao: WorkoutDao) {
 
+    suspend fun getSessionById(id: Long): WorkoutSession? {
+        return workoutDao.getSessionById(id)
+    }
+
     suspend fun getOrCreateSession(date: String, timestamp: Long, location: String? = null): WorkoutSession {
         val existing = workoutDao.getSessionByDate(date)
         if (existing != null) return existing
@@ -24,8 +28,16 @@ class WorkoutRepository(private val workoutDao: WorkoutDao) {
         return workoutDao.getSessionsWithSetCounts()
     }
 
+    suspend fun getLogById(id: Long): WorkoutLogEntry? {
+        return workoutDao.getLogById(id)
+    }
+
     suspend fun logSet(entry: WorkoutLogEntry) {
         workoutDao.insertLogEntry(entry)
+    }
+
+    suspend fun updateLog(entry: WorkoutLogEntry) {
+        workoutDao.updateLogEntry(entry)
     }
 
     suspend fun deleteLog(entry: WorkoutLogEntry) {

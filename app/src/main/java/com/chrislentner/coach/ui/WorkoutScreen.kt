@@ -271,43 +271,15 @@ fun SessionScreenContent(
                         }
                     } else {
                         // Free Entry Mode Inputs
-                        OutlinedTextField(
-                            value = freeExercise,
-                            onValueChange = onFreeExerciseChange,
-                            label = { Text("Exercise Name") },
-                            modifier = Modifier.fillMaxWidth()
-                        )
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            OutlinedTextField(
-                                value = freeLoad,
-                                onValueChange = onFreeLoadChange,
-                                label = { Text("Load") },
-                                modifier = Modifier.weight(1f)
-                            )
-                            OutlinedTextField(
-                                value = freeReps,
-                                onValueChange = onFreeRepsChange,
-                                label = { Text("Reps") },
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                modifier = Modifier.weight(1f)
-                            )
-                        }
-
-                        OutlinedTextField(
-                            value = freeTempo,
-                            onValueChange = onFreeTempoChange,
-                            label = { Text("Tempo (e.g. 3030)") },
-                            isError = freeTempo.isNotEmpty() && freeTempo.length != 4,
-                            supportingText = {
-                                if (freeTempo.isNotEmpty() && freeTempo.length != 4) {
-                                    Text("Must be exactly 4 digits")
-                                }
-                            },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        ExerciseEntryForm(
+                            exerciseName = freeExercise,
+                            onExerciseNameChange = onFreeExerciseChange,
+                            load = freeLoad,
+                            onLoadChange = onFreeLoadChange,
+                            reps = freeReps,
+                            onRepsChange = onFreeRepsChange,
+                            tempo = freeTempo,
+                            onTempoChange = onFreeTempoChange,
                             modifier = Modifier.fillMaxWidth()
                         )
                     }

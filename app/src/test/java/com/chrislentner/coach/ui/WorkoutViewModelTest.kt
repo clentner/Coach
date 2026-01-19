@@ -40,6 +40,21 @@ class WorkoutViewModelTest {
             return id
         }
 
+        override suspend fun updateLogEntry(entry: WorkoutLogEntry) {
+            val index = logs.indexOfFirst { it.id == entry.id }
+            if (index != -1) {
+                logs[index] = entry
+            }
+        }
+
+        override suspend fun getLogById(id: Long): WorkoutLogEntry? {
+            return logs.find { it.id == id }
+        }
+
+        override suspend fun getSessionById(id: Long): WorkoutSession? {
+            return sessions.find { it.id == id }
+        }
+
         override suspend fun deleteLogEntry(entry: WorkoutLogEntry) {
             logs.removeIf { it.id == entry.id }
         }
