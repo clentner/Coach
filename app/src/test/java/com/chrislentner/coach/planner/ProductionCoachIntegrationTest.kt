@@ -46,8 +46,8 @@ class ProductionCoachIntegrationTest {
     fun `first scheduled exercise should be from top priority patellar_tendon`() {
         val today = Date()
         val history = emptyList<WorkoutLogEntry>()
-        // 60 minutes, gym
-        val schedule = ScheduleEntry("2024-01-01", today.time, 60, "gym")
+        // 60 minutes, Gym (Capitalized as per UI)
+        val schedule = ScheduleEntry("2024-01-01", today.time, 60, "Gym")
 
         val plan = planner.generatePlan(today, history, schedule)
 

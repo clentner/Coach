@@ -76,7 +76,7 @@ class AdvancedWorkoutPlanner(
                 ?: throw IllegalStateException("Priority group '$priorityGroupKey' defined in priority_order but not found in priorities.")
 
             for (block in group.blocks) {
-                if (block.location != "anywhere" && block.location != location) continue
+                if (block.location != "anywhere" && !block.location.equals(location, ignoreCase = true)) continue
 
                 val helpsDeficit = block.contributesTo.any { (deficits[it.target] ?: 0.0) > 0.0 }
                 if (!helpsDeficit) continue
