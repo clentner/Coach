@@ -49,6 +49,8 @@ class WorkoutViewModel(
     var timerAccumulatedTime by mutableStateOf(0L)
         private set
 
+    private var cachedPlan: List<WorkoutStep>? = null
+
     init {
         initializeSession()
     }
@@ -93,33 +95,40 @@ class WorkoutViewModel(
             // 1. Get or Create Session
             val session = repository.getOrCreateSession(todayStr, now.time, location)
 
-            // 2. Fetch History & Generate Plan
-            // We need history for Planner (e.g. yesterday's squats)
-            // But we also need *today's* logs to see what's done.
+            // 2. Fetch History & Generate Plan (Only if not already cached)
+            if (cachedPlan == null) {
+                // Planner needs broad history (last few days).
+                val weekAgo = Calendar.getInstance()
+                weekAgo.add(Calendar.DAY_OF_YEAR, -14)
+                val rawHistory = repository.getHistorySince(weekAgo.timeInMillis)
 
-            // Planner needs broad history (last few days).
-            // Let's fetch last 14 days for simplicity/safety of planner logic
-            val weekAgo = Calendar.getInstance()
-            weekAgo.add(Calendar.DAY_OF_YEAR, -14)
-            val history = repository.getHistorySince(weekAgo.timeInMillis)
+                // Calculate start of today to exclude today's logs
+                val calendar = Calendar.getInstance(java.util.Locale.US)
+                calendar.time = now
+                calendar.set(Calendar.HOUR_OF_DAY, 0)
+                calendar.set(Calendar.MINUTE, 0)
+                calendar.set(Calendar.SECOND, 0)
+                calendar.set(Calendar.MILLISECOND, 0)
+                val startOfToday = calendar.timeInMillis
 
-            // Get Schedule for Today (Planner requires it)
-            // If scheduleRepository is null or no schedule, we can't plan accurately.
-            // But getOrCreateSession implies we might have session without schedule?
-            // "Inputs: yaml spec, historic exercises, time available today, location today".
-            // We need ScheduleEntry.
+                // The data model assumes 1 session per day. We exclude today's logs to ensure the plan
+                // remains consistent and doesn't change as the user logs sets during the session.
+                val historyForPlanning = rawHistory.filter { it.timestamp < startOfToday }
 
-            val fullPlan = if (planner != null && scheduleRepository != null) {
-                val schedule = scheduleRepository.getScheduleByDate(todayStr)
-                if (schedule != null) {
-                     planner.generatePlan(now, history, schedule)
+                cachedPlan = if (planner != null && scheduleRepository != null) {
+                    val schedule = scheduleRepository.getScheduleByDate(todayStr)
+                    if (schedule != null) {
+                        planner.generatePlan(now, historyForPlanning, schedule)
+                    } else {
+                        emptyList()
+                    }
                 } else {
-                     emptyList() // Or fallback?
+                    // Fallback to legacy planner if new one not provided (e.g. tests)
+                    com.chrislentner.coach.planner.WorkoutPlanner.generatePlan(now, historyForPlanning)
                 }
-            } else {
-                 // Fallback to legacy planner if new one not provided (e.g. tests)
-                 com.chrislentner.coach.planner.WorkoutPlanner.generatePlan(now, history)
             }
+
+            val fullPlan = cachedPlan!!
 
             // 3. Filter out completed sets for THIS session
             val sessionLogs = repository.getLogsForSession(session.id)

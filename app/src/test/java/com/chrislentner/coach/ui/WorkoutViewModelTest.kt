@@ -1,15 +1,26 @@
 package com.chrislentner.coach.ui
 
 import android.os.Looper
+import com.chrislentner.coach.database.ScheduleEntry
+import com.chrislentner.coach.database.ScheduleRepository
 import com.chrislentner.coach.database.SessionSummary
 import com.chrislentner.coach.database.WorkoutDao
 import com.chrislentner.coach.database.WorkoutLogEntry
 import com.chrislentner.coach.database.WorkoutRepository
 import com.chrislentner.coach.database.WorkoutSession
+import com.chrislentner.coach.planner.AdvancedWorkoutPlanner
+import com.chrislentner.coach.planner.WorkoutStep
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.mockito.Mockito.mock
+import org.mockito.Mockito.times
+import org.mockito.Mockito.verify
+import org.mockito.kotlin.any
+import org.mockito.kotlin.argumentCaptor
+import org.mockito.kotlin.whenever
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
 
@@ -167,5 +178,59 @@ class WorkoutViewModelTest {
         // Verify timer is still stopped
         assertFalse("Timer should remain stopped after skip", viewModel.isTimerRunning)
         assertNull("Timer start time should remain null after skip", viewModel.timerStartTime)
+    }
+
+    @Test
+    fun `initializeSession only generates plan once`() {
+        runBlocking {
+            val planner = mock(AdvancedWorkoutPlanner::class.java)
+            val scheduleRepo = mock(ScheduleRepository::class.java)
+            // Stub scheduleRepo to return a schedule so planner is used
+            val schedule = ScheduleEntry(date = "2024-01-01", timeInMillis = 1000L, location = "Gym", durationMinutes = 60)
+            whenever(scheduleRepo.getScheduleByDate(any())).thenReturn(schedule)
+            whenever(planner.generatePlan(any(), any(), any())).thenReturn(listOf(WorkoutStep("Test", 10, null, "Load")))
+
+            viewModel = WorkoutViewModel(repository, scheduleRepo, planner)
+            shadowOf(Looper.getMainLooper()).idle()
+
+            verify(planner, times(1)).generatePlan(any(), any(), any())
+
+            // Simulate completing a step which calls initializeSession again
+            viewModel.completeCurrentStep()
+            shadowOf(Looper.getMainLooper()).idle()
+
+            // Should still be 1 interaction because cached plan is used
+            verify(planner, times(1)).generatePlan(any(), any(), any())
+        }
+    }
+
+    @Test
+    fun `generatePlan excludes logs from today`() {
+        runBlocking {
+            val planner = mock(AdvancedWorkoutPlanner::class.java)
+            val scheduleRepo = mock(ScheduleRepository::class.java)
+            val schedule = ScheduleEntry(date = "2024-01-01", timeInMillis = 1000L, location = "Gym", durationMinutes = 60)
+            whenever(scheduleRepo.getScheduleByDate(any())).thenReturn(schedule)
+            whenever(planner.generatePlan(any(), any(), any())).thenReturn(emptyList())
+
+            // Add a log for today and yesterday
+            val now = System.currentTimeMillis()
+            val yesterday = now - 24 * 60 * 60 * 1000
+            val todayLog = WorkoutLogEntry(id=1, sessionId=1, exerciseName="Squats", targetReps=5, targetDurationSeconds=null, loadDescription="100", actualReps=5, actualDurationSeconds=null, rpe=null, notes=null, timestamp=now)
+            val yesterdayLog = WorkoutLogEntry(id=2, sessionId=2, exerciseName="Squats", targetReps=5, targetDurationSeconds=null, loadDescription="100", actualReps=5, actualDurationSeconds=null, rpe=null, notes=null, timestamp=yesterday)
+
+            dao.logs.add(todayLog)
+            dao.logs.add(yesterdayLog)
+
+            viewModel = WorkoutViewModel(repository, scheduleRepo, planner)
+            shadowOf(Looper.getMainLooper()).idle()
+
+            val captor = argumentCaptor<List<WorkoutLogEntry>>()
+            verify(planner).generatePlan(any(), captor.capture(), any())
+
+            val capturedHistory = captor.firstValue
+            assertTrue("History should include yesterday's log", capturedHistory.any { it.id == yesterdayLog.id })
+            assertFalse("History should NOT include today's log", capturedHistory.any { it.id == todayLog.id })
+        }
     }
 }
