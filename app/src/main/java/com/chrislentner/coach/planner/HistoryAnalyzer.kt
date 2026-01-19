@@ -15,9 +15,17 @@ class HistoryAnalyzer(private val config: CoachConfig) {
 
     private fun buildFatigueMap(): Map<String, Map<String, Any>> {
         val map = mutableMapOf<String, Map<String, Any>>()
-        allBlocks.flatMap { it.prescription }.forEach {
-            if (it.fatigueLoads.isNotEmpty()) {
-                map[it.exercise] = it.fatigueLoads
+        allBlocks.flatMap { it.prescription }.forEach { prescription ->
+            if (prescription.fatigueLoads.isNotEmpty()) {
+                val sets = prescription.sets ?: 1
+                val normalizedLoads = prescription.fatigueLoads.mapValues { (_, value) ->
+                    if (value is Number) {
+                        value.toDouble() / sets
+                    } else {
+                        value
+                    }
+                }
+                map[prescription.exercise] = normalizedLoads
             }
         }
         return map
