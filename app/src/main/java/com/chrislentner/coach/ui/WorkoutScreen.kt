@@ -181,14 +181,17 @@ fun SessionScreenContent(
             lifecycleState == Lifecycle.State.RESUMED &&
             effectiveTempo != null
         ) {
-            val metronome = Metronome()
+            var metronome: Metronome? = null
             try {
+                metronome = Metronome()
                 while (isActive) {
                     metronome.playClick()
                     delay(1000)
                 }
+            } catch (e: Exception) {
+                e.printStackTrace()
             } finally {
-                metronome.release()
+                metronome?.release()
             }
         }
     }
