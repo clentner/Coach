@@ -80,21 +80,6 @@ class HistoryAnalyzer(private val config: CoachConfig) {
          return max(0.0, targetConfig.goal - performed)
     }
 
-    fun getDeficits(history: List<WorkoutLogEntry>, now: Date): Map<String, Double> {
-        return config.targets.associate { target ->
-            target.id to getDeficit(target.id, target.windowDays, now, history)
-        }
-    }
-
-    fun getAccumulatedFatigue(history: List<WorkoutLogEntry>, now: Date): Map<String, Double> {
-        return config.fatigueConstraints.flatMap { (kind, constraints) ->
-            constraints.map { constraint ->
-                val windowHours = constraint.windowHours
-                kind to getAccumulatedFatigue(kind, windowHours, now, history)
-            }
-        }.toMap()
-    }
-
     fun getLastSatisfyingSessions(blockName: String, history: List<WorkoutLogEntry>): List<List<WorkoutLogEntry>> {
         val block = allBlocks.find { it.blockName == blockName } ?: return emptyList()
 
