@@ -15,7 +15,10 @@ import androidx.room.PrimaryKey
             onDelete = ForeignKey.CASCADE
         )
     ],
-    indices = [Index(value = ["sessionId"])]
+    indices = [
+        Index(value = ["sessionId"]),
+        Index(value = ["timestamp"])
+    ]
 )
 data class WorkoutLogEntry(
     @PrimaryKey(autoGenerate = true)
