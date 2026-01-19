@@ -1,6 +1,7 @@
 package com.chrislentner.coach.ui
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -11,6 +12,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.chrislentner.coach.database.ScheduleRepository
 import com.chrislentner.coach.database.WorkoutRepository
 import com.chrislentner.coach.planner.AdvancedWorkoutPlanner
+import com.chrislentner.coach.planner.HistoryAnalyzer
+import com.chrislentner.coach.planner.WorkoutScheduler
+import com.chrislentner.coach.planner.ConfigLoader
 
 @Composable
 fun CoachApp(
@@ -27,6 +31,16 @@ fun CoachApp(
         }
         composable("survey") {
             SurveyScreen(navController = navController, repository = repository)
+        }
+        composable("schedule") {
+            val context = LocalContext.current
+            val config = ConfigLoader.load(context)
+            val historyAnalyzer = HistoryAnalyzer(config)
+            val scheduler = WorkoutScheduler(config, historyAnalyzer)
+            val viewModel: ScheduleViewModel = viewModel(
+                factory = ScheduleViewModelFactory(workoutRepository, scheduler)
+            )
+            ScheduleScreen(viewModel = viewModel)
         }
         composable("workout") {
             // repository is ScheduleRepository, passing it to factory

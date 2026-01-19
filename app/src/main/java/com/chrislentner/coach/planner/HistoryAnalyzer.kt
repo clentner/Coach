@@ -80,6 +80,10 @@ class HistoryAnalyzer(private val config: CoachConfig) {
          return max(0.0, targetConfig.goal - performed)
     }
 
+    fun isTargetMet(targetId: String, windowDays: Int, now: Date, history: List<WorkoutLogEntry>): Boolean {
+        return getDeficit(targetId, windowDays, now, history) <= 0.0
+    }
+
     fun getLastSatisfyingSessions(blockName: String, history: List<WorkoutLogEntry>): List<List<WorkoutLogEntry>> {
         val block = allBlocks.find { it.blockName == blockName } ?: return emptyList()
 
