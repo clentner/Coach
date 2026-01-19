@@ -1,13 +1,15 @@
 package com.chrislentner.coach.planner
 
 object MathEvaluator {
+    private val WHITESPACE_REGEX = "\\s".toRegex()
+
     fun evaluate(expression: String, variables: Map<String, Double>): Double {
         var expr = expression
         for ((key, value) in variables) {
             expr = expr.replace(key, value.toString())
         }
         // Remove whitespace
-        expr = expr.replace("\\s".toRegex(), "")
+        expr = expr.replace(WHITESPACE_REGEX, "")
         return object : Any() {
             var pos = -1
             var ch = 0
