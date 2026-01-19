@@ -132,7 +132,8 @@ class AdvancedWorkoutPlanner(
         plannedBlocks: List<PlannedBlock>,
         today: Date
     ): Boolean {
-        val combinedHistory = history + plannedBlocks.flatMap { it.dummyLogs } + candidate.dummyLogs
+        val priorHistory = history + plannedBlocks.flatMap { it.dummyLogs }
+        val combinedHistory = priorHistory + candidate.dummyLogs
 
         val candidateTags = candidate.block.tags.toSet()
 
@@ -140,7 +141,8 @@ class AdvancedWorkoutPlanner(
             constraints.forEach { constraint ->
                 val applies = constraint.appliesToBlocksWithTag.any { it in candidateTags }
                 if (applies) {
-                    val currentLoad = historyAnalyzer.getAccumulatedFatigue(kind, constraint.windowHours, today, combinedHistory)
+                    val historyToUse = if (constraint.kind == "prior_load_lt") priorHistory else combinedHistory
+                    val currentLoad = historyAnalyzer.getAccumulatedFatigue(kind, constraint.windowHours, today, historyToUse)
                     if (currentLoad >= constraint.threshold) {
                          return false
                     }
