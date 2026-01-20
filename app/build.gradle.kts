@@ -1,3 +1,5 @@
+import java.net.URI
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
@@ -96,4 +98,22 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+}
+
+val proxyUri = sequenceOf(
+    System.getenv("HTTPS_PROXY"),
+    System.getenv("HTTP_PROXY")
+).firstOrNull { !it.isNullOrBlank() }?.let { URI(it) }
+
+tasks.withType<Test>().configureEach {
+    systemProperty("java.net.preferIPv4Stack", "true")
+    systemProperty("java.net.preferIPv6Addresses", "false")
+    proxyUri?.let { uri ->
+        val proxyPort = if (uri.port != -1) uri.port else if (uri.scheme == "https") 443 else 80
+        systemProperty("http.proxyHost", uri.host)
+        systemProperty("http.proxyPort", proxyPort.toString())
+        systemProperty("https.proxyHost", uri.host)
+        systemProperty("https.proxyPort", proxyPort.toString())
+        systemProperty("http.nonProxyHosts", "localhost|127.0.0.1|::1")
+    }
 }
