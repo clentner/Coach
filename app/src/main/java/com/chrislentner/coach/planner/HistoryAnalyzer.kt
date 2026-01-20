@@ -38,7 +38,7 @@ class HistoryAnalyzer(private val config: CoachConfig) {
         val cutoff = now.time - TimeUnit.HOURS.toMillis(windowHours.toLong())
         var total = 0.0
 
-        history.filter { it.timestamp in cutoff..now.time }.forEach { log ->
+        history.filter { it.timestamp in cutoff..now.time - 1 }.forEach { log ->
             // Note: If multiple exercises match, we use the first fatigue def found (via map, last write wins if duplicates).
             // Assuming unique exercise names across config or consistent fatigue loads.
             val fatigueDef = exerciseFatigueMap[log.exerciseName]
