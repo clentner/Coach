@@ -1,6 +1,8 @@
 package com.chrislentner.coach.ui
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -15,7 +17,7 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun ExerciseEntryForm(
     exerciseName: String,
-    onExerciseNameChange: (String) -> Unit,
+    onExerciseClick: () -> Unit,
     load: String,
     onLoadChange: (String) -> Unit,
     reps: String,
@@ -28,12 +30,21 @@ fun ExerciseEntryForm(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        OutlinedTextField(
-            value = exerciseName,
-            onValueChange = onExerciseNameChange,
-            label = { Text("Exercise Name") },
-            modifier = Modifier.fillMaxWidth()
-        )
+        // Tappable Exercise Name Field
+        Box(modifier = Modifier.fillMaxWidth()) {
+            OutlinedTextField(
+                value = exerciseName,
+                onValueChange = {}, // Ignored since we use the overlay
+                label = { Text("Exercise Name") },
+                modifier = Modifier.fillMaxWidth(),
+                readOnly = true
+            )
+            Box(
+                modifier = Modifier
+                    .matchParentSize()
+                    .clickable(onClick = onExerciseClick)
+            )
+        }
 
         Row(
             modifier = Modifier.fillMaxWidth(),

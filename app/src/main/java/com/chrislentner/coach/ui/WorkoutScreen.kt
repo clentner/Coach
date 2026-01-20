@@ -36,18 +36,22 @@ fun WorkoutScreen(
     }
     val selectedExercise by selectedExerciseFlow?.collectAsState() ?: remember { mutableStateOf(null) }
 
-    LaunchedEffect(selectedExercise) {
-        selectedExercise?.let {
-            viewModel.updateCurrentStepExercise(it)
-            savedStateHandle?.remove<String>("selected_exercise")
-        }
-    }
-
     // Free Entry State (Hoisted to share with Metronome logic)
     var freeExercise by remember { mutableStateOf("") }
     var freeLoad by remember { mutableStateOf("") }
     var freeReps by remember { mutableStateOf("") }
     var freeTempo by remember { mutableStateOf("") }
+
+    LaunchedEffect(selectedExercise) {
+        selectedExercise?.let {
+            if (uiState is WorkoutUiState.FreeEntry) {
+                freeExercise = it
+            } else {
+                viewModel.updateCurrentStepExercise(it)
+            }
+            savedStateHandle?.remove<String>("selected_exercise")
+        }
+    }
 
     // Calculate effective tempo for metronome
     val effectiveTempo = when (uiState) {
@@ -102,7 +106,6 @@ fun WorkoutScreen(
             onFinishWorkout = { navController.navigate("home") { popUpTo("home") { inclusive = true } } },
             // Free Entry Data
             freeExercise = freeExercise,
-            onFreeExerciseChange = { freeExercise = it },
             freeLoad = freeLoad,
             onFreeLoadChange = { freeLoad = it },
             freeReps = freeReps,
@@ -163,7 +166,6 @@ fun SessionScreenContent(
     onFinishWorkout: () -> Unit,
     // Free Entry
     freeExercise: String,
-    onFreeExerciseChange: (String) -> Unit,
     freeLoad: String,
     onFreeLoadChange: (String) -> Unit,
     freeReps: String,
@@ -273,7 +275,7 @@ fun SessionScreenContent(
                         // Free Entry Mode Inputs
                         ExerciseEntryForm(
                             exerciseName = freeExercise,
-                            onExerciseNameChange = onFreeExerciseChange,
+                            onExerciseClick = onSwapExercise,
                             load = freeLoad,
                             onLoadChange = onFreeLoadChange,
                             reps = freeReps,
