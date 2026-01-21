@@ -43,35 +43,25 @@ class PastWorkoutsViewModel(
         }
     }
 
-    private val parser = object : ThreadLocal<SimpleDateFormat>() {
-        override fun initialValue() = SimpleDateFormat("yyyy-MM-dd", Locale.US)
-    }
-    private val formatterCurrentYear = object : ThreadLocal<SimpleDateFormat>() {
-        override fun initialValue() = SimpleDateFormat("MMM d", Locale.US)
-    }
-    private val formatterOtherYear = object : ThreadLocal<SimpleDateFormat>() {
-        override fun initialValue() = SimpleDateFormat("MMM d, yyyy", Locale.US)
-    }
-    private val calendar = object : ThreadLocal<Calendar>() {
-        override fun initialValue() = Calendar.getInstance()
-    }
+    private val parser = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+    private val formatterCurrentYear = SimpleDateFormat("MMM d", Locale.US)
+    private val formatterOtherYear = SimpleDateFormat("MMM d, yyyy", Locale.US)
+    private val calendar = Calendar.getInstance()
 
     fun formatDate(dateStr: String): String {
         // Input: YYYY-MM-DD
         // Output: "Oct 24" (current year) or "Oct 24, 2023" (other years)
         try {
-            val sdf = parser.get() ?: return dateStr
-            val date = sdf.parse(dateStr) ?: return dateStr
+            val date = parser.parse(dateStr) ?: return dateStr
 
-            val cal = calendar.get() ?: Calendar.getInstance()
-            cal.time = date
-            val year = cal.get(Calendar.YEAR)
+            calendar.time = date
+            val year = calendar.get(Calendar.YEAR)
 
-            cal.setTimeInMillis(System.currentTimeMillis())
-            val currentYear = cal.get(Calendar.YEAR)
+            calendar.setTimeInMillis(System.currentTimeMillis())
+            val currentYear = calendar.get(Calendar.YEAR)
 
-            val formatter = if (year == currentYear) formatterCurrentYear.get() else formatterOtherYear.get()
-            return formatter?.format(date) ?: dateStr
+            val formatter = if (year == currentYear) formatterCurrentYear else formatterOtherYear
+            return formatter.format(date)
         } catch (e: Exception) {
             return dateStr
         }
