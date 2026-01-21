@@ -333,5 +333,16 @@ priorities:
               knee: 0.0
               cns: 0.5
 
+library:
+  nordic_ski:
+    blocks:
+      - block_name: nordic_ski_1_mile
+        location: anywhere
+        prescription:
+          - exercise: nordic_ski
+            distance: "1 mile"
+            fatigue_loads:
+              knee: 0.5
+
 selection:
   strategy: greedy_strict
