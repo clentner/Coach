@@ -13,6 +13,12 @@ class AdvancedWorkoutPlanner(
     private val progressionEngine: ProgressionEngine
 ) {
 
+    data class PlanResult(
+        val steps: List<WorkoutStep>,
+        val dummyLogs: List<WorkoutLogEntry>,
+        val deficits: Map<String, Double>
+    )
+
     private data class PlannedBlock(
         val block: Block,
         val effectiveSizeMinutes: Int,
@@ -20,11 +26,62 @@ class AdvancedWorkoutPlanner(
         val dummyLogs: List<WorkoutLogEntry>
     )
 
+    private data class PlanBuild(
+        val plannedBlocks: List<PlannedBlock>,
+        val deficits: Map<String, Double>
+    )
+
     fun generatePlan(
         today: Date,
         history: List<WorkoutLogEntry>,
         schedule: ScheduleEntry
     ): List<WorkoutStep> {
+        return buildPlan(today, history, schedule).plannedBlocks.flatMap { it.steps }
+    }
+
+    fun generatePlanResult(
+        today: Date,
+        history: List<WorkoutLogEntry>,
+        schedule: ScheduleEntry
+    ): PlanResult {
+        val planBuild = buildPlan(today, history, schedule)
+        return PlanResult(
+            steps = planBuild.plannedBlocks.flatMap { it.steps },
+            dummyLogs = planBuild.plannedBlocks.flatMap { it.dummyLogs },
+            deficits = planBuild.deficits
+        )
+    }
+
+    fun getHistoryWindowDays(): Int {
+        val maxTargetDays = config.targets.maxOfOrNull { it.windowDays } ?: 0
+        val maxFatigueHours = config.fatigueConstraints.values
+            .flatten()
+            .maxOfOrNull { it.windowHours } ?: 0
+        val maxFatigueDays = kotlin.math.ceil(maxFatigueHours / 24.0).toInt()
+        return max(maxTargetDays, maxFatigueDays)
+    }
+
+    fun getTargetPriorityOrder(): List<String> {
+        val orderedTargets = linkedSetOf<String>()
+        config.priorityOrder.forEach { groupKey ->
+            val group = config.priorities[groupKey] ?: return@forEach
+            group.blocks.forEach { block ->
+                block.contributesTo.forEach { contribution ->
+                    orderedTargets.add(contribution.target)
+                }
+            }
+        }
+        if (orderedTargets.isNotEmpty()) {
+            return orderedTargets.toList()
+        }
+        return config.targets.map { it.id }
+    }
+
+    private fun buildPlan(
+        today: Date,
+        history: List<WorkoutLogEntry>,
+        schedule: ScheduleEntry
+    ): PlanBuild {
         val plannedBlocks = mutableListOf<PlannedBlock>()
         var timeRemaining = schedule.durationMinutes
 
@@ -59,7 +116,7 @@ class AdvancedWorkoutPlanner(
             }
         }
 
-        return plannedBlocks.flatMap { it.steps }
+        return PlanBuild(plannedBlocks, deficits.toMap())
     }
 
     private fun findBestBlock(

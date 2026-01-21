@@ -1,6 +1,7 @@
 package com.chrislentner.coach.ui
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -40,6 +41,25 @@ fun CoachApp(
                 factory = PastWorkoutsViewModelFactory(workoutRepository)
             )
             PastWorkoutsScreen(navController = navController, viewModel = viewModel)
+        }
+        composable("suggested_schedule") {
+            val viewModel: SuggestedScheduleViewModel = viewModel(
+                factory = SuggestedScheduleViewModelFactory(workoutRepository, repository, planner)
+            )
+            SuggestedScheduleScreen(navController = navController, viewModel = viewModel)
+        }
+        composable("suggested_schedule_detail/{dayIndex}") { backStackEntry ->
+            val dayIndex = backStackEntry.arguments?.getString("dayIndex")?.toIntOrNull() ?: 0
+            val parentEntry = remember { navController.getBackStackEntry("suggested_schedule") }
+            val viewModel: SuggestedScheduleViewModel = viewModel(
+                parentEntry,
+                factory = SuggestedScheduleViewModelFactory(workoutRepository, repository, planner)
+            )
+            SuggestedScheduleDetailScreen(
+                navController = navController,
+                viewModel = viewModel,
+                dayIndex = dayIndex
+            )
         }
         composable("workout_detail/{sessionId}") { backStackEntry ->
             val sessionIdStr = backStackEntry.arguments?.getString("sessionId")
