@@ -104,4 +104,23 @@ class EditExerciseViewModelTest {
         assertEquals("Bench", log.exerciseName)
         assertEquals(1000L, log.timestamp)
     }
+
+    @Test
+    fun `delete removes log`() {
+        // Setup session & log
+        val session = WorkoutSession(id=1, date="2023-01-01", startTimeInMillis=1000L, isCompleted=false)
+        dao.sessions.add(session)
+        val existingLog = WorkoutLogEntry(id=1, sessionId=1, exerciseName="Squat", targetReps=5, targetDurationSeconds=null, loadDescription="100", timestamp=1000L, actualReps=5, actualDurationSeconds=null, rpe=null, notes=null)
+        dao.logs.add(existingLog)
+
+        val viewModel = EditExerciseViewModel(repository, sessionId=1, logId=1)
+        shadowOf(Looper.getMainLooper()).idle() // let init run
+
+        var successCalled = false
+        viewModel.delete { successCalled = true }
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertTrue(successCalled)
+        assertTrue(dao.logs.isEmpty())
+    }
 }

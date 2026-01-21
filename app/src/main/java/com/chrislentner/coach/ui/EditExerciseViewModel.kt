@@ -21,12 +21,15 @@ class EditExerciseViewModel(
     var reps by mutableStateOf("")
     var tempo by mutableStateOf("")
 
+    val isEditing: Boolean
+        get() = logId != null && logId != -1L
+
     private var existingLog: WorkoutLogEntry? = null
 
     init {
-        if (logId != null && logId != -1L) {
+        if (isEditing) {
             viewModelScope.launch {
-                val log = repository.getLogById(logId)
+                val log = repository.getLogById(logId!!)
                 if (log != null) {
                     existingLog = log
                     exerciseName = log.exerciseName
@@ -84,6 +87,15 @@ class EditExerciseViewModel(
                     timestamp = timestamp
                 )
                 repository.logSet(newEntry)
+            }
+            onSuccess()
+        }
+    }
+
+    fun delete(onSuccess: () -> Unit) {
+        viewModelScope.launch {
+            existingLog?.let {
+                repository.deleteLog(it)
             }
             onSuccess()
         }
