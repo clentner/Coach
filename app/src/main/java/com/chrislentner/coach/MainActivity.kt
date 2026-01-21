@@ -58,8 +58,10 @@ class MainActivity : ComponentActivity() {
 
         // Initialize Planner
         var planner: AdvancedWorkoutPlanner? = null
+        var configExercises: List<String> = emptyList()
         try {
             val config = ConfigLoader.load(applicationContext)
+            configExercises = config.getAllExerciseNames()
             val historyAnalyzer = HistoryAnalyzer(config)
             val progressionEngine = ProgressionEngine(historyAnalyzer)
             planner = AdvancedWorkoutPlanner(config, historyAnalyzer, progressionEngine)
@@ -95,6 +97,7 @@ class MainActivity : ComponentActivity() {
                         repository = repository,
                         workoutRepository = workoutRepository,
                         planner = planner,
+                        configExercises = configExercises,
                         startDestination = startDestination
                     )
                 }

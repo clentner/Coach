@@ -20,16 +20,16 @@ import com.chrislentner.coach.planner.WorkoutPlanner
 @Composable
 fun ExerciseSelectionScreen(
     navController: NavController,
-    repository: WorkoutRepository
+    repository: WorkoutRepository,
+    configExercises: List<String> = emptyList()
 ) {
     var searchText by remember { mutableStateOf("") }
     var suggestions by remember { mutableStateOf(emptyList<String>()) }
 
     LaunchedEffect(Unit) {
-        val recents = repository.getRecentExerciseNames(20)
-        val defaults = WorkoutPlanner.DEFAULT_EXERCISES
-        // Prioritize recents, then defaults. Remove duplicates.
-        suggestions = (recents + defaults).distinct()
+        val dbExercises = repository.getAllExerciseNamesOrderedByRecency()
+        // Prioritize DB (recent first), then config. Remove duplicates.
+        suggestions = (dbExercises + configExercises).distinct()
     }
 
     // Filter suggestions based on search text

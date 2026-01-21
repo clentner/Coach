@@ -55,4 +55,8 @@ class WorkoutRepository(private val workoutDao: WorkoutDao) {
     suspend fun getRecentExerciseNames(limit: Int): List<String> {
         return workoutDao.getRecentExerciseNames(limit)
     }
+
+    suspend fun getAllExerciseNamesOrderedByRecency(): List<String> {
+        return workoutDao.getAllExerciseNamesOrderedByRecency()
+    }
 }

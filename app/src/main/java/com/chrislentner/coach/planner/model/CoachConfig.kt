@@ -18,7 +18,13 @@ data class CoachConfig(
     val priorities: Map<String, PriorityGroup>,
     val library: Map<String, PriorityGroup> = emptyMap(),
     val selection: SelectionStrategy
-)
+) {
+    fun getAllExerciseNames(): List<String> {
+        val priorityExercises = priorities.values.flatMap { it.blocks }.flatMap { it.prescription }.map { it.exercise }
+        val libraryExercises = library.values.flatMap { it.blocks }.flatMap { it.prescription }.map { it.exercise }
+        return (priorityExercises + libraryExercises).distinct()
+    }
+}
 
 data class Target(
     val id: String,

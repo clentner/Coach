@@ -17,6 +17,7 @@ fun CoachApp(
     repository: ScheduleRepository,
     workoutRepository: WorkoutRepository,
     planner: AdvancedWorkoutPlanner?,
+    configExercises: List<String> = emptyList(),
     startDestination: String = "home"
 ) {
     val navController = rememberNavController()
@@ -50,7 +51,11 @@ fun CoachApp(
             WorkoutDetailScreen(navController = navController, viewModel = viewModel)
         }
         composable("exercise_selection") {
-            ExerciseSelectionScreen(navController = navController, repository = workoutRepository)
+            ExerciseSelectionScreen(
+                navController = navController,
+                repository = workoutRepository,
+                configExercises = configExercises
+            )
         }
         composable(
             "edit_exercise/{sessionId}?logId={logId}",

@@ -89,6 +89,10 @@ class WorkoutViewModelTest {
         override suspend fun getRecentExerciseNames(limit: Int): List<String> {
             return emptyList()
         }
+
+        override suspend fun getAllExerciseNamesOrderedByRecency(): List<String> {
+            return emptyList()
+        }
     }
 
     @Before
