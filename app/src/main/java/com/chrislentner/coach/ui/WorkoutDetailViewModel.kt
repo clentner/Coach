@@ -24,7 +24,9 @@ class WorkoutDetailViewModel(
 
     private fun loadLogs() {
         viewModelScope.launch {
-            logs = repository.getLogsForSession(sessionId)
+            repository.getLogsForSessionFlow(sessionId).collect {
+                logs = it
+            }
         }
     }
 }

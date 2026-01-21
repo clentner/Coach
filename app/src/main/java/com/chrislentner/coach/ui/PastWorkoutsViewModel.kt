@@ -27,7 +27,9 @@ class PastWorkoutsViewModel(
 
     private fun loadSessions() {
         viewModelScope.launch {
-            sessions = repository.getSessionsWithSetCounts()
+            repository.getSessionsWithSetCountsFlow().collect {
+                sessions = it
+            }
         }
     }
 

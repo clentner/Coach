@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Transaction
+import kotlinx.coroutines.flow.Flow
 
 data class SessionSummary(
     val id: Long,
@@ -38,6 +39,9 @@ interface WorkoutDao {
     @Query("SELECT * FROM workout_logs WHERE sessionId = :sessionId ORDER BY timestamp ASC")
     suspend fun getLogsForSession(sessionId: Long): List<WorkoutLogEntry>
 
+    @Query("SELECT * FROM workout_logs WHERE sessionId = :sessionId ORDER BY timestamp ASC")
+    fun getLogsForSessionFlow(sessionId: Long): Flow<List<WorkoutLogEntry>>
+
     @Query("SELECT * FROM workout_logs ORDER BY timestamp DESC")
     suspend fun getAllLogs(): List<WorkoutLogEntry>
 
@@ -57,6 +61,19 @@ interface WorkoutDao {
         ORDER BY s.date DESC
     """)
     suspend fun getSessionsWithSetCounts(): List<SessionSummary>
+
+    @Query("""
+        SELECT
+            s.id,
+            s.date,
+            s.location,
+            COUNT(CASE WHEN l.skipped = 0 THEN 1 END) as setCount
+        FROM workout_sessions s
+        LEFT JOIN workout_logs l ON s.id = l.sessionId
+        GROUP BY s.id
+        ORDER BY s.date DESC
+    """)
+    fun getSessionsWithSetCountsFlow(): Flow<List<SessionSummary>>
 
     @Query("SELECT exerciseName FROM workout_logs GROUP BY exerciseName ORDER BY MAX(timestamp) DESC LIMIT :limit")
     suspend fun getRecentExerciseNames(limit: Int): List<String>

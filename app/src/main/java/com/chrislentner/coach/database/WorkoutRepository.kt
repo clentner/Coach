@@ -1,5 +1,7 @@
 package com.chrislentner.coach.database
 
+import kotlinx.coroutines.flow.Flow
+
 // Normally we would use Dependency Injection (Hilt/Koin), but for this project we'll do manual DI or a singleton.
 // Assuming the AppDatabase is provided elsewhere.
 // But for now, let's just make a Repository class that wraps the Dao.
@@ -28,6 +30,10 @@ class WorkoutRepository(private val workoutDao: WorkoutDao) {
         return workoutDao.getSessionsWithSetCounts()
     }
 
+    fun getSessionsWithSetCountsFlow(): Flow<List<SessionSummary>> {
+        return workoutDao.getSessionsWithSetCountsFlow()
+    }
+
     suspend fun getLogById(id: Long): WorkoutLogEntry? {
         return workoutDao.getLogById(id)
     }
@@ -46,6 +52,10 @@ class WorkoutRepository(private val workoutDao: WorkoutDao) {
 
     suspend fun getLogsForSession(sessionId: Long): List<WorkoutLogEntry> {
         return workoutDao.getLogsForSession(sessionId)
+    }
+
+    fun getLogsForSessionFlow(sessionId: Long): Flow<List<WorkoutLogEntry>> {
+        return workoutDao.getLogsForSessionFlow(sessionId)
     }
 
     suspend fun getHistorySince(timestamp: Long): List<WorkoutLogEntry> {

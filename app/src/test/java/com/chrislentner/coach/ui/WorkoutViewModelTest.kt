@@ -10,6 +10,8 @@ import com.chrislentner.coach.database.WorkoutRepository
 import com.chrislentner.coach.database.WorkoutSession
 import com.chrislentner.coach.planner.AdvancedWorkoutPlanner
 import com.chrislentner.coach.planner.WorkoutStep
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.*
 import org.junit.Before
@@ -86,8 +88,16 @@ class WorkoutViewModelTest {
             return emptyList()
         }
 
+        override fun getSessionsWithSetCountsFlow(): Flow<List<SessionSummary>> {
+            return flowOf(emptyList())
+        }
+
         override suspend fun getRecentExerciseNames(limit: Int): List<String> {
             return emptyList()
+        }
+
+        override fun getLogsForSessionFlow(sessionId: Long): Flow<List<WorkoutLogEntry>> {
+            return flowOf(logs.filter { it.sessionId == sessionId }.sortedBy { it.timestamp })
         }
     }
 

@@ -6,6 +6,8 @@ import com.chrislentner.coach.database.WorkoutDao
 import com.chrislentner.coach.database.WorkoutLogEntry
 import com.chrislentner.coach.database.WorkoutRepository
 import com.chrislentner.coach.database.WorkoutSession
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
@@ -45,7 +47,9 @@ class EditExerciseViewModelTest {
         override suspend fun getAllLogs() = logs
         override suspend fun getLogsSince(timestamp: Long) = logs.filter { it.timestamp >= timestamp }
         override suspend fun getSessionsWithSetCounts() = emptyList<SessionSummary>()
+        override fun getSessionsWithSetCountsFlow(): Flow<List<SessionSummary>> = flowOf(emptyList())
         override suspend fun getRecentExerciseNames(limit: Int) = logs.sortedByDescending { it.timestamp }.map { it.exerciseName }.distinct().take(limit)
+        override fun getLogsForSessionFlow(sessionId: Long): Flow<List<WorkoutLogEntry>> = flowOf(logs.filter { it.sessionId == sessionId })
     }
 
     @Before
