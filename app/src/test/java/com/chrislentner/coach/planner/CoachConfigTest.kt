@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.io.File
 import java.io.FileInputStream
@@ -30,6 +31,30 @@ class CoachConfigTest {
         assertNotNull(config.targets)
         assertNotNull(config.priorities)
 
-        println("Successfully parsed ${config.targets.size} targets and ${config.priorities.size} priority groups.")
+        // Verify Library
+        assertNotNull(config.library)
+        val nordicSki = config.library["nordic_ski"]
+        assertNotNull("nordic_ski should exist in library", nordicSki)
+
+        val block = nordicSki!!.blocks.firstOrNull()
+        assertNotNull(block)
+
+        // Check defaults are working (sizeMinutes empty, contributesTo empty)
+        assertNotNull(block!!.sizeMinutes)
+        assert(block.sizeMinutes.isEmpty())
+        assertNotNull(block.contributesTo)
+        assert(block.contributesTo.isEmpty())
+
+        val prescription = block.prescription.firstOrNull()
+        assertNotNull(prescription)
+
+        // Check distance
+        assertEquals("1 mile", prescription!!.distance)
+
+        // Check fatigue
+        val kneeFatigue = prescription.fatigueLoads["knee"]
+        assertEquals(0.5, kneeFatigue)
+
+        println("Successfully parsed ${config.targets.size} targets, ${config.priorities.size} priority groups, and ${config.library.size} library entries.")
     }
 }

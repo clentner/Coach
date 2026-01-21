@@ -16,6 +16,7 @@ data class CoachConfig(
     @JsonProperty("priority_order")
     val priorityOrder: List<String>,
     val priorities: Map<String, PriorityGroup>,
+    val library: Map<String, PriorityGroup> = emptyMap(),
     val selection: SelectionStrategy
 )
 
@@ -46,11 +47,11 @@ data class Block(
     val blockName: String,
     @JsonProperty("size_minutes")
     @JsonDeserialize(using = SizeMinutesDeserializer::class)
-    val sizeMinutes: List<Int>, // Always normalized to a list
+    val sizeMinutes: List<Int> = emptyList(), // Always normalized to a list
     val location: String,
     val tags: List<String> = emptyList(),
     @JsonProperty("contributes_to")
-    val contributesTo: List<Contribution>,
+    val contributesTo: List<Contribution> = emptyList(),
     val prescription: List<Prescription>,
     val progression: Progression? = null
 )
@@ -68,6 +69,7 @@ data class Prescription(
     @JsonProperty("per_side")
     val perSide: Boolean = false,
     val target: String? = null, // e.g. "Z2"
+    val distance: String? = null,
     @JsonProperty("interval_protocol")
     val intervalProtocol: String? = null,
     @JsonProperty("seconds_per_rep")
