@@ -57,6 +57,7 @@ class WorkoutDetailViewModelTest {
         override suspend fun getAllLogs() = emptyList<WorkoutLogEntry>()
         override suspend fun getLogsSince(timestamp: Long) = emptyList<WorkoutLogEntry>()
         override suspend fun getSessionsWithSetCounts() = emptyList<SessionSummary>()
+        override fun getSessionsWithSetCountsFlow(): Flow<List<SessionSummary>> = kotlinx.coroutines.flow.flowOf(emptyList())
         override suspend fun getRecentExerciseNames(limit: Int) = emptyList<String>()
     }
 

@@ -88,6 +88,10 @@ class WorkoutViewModelTest {
             return emptyList()
         }
 
+        override fun getSessionsWithSetCountsFlow(): Flow<List<SessionSummary>> {
+            return flowOf(emptyList())
+        }
+
         override suspend fun getRecentExerciseNames(limit: Int): List<String> {
             return emptyList()
         }

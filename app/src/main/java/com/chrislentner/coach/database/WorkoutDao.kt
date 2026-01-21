@@ -62,6 +62,19 @@ interface WorkoutDao {
     """)
     suspend fun getSessionsWithSetCounts(): List<SessionSummary>
 
+    @Query("""
+        SELECT
+            s.id,
+            s.date,
+            s.location,
+            COUNT(CASE WHEN l.skipped = 0 THEN 1 END) as setCount
+        FROM workout_sessions s
+        LEFT JOIN workout_logs l ON s.id = l.sessionId
+        GROUP BY s.id
+        ORDER BY s.date DESC
+    """)
+    fun getSessionsWithSetCountsFlow(): Flow<List<SessionSummary>>
+
     @Query("SELECT exerciseName FROM workout_logs GROUP BY exerciseName ORDER BY MAX(timestamp) DESC LIMIT :limit")
     suspend fun getRecentExerciseNames(limit: Int): List<String>
 }

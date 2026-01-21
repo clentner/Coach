@@ -30,6 +30,10 @@ class WorkoutRepository(private val workoutDao: WorkoutDao) {
         return workoutDao.getSessionsWithSetCounts()
     }
 
+    fun getSessionsWithSetCountsFlow(): Flow<List<SessionSummary>> {
+        return workoutDao.getSessionsWithSetCountsFlow()
+    }
+
     suspend fun getLogById(id: Long): WorkoutLogEntry? {
         return workoutDao.getLogById(id)
     }
