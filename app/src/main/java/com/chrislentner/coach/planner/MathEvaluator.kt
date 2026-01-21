@@ -5,7 +5,8 @@ object MathEvaluator {
 
     fun evaluate(expression: String, variables: Map<String, Double>): Double {
         var expr = expression
-        for ((key, value) in variables) {
+        val sortedVariables = variables.entries.sortedByDescending { it.key.length }
+        for ((key, value) in sortedVariables) {
             expr = expr.replace(key, value.toString())
         }
         // Remove whitespace

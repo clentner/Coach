@@ -96,7 +96,7 @@ class HistoryAnalyzer(private val config: CoachConfig) {
 
         if (matchingLogs.isEmpty()) return false
 
-        val prescribedSets = block.prescription.sumOf { it.sets ?: 0 }
+        val prescribedSets = block.prescription.sumOf { it.sets ?: 1 }
 
         if (prescribedSets > 0) {
             val actualSets = matchingLogs.count { !it.skipped }
