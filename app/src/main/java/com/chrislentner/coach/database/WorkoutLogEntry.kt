@@ -17,7 +17,8 @@ import androidx.room.PrimaryKey
     ],
     indices = [
         Index(value = ["sessionId"]),
-        Index(value = ["timestamp"])
+        Index(value = ["timestamp"]),
+        Index(value = ["exerciseName"])
     ]
 )
 data class WorkoutLogEntry(
