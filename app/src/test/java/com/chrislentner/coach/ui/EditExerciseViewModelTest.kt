@@ -45,8 +45,7 @@ class EditExerciseViewModelTest {
         override suspend fun getAllLogs() = logs
         override suspend fun getLogsSince(timestamp: Long) = logs.filter { it.timestamp >= timestamp }
         override suspend fun getSessionsWithSetCounts() = emptyList<SessionSummary>()
-        override suspend fun getRecentExerciseNames(limit: Int) = emptyList<String>()
-        override suspend fun getAllExerciseNamesOrderedByRecency() = logs.sortedByDescending { it.timestamp }.map { it.exerciseName }.distinct()
+        override suspend fun getRecentExerciseNames(limit: Int) = logs.sortedByDescending { it.timestamp }.map { it.exerciseName }.distinct().take(limit)
     }
 
     @Before

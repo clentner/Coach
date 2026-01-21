@@ -57,6 +57,8 @@ class WorkoutRepository(private val workoutDao: WorkoutDao) {
     }
 
     suspend fun getAllExerciseNamesOrderedByRecency(): List<String> {
-        return workoutDao.getAllExerciseNamesOrderedByRecency()
+        // Fetch a large number to approximate "all" but keep it safe.
+        // 1000 unique exercise names is a reasonable upper bound for a personal app.
+        return workoutDao.getRecentExerciseNames(1000)
     }
 }
