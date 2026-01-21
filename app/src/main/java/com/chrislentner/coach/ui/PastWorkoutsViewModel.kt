@@ -43,21 +43,35 @@ class PastWorkoutsViewModel(
         }
     }
 
+    private val parser = object : ThreadLocal<SimpleDateFormat>() {
+        override fun initialValue() = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+    }
+    private val formatterCurrentYear = object : ThreadLocal<SimpleDateFormat>() {
+        override fun initialValue() = SimpleDateFormat("MMM d", Locale.US)
+    }
+    private val formatterOtherYear = object : ThreadLocal<SimpleDateFormat>() {
+        override fun initialValue() = SimpleDateFormat("MMM d, yyyy", Locale.US)
+    }
+    private val calendar = object : ThreadLocal<Calendar>() {
+        override fun initialValue() = Calendar.getInstance()
+    }
+
     fun formatDate(dateStr: String): String {
         // Input: YYYY-MM-DD
         // Output: "Oct 24" (current year) or "Oct 24, 2023" (other years)
         try {
-            val parser = SimpleDateFormat("yyyy-MM-dd", Locale.US)
-            val date = parser.parse(dateStr) ?: return dateStr
-            val cal = Calendar.getInstance()
+            val sdf = parser.get() ?: return dateStr
+            val date = sdf.parse(dateStr) ?: return dateStr
+
+            val cal = calendar.get() ?: Calendar.getInstance()
             cal.time = date
             val year = cal.get(Calendar.YEAR)
 
-            val now = Calendar.getInstance()
-            val currentYear = now.get(Calendar.YEAR)
+            cal.setTimeInMillis(System.currentTimeMillis())
+            val currentYear = cal.get(Calendar.YEAR)
 
-            val pattern = if (year == currentYear) "MMM d" else "MMM d, yyyy"
-            return SimpleDateFormat(pattern, Locale.US).format(date)
+            val formatter = if (year == currentYear) formatterCurrentYear.get() else formatterOtherYear.get()
+            return formatter?.format(date) ?: dateStr
         } catch (e: Exception) {
             return dateStr
         }
