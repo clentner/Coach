@@ -29,6 +29,12 @@ fun CoachApp(
         composable("survey") {
             SurveyScreen(navController = navController, repository = repository)
         }
+        composable("weekly_planner") {
+            val viewModel: WeeklyPlannerViewModel = viewModel(
+                factory = WeeklyPlannerViewModelFactory(repository)
+            )
+            WeeklyPlannerScreen(navController = navController, viewModel = viewModel)
+        }
         composable("workout") {
             // repository is ScheduleRepository, passing it to factory
             val viewModel: WorkoutViewModel = viewModel(

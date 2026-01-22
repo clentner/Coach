@@ -26,7 +26,7 @@ class AdvancedWorkoutPlanner(
         schedule: ScheduleEntry
     ): List<WorkoutStep> {
         val plannedBlocks = mutableListOf<PlannedBlock>()
-        var timeRemaining = schedule.durationMinutes
+        var timeRemaining = schedule.durationMinutes ?: 60
 
         // Initial Deficits
         val deficits = config.targets.associate { target ->
@@ -37,7 +37,7 @@ class AdvancedWorkoutPlanner(
         while (true) {
             val bestBlock = findBestBlock(
                 timeRemaining,
-                schedule.location,
+                schedule.location ?: "Home",
                 deficits,
                 history,
                 plannedBlocks,

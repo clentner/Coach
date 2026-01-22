@@ -10,6 +10,9 @@ interface ScheduleDao {
     @Query("SELECT * FROM schedule_entries WHERE date = :date")
     suspend fun getScheduleByDate(date: String): ScheduleEntry?
 
+    @Query("SELECT * FROM schedule_entries WHERE date >= :startDate AND date <= :endDate ORDER BY date ASC")
+    suspend fun getScheduleBetweenDates(startDate: String, endDate: String): List<ScheduleEntry>
+
     @Query("SELECT * FROM schedule_entries ORDER BY date DESC LIMIT 1")
     suspend fun getLastSchedule(): ScheduleEntry?
 

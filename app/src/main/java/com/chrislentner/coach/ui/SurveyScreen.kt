@@ -38,12 +38,18 @@ fun SurveyScreen(
     LaunchedEffect(Unit) {
         val lastSchedule = repository.getLastSchedule()
         if (lastSchedule != null) {
-            val cal = Calendar.getInstance()
-            cal.timeInMillis = lastSchedule.timeInMillis
-            initialHour = cal.get(Calendar.HOUR_OF_DAY)
-            initialMinute = cal.get(Calendar.MINUTE)
-            duration = lastSchedule.durationMinutes.toFloat()
-            location = lastSchedule.location
+            if (lastSchedule.timeInMillis != null) {
+                val cal = Calendar.getInstance()
+                cal.timeInMillis = lastSchedule.timeInMillis
+                initialHour = cal.get(Calendar.HOUR_OF_DAY)
+                initialMinute = cal.get(Calendar.MINUTE)
+            }
+            if (lastSchedule.durationMinutes != null) {
+                duration = lastSchedule.durationMinutes.toFloat()
+            }
+            if (lastSchedule.location != null) {
+                location = lastSchedule.location
+            }
         }
         isLoading = false
     }
