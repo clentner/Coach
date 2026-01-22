@@ -12,7 +12,7 @@ data class User(
     val lastName: String?
 )
 
-@Database(entities = [User::class, ScheduleEntry::class, WorkoutSession::class, WorkoutLogEntry::class], version = 7, exportSchema = false)
+@Database(entities = [User::class, ScheduleEntry::class, WorkoutSession::class, WorkoutLogEntry::class], version = 8, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
     // abstract fun userDao(): UserDao
     abstract fun scheduleDao(): ScheduleDao

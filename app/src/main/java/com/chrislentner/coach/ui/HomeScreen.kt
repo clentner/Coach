@@ -24,10 +24,16 @@ fun HomeScreen(
         val today = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
         val schedule = repository.getScheduleByDate(today)
         if (schedule != null) {
-            val cal = Calendar.getInstance()
-            cal.timeInMillis = schedule.timeInMillis
-            val timeStr = String.format("%02d:%02d", cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE))
-            workoutText = "Workout scheduled for today:\n\nTime: $timeStr\nLocation: ${schedule.location}\nDuration: ${schedule.durationMinutes} mins"
+            if (schedule.isRestDay) {
+                workoutText = "Rest Day"
+            } else if (schedule.timeInMillis != null) {
+                val cal = Calendar.getInstance()
+                cal.timeInMillis = schedule.timeInMillis
+                val timeStr = String.format("%02d:%02d", cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE))
+                workoutText = "Workout scheduled for today:\n\nTime: $timeStr\nLocation: ${schedule.location}\nDuration: ${schedule.durationMinutes} mins"
+            } else {
+                workoutText = "Workout planned for today."
+            }
         } else {
             workoutText = "No workout planned for today yet."
         }
@@ -48,7 +54,13 @@ fun HomeScreen(
 
             // Optional: Button to edit/plan if not planned?
             Button(onClick = { navController.navigate("survey") }) {
-                Text("Edit Plan")
+                Text("Edit Today's Plan")
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Button(onClick = { navController.navigate("weekly_planner") }) {
+                Text("Weekly Planner")
             }
 
             Spacer(modifier = Modifier.height(16.dp))

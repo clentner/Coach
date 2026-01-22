@@ -7,7 +7,8 @@ import androidx.room.PrimaryKey
 data class ScheduleEntry(
     @PrimaryKey
     val date: String, // Format: YYYY-MM-DD
-    val timeInMillis: Long,
-    val durationMinutes: Int,
-    val location: String // "Home" or "Gym"
+    val timeInMillis: Long?,
+    val durationMinutes: Int?,
+    val location: String?, // "Home" or "Gym"
+    val isRestDay: Boolean = false
 )
