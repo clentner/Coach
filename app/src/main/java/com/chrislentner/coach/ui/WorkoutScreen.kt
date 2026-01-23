@@ -26,7 +26,6 @@ fun WorkoutScreen(
     viewModel: WorkoutViewModel
 ) {
     val uiState = viewModel.uiState
-    val isMetronomeEnabled = viewModel.isMetronomeEnabled
 
     // Handle Exercise Swap Result
     val currentBackStackEntry = navController.currentBackStackEntry
@@ -60,6 +59,13 @@ fun WorkoutScreen(
         else -> null
     }
 
+    val hasTempo = effectiveTempo != null
+    val isMetronomeActive = if (hasTempo) {
+        viewModel.isMetronomeEnabledWithTempo
+    } else {
+        viewModel.isMetronomeEnabledWithoutTempo
+    }
+
     // Determine completed/total count for header
     val (stepHeader, isFreeMode) = when (uiState) {
         is WorkoutUiState.Active -> "Step ${uiState.completedStepsCount + 1} / ${uiState.totalStepsCount}" to false
@@ -89,9 +95,9 @@ fun WorkoutScreen(
             onUpdateTempo = { viewModel.updateCurrentStepTempo(it) },
             onSwapExercise = { navController.navigate("exercise_selection") },
             // Metronome
-            isMetronomeEnabled = isMetronomeEnabled,
+            isMetronomeEnabled = isMetronomeActive,
             effectiveTempo = effectiveTempo,
-            onToggleMetronome = { viewModel.toggleMetronome() },
+            onToggleMetronome = { viewModel.toggleMetronome(hasTempo) },
             // Timer
             isTimerRunning = viewModel.isTimerRunning,
             timerStartTime = viewModel.timerStartTime,
@@ -178,10 +184,9 @@ fun SessionScreenContent(
     val lifecycleState by lifecycleOwner.lifecycle.currentStateFlow.collectAsState()
 
     // Metronome Logic
-    LaunchedEffect(effectiveTempo, isMetronomeEnabled, lifecycleState) {
+    LaunchedEffect(isMetronomeEnabled, lifecycleState) {
         if (isMetronomeEnabled &&
-            lifecycleState == Lifecycle.State.RESUMED &&
-            effectiveTempo != null
+            lifecycleState == Lifecycle.State.RESUMED
         ) {
             val metronome = Metronome()
             try {

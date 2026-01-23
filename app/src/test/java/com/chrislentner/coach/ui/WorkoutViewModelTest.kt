@@ -143,13 +143,20 @@ class WorkoutViewModelTest {
     }
 
     @Test
-    fun `updateCurrentStepTempo disables metronome when tempo is removed`() {
-        // Ensure enabled initially (default is true)
-        assertTrue(viewModel.isMetronomeEnabled)
+    fun `toggleMetronome updates correct state based on hasTempo`() {
+        // Initial state
+        assertTrue("Metronome with tempo should be enabled by default", viewModel.isMetronomeEnabledWithTempo)
+        assertFalse("Metronome without tempo should be disabled by default", viewModel.isMetronomeEnabledWithoutTempo)
 
-        viewModel.updateCurrentStepTempo(null)
+        // Toggle for tempo
+        viewModel.toggleMetronome(hasTempo = true)
+        assertFalse("Metronome with tempo should be disabled after toggle", viewModel.isMetronomeEnabledWithTempo)
+        assertFalse("Metronome without tempo should remain disabled", viewModel.isMetronomeEnabledWithoutTempo)
 
-        assertFalse(viewModel.isMetronomeEnabled)
+        // Toggle for no tempo
+        viewModel.toggleMetronome(hasTempo = false)
+        assertFalse("Metronome with tempo should remain disabled", viewModel.isMetronomeEnabledWithTempo)
+        assertTrue("Metronome without tempo should be enabled after toggle", viewModel.isMetronomeEnabledWithoutTempo)
     }
 
     @Test

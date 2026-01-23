@@ -37,7 +37,10 @@ class WorkoutViewModel(
     var uiState by mutableStateOf<WorkoutUiState>(WorkoutUiState.Loading)
         private set
 
-    var isMetronomeEnabled by mutableStateOf(true)
+    var isMetronomeEnabledWithTempo by mutableStateOf(true)
+        private set
+
+    var isMetronomeEnabledWithoutTempo by mutableStateOf(false)
         private set
 
     var isTimerRunning by mutableStateOf(false)
@@ -55,8 +58,12 @@ class WorkoutViewModel(
         initializeSession()
     }
 
-    fun toggleMetronome() {
-        isMetronomeEnabled = !isMetronomeEnabled
+    fun toggleMetronome(hasTempo: Boolean) {
+        if (hasTempo) {
+            isMetronomeEnabledWithTempo = !isMetronomeEnabledWithTempo
+        } else {
+            isMetronomeEnabledWithoutTempo = !isMetronomeEnabledWithoutTempo
+        }
     }
 
     fun toggleTimer() {
@@ -281,10 +288,6 @@ class WorkoutViewModel(
         if (state is WorkoutUiState.Active && state.currentStep != null) {
             val newStep = state.currentStep.copy(tempo = newTempo)
             uiState = state.copy(currentStep = newStep)
-
-            if (newTempo == null) {
-                isMetronomeEnabled = false
-            }
         }
     }
 
