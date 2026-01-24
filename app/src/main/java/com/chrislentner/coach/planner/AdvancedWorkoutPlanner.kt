@@ -26,6 +26,7 @@ class AdvancedWorkoutPlanner(
         schedule: ScheduleEntry
     ): List<WorkoutStep> {
         val plannedBlocks = mutableListOf<PlannedBlock>()
+        val workingHistory = history.toMutableList()
         var timeRemaining = schedule.durationMinutes ?: 60
 
         // Initial Deficits
@@ -39,7 +40,8 @@ class AdvancedWorkoutPlanner(
                 timeRemaining,
                 schedule.location ?: "Home",
                 deficits,
-                history,
+                history, // Original history for progression
+                workingHistory, // Mutable history for fatigue
                 plannedBlocks,
                 today
             )
@@ -47,6 +49,9 @@ class AdvancedWorkoutPlanner(
             if (bestBlock != null) {
                 plannedBlocks.add(bestBlock)
                 timeRemaining -= bestBlock.effectiveSizeMinutes
+
+                // Update working history
+                workingHistory.addAll(bestBlock.dummyLogs)
 
                 // Update deficits
                 bestBlock.block.contributesTo.forEach { contribution ->
@@ -66,7 +71,8 @@ class AdvancedWorkoutPlanner(
         timeRemaining: Int,
         location: String,
         deficits: Map<String, Double>,
-        history: List<WorkoutLogEntry>,
+        originalHistory: List<WorkoutLogEntry>,
+        workingHistory: MutableList<WorkoutLogEntry>,
         plannedBlocks: List<PlannedBlock>,
         today: Date
     ): PlannedBlock? {
@@ -85,7 +91,7 @@ class AdvancedWorkoutPlanner(
                 val helpsDeficit = block.contributesTo.any { (deficits[it.target] ?: 0.0) > 0.0 }
                 if (!helpsDeficit) continue
 
-                val progressionResult = progressionEngine.determineProgression(block, history)
+                val progressionResult = progressionEngine.determineProgression(block, originalHistory)
 
                 val possibleSizes = if (progressionResult.sizeMinutes != null) {
                     listOf(progressionResult.sizeMinutes)
@@ -100,7 +106,7 @@ class AdvancedWorkoutPlanner(
 
                 val candidate = createPlannedBlock(block, selectedSize, progressionResult, today.time)
 
-                if (checkFatigue(candidate, history, plannedBlocks, today)) {
+                if (checkFatigue(candidate, workingHistory, today)) {
                     return candidate
                 }
             }
@@ -132,25 +138,43 @@ class AdvancedWorkoutPlanner(
 
     private fun checkFatigue(
         candidate: PlannedBlock,
-        history: List<WorkoutLogEntry>,
-        plannedBlocks: List<PlannedBlock>,
+        history: MutableList<WorkoutLogEntry>,
         today: Date
     ): Boolean {
-        val priorHistory = history + plannedBlocks.flatMap { it.dummyLogs }
-        val combinedHistory = priorHistory + candidate.dummyLogs
-
         val candidateTags = candidate.block.tags.toSet()
 
+        // 1. Check prior_load_lt (using history as is, before adding candidate)
         config.fatigueConstraints.forEach { (kind, constraints) ->
             constraints.forEach { constraint ->
-                val applies = constraint.appliesToBlocksWithTag.any { it in candidateTags }
-                if (applies) {
-                    val historyToUse = if (constraint.kind == "prior_load_lt") priorHistory else combinedHistory
-                    val currentLoad = historyAnalyzer.getAccumulatedFatigue(kind, constraint.windowHours, today, historyToUse)
-                    if (currentLoad >= constraint.threshold) {
-                         return false
+                if (constraint.kind == "prior_load_lt") {
+                    val applies = constraint.appliesToBlocksWithTag.any { it in candidateTags }
+                    if (applies) {
+                        val currentLoad = historyAnalyzer.getAccumulatedFatigue(kind, constraint.windowHours, today, history)
+                        if (currentLoad >= constraint.threshold) return false
                     }
                 }
+            }
+        }
+
+        // 2. Add candidate logs
+        history.addAll(candidate.dummyLogs)
+        try {
+            // 3. Check others (e.g. max_load_24h)
+            config.fatigueConstraints.forEach { (kind, constraints) ->
+                constraints.forEach { constraint ->
+                    if (constraint.kind != "prior_load_lt") {
+                        val applies = constraint.appliesToBlocksWithTag.any { it in candidateTags }
+                        if (applies) {
+                            val currentLoad = historyAnalyzer.getAccumulatedFatigue(kind, constraint.windowHours, today, history)
+                            if (currentLoad >= constraint.threshold) return false
+                        }
+                    }
+                }
+            }
+        } finally {
+            // 4. Remove candidate logs
+            repeat(candidate.dummyLogs.size) {
+                history.removeAt(history.lastIndex)
             }
         }
         return true

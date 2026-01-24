@@ -105,7 +105,7 @@ class WorkoutViewModelTest {
     fun setup() {
         dao = FakeWorkoutDao()
         repository = WorkoutRepository(dao)
-        viewModel = WorkoutViewModel(repository)
+        viewModel = WorkoutViewModel(repository, defaultDispatcher = kotlinx.coroutines.Dispatchers.Main)
         shadowOf(Looper.getMainLooper()).idle()
     }
 
@@ -207,7 +207,7 @@ class WorkoutViewModelTest {
             whenever(scheduleRepo.getScheduleByDate(any())).thenReturn(schedule)
             whenever(planner.generatePlan(any(), any(), any())).thenReturn(listOf(WorkoutStep("Test", 10, null, "Load")))
 
-            viewModel = WorkoutViewModel(repository, scheduleRepo, planner)
+            viewModel = WorkoutViewModel(repository, scheduleRepo, planner, defaultDispatcher = kotlinx.coroutines.Dispatchers.Main)
             shadowOf(Looper.getMainLooper()).idle()
 
             verify(planner, times(1)).generatePlan(any(), any(), any())
@@ -239,7 +239,7 @@ class WorkoutViewModelTest {
             dao.logs.add(todayLog)
             dao.logs.add(yesterdayLog)
 
-            viewModel = WorkoutViewModel(repository, scheduleRepo, planner)
+            viewModel = WorkoutViewModel(repository, scheduleRepo, planner, defaultDispatcher = kotlinx.coroutines.Dispatchers.Main)
             shadowOf(Looper.getMainLooper()).idle()
 
             val captor = argumentCaptor<List<WorkoutLogEntry>>()

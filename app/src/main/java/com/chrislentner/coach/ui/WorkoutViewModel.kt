@@ -12,7 +12,10 @@ import com.chrislentner.coach.database.WorkoutSession
 import com.chrislentner.coach.database.ScheduleRepository
 import com.chrislentner.coach.planner.AdvancedWorkoutPlanner
 import com.chrislentner.coach.planner.WorkoutStep
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.Calendar
 import java.util.Date
 
@@ -31,7 +34,8 @@ sealed class WorkoutUiState {
 class WorkoutViewModel(
     private val repository: WorkoutRepository,
     private val scheduleRepository: ScheduleRepository? = null,
-    private val planner: AdvancedWorkoutPlanner? = null // Optional for incremental migration/testing
+    private val planner: AdvancedWorkoutPlanner? = null, // Optional for incremental migration/testing
+    private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default
 ) : ViewModel() {
 
     var uiState by mutableStateOf<WorkoutUiState>(WorkoutUiState.Loading)
@@ -122,16 +126,18 @@ class WorkoutViewModel(
                 // remains consistent and doesn't change as the user logs sets during the session.
                 val historyForPlanning = rawHistory.filter { it.timestamp < startOfToday }
 
-                cachedPlan = if (planner != null && scheduleRepository != null) {
-                    val schedule = scheduleRepository.getScheduleByDate(todayStr)
-                    if (schedule != null) {
-                        planner.generatePlan(now, historyForPlanning, schedule)
+                cachedPlan = withContext(defaultDispatcher) {
+                    if (planner != null && scheduleRepository != null) {
+                        val schedule = scheduleRepository.getScheduleByDate(todayStr)
+                        if (schedule != null) {
+                            planner.generatePlan(now, historyForPlanning, schedule)
+                        } else {
+                            emptyList()
+                        }
                     } else {
-                        emptyList()
+                        // Fallback to legacy planner if new one not provided (e.g. tests)
+                        com.chrislentner.coach.planner.WorkoutPlanner.generatePlan(now, historyForPlanning)
                     }
-                } else {
-                    // Fallback to legacy planner if new one not provided (e.g. tests)
-                    com.chrislentner.coach.planner.WorkoutPlanner.generatePlan(now, historyForPlanning)
                 }
             }
 

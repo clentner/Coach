@@ -23,6 +23,13 @@ fun CoachApp(
     val navController = rememberNavController()
 
     NavHost(navController = navController, startDestination = startDestination) {
+        composable("splash") {
+            SplashScreen(repository = repository) { nextRoute ->
+                navController.navigate(nextRoute) {
+                    popUpTo("splash") { inclusive = true }
+                }
+            }
+        }
         composable("home") {
             HomeScreen(navController = navController, repository = repository)
         }

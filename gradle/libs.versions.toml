@@ -14,6 +14,7 @@ ksp = "1.9.24-1.0.20"
 navigationCompose = "2.7.7"
 robolectric = "4.12.1"
 androidxTestCore = "1.5.0"
+desugar_jdk_libs = "2.0.4"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -37,6 +38,7 @@ androidx-work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx"
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
 robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
 androidx-test-core = { group = "androidx.test", name = "core", version.ref = "androidxTestCore" }
+desugar-jdk-libs = { group = "com.android.tools", name = "desugar_jdk_libs", version.ref = "desugar_jdk_libs" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
