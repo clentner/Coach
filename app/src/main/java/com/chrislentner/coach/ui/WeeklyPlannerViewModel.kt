@@ -30,10 +30,10 @@ class WeeklyPlannerViewModel(
         private set
 
     init {
-        loadSchedule()
+        refresh()
     }
 
-    private fun loadSchedule() {
+    fun refresh() {
         viewModelScope.launch {
             val calendar = Calendar.getInstance()
             val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US)
@@ -107,7 +107,7 @@ class WeeklyPlannerViewModel(
             }
 
             repository.saveSchedule(newEntry)
-            loadSchedule() // Reload to refresh UI
+            refresh() // Reload to refresh UI
         }
     }
 }
