@@ -2,8 +2,10 @@ package com.chrislentner.coach.ui
 
 import android.media.AudioAttributes
 import android.media.AudioFormat
-import android.media.AudioManager
 import android.media.AudioTrack
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlin.coroutines.coroutineContext
 
 class Metronome {
     private val sampleRate = 44100
@@ -15,6 +17,29 @@ class Metronome {
     init {
         generateClickSound()
         createAudioTrack()
+    }
+
+    companion object {
+        fun calculateInterval(tempo: String?): Long {
+            // Default behavior: 60 BPM (1000ms) regardless of tempo string for now.
+            // This hook allows future implementation of custom BPMs or patterns.
+            if (!tempo.isNullOrBlank()) {
+                // Potential future logic: parse tempo string
+            }
+            return 1000L
+        }
+    }
+
+    suspend fun start(tempo: String?) {
+        val interval = calculateInterval(tempo)
+        try {
+            while (coroutineContext.isActive) {
+                playClick()
+                delay(interval)
+            }
+        } finally {
+            release()
+        }
     }
 
     private fun generateClickSound() {
