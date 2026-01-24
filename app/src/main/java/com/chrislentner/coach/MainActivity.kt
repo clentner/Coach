@@ -7,11 +7,17 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.chrislentner.coach.database.AppDatabase
 import com.chrislentner.coach.database.ScheduleRepository
 import com.chrislentner.coach.database.WorkoutRepository
@@ -20,12 +26,10 @@ import com.chrislentner.coach.planner.ConfigLoader
 import com.chrislentner.coach.planner.HistoryAnalyzer
 import com.chrislentner.coach.planner.ProgressionEngine
 import com.chrislentner.coach.ui.CoachApp
+import com.chrislentner.coach.ui.MainViewModel
+import com.chrislentner.coach.ui.MainViewModelFactory
 import com.chrislentner.coach.ui.theme.CoachTheme
 import com.chrislentner.coach.worker.BootReceiver
-import kotlinx.coroutines.runBlocking
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 class MainActivity : ComponentActivity() {
 
@@ -70,22 +74,7 @@ class MainActivity : ComponentActivity() {
             // Ideally notify user, but for now just logging and fallback to null planner
         }
 
-        // Determine start destination
-        var startDestination = "home"
-
-        // Check if opened from notification
-        if (intent.getStringExtra("navigate_to") == "survey") {
-            startDestination = "survey"
-        } else {
-            // Check if we have a workout for today
-            val today = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
-            // We use runBlocking here for simplicity in onCreate to determine initial state.
-            // In a larger app, we'd use a ViewModel and expose state, showing a Splash/Loading first.
-            val todaysSchedule = runBlocking { repository.getScheduleByDate(today) }
-            if (todaysSchedule == null) {
-                startDestination = "survey"
-            }
-        }
+        val navigateTo = intent.getStringExtra("navigate_to")
 
         setContent {
             CoachTheme {
@@ -93,13 +82,27 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    CoachApp(
-                        repository = repository,
-                        workoutRepository = workoutRepository,
-                        planner = planner,
-                        configExercises = configExercises,
-                        startDestination = startDestination
+                    val viewModel: MainViewModel = viewModel(
+                        factory = MainViewModelFactory(repository, navigateTo)
                     )
+                    val uiState by viewModel.uiState.collectAsState()
+
+                    if (uiState.isLoading) {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator()
+                        }
+                    } else {
+                        CoachApp(
+                            repository = repository,
+                            workoutRepository = workoutRepository,
+                            planner = planner,
+                            configExercises = configExercises,
+                            startDestination = uiState.startDestination
+                        )
+                    }
                 }
             }
         }
