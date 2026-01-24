@@ -154,8 +154,12 @@ fun SurveyScreen(
                              workManager.enqueue(reminderRequest)
                         }
 
-                        navController.navigate("home") {
-                            popUpTo("survey") { inclusive = true }
+                        if (date != null) {
+                            navController.popBackStack()
+                        } else {
+                            navController.navigate("home") {
+                                popUpTo("survey") { inclusive = true }
+                            }
                         }
                     }
                 }
