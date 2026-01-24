@@ -43,7 +43,8 @@ fun WeeklyPlannerScreen(
             items(days) { day ->
                 PlannerDayRow(
                     day = day,
-                    onToggleRest = { viewModel.toggleRestDay(day) }
+                    onToggleRest = { viewModel.toggleRestDay(day) },
+                    onEdit = { navController.navigate("survey?date=${day.date}") }
                 )
                 Spacer(modifier = Modifier.height(8.dp))
             }
@@ -54,7 +55,8 @@ fun WeeklyPlannerScreen(
 @Composable
 fun PlannerDayRow(
     day: PlannerDayUiModel,
-    onToggleRest: () -> Unit
+    onToggleRest: () -> Unit,
+    onEdit: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -98,12 +100,22 @@ fun PlannerDayRow(
 
                 Spacer(modifier = Modifier.height(4.dp))
 
-                Button(
-                    onClick = onToggleRest,
-                    modifier = Modifier.height(36.dp),
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
-                ) {
-                    Text(if (day.isRestDay) "Set Active" else "Set Rest")
+                Row {
+                    Button(
+                        onClick = onEdit,
+                        modifier = Modifier.height(36.dp),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
+                    ) {
+                        Text("Edit")
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Button(
+                        onClick = onToggleRest,
+                        modifier = Modifier.height(36.dp),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
+                    ) {
+                        Text(if (day.isRestDay) "Set Active" else "Set Rest")
+                    }
                 }
             }
         }
