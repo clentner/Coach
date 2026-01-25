@@ -44,7 +44,8 @@ class AdvancedWorkoutPlannerTest {
         val history = emptyList<WorkoutLogEntry>()
         val schedule = ScheduleEntry("2023-10-27", today.time, 30, "anywhere") // 30 mins available
 
-        val plan = planner.generatePlan(today, history, schedule)
+        val planResult = planner.generatePlan(today, history, schedule)
+        val plan = planResult.steps
 
         // Expected:
         // 1. BlockA (10 mins, 0.6 fatigue). Deficit T1 (Sets 10) -> 8.
@@ -79,7 +80,8 @@ class AdvancedWorkoutPlannerTest {
         // Block B has no fatigue limits, so without uniqueness check, it would appear multiple times to fill the 30 mins.
         val schedule = ScheduleEntry("2023-10-27", today.time, 30, "anywhere")
 
-        val plan = planner.generatePlan(today, history, schedule)
+        val planResult = planner.generatePlan(today, history, schedule)
+        val plan = planResult.steps
 
         // Block A uses "ex_a". Block B uses "ex_b".
         // With uniqueness enforcement:
@@ -123,7 +125,8 @@ class AdvancedWorkoutPlannerTest {
 
         val schedule = ScheduleEntry("2023-10-27", today.time, 15, "anywhere")
 
-        val plan = planner.generatePlan(today, history, schedule)
+        val planResult = planner.generatePlan(today, history, schedule)
+        val plan = planResult.steps
 
         // BlockA progression: every 1 session, increment 10 lbs.
         // Start 100. History has 100. Next should be 110.

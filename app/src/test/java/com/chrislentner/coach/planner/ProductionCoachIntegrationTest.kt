@@ -49,7 +49,8 @@ class ProductionCoachIntegrationTest {
         // 60 minutes, Gym (Capitalized as per UI)
         val schedule = ScheduleEntry("2024-01-01", today.time, 60, "Gym")
 
-        val plan = planner.generatePlan(today, history, schedule)
+        val planResult = planner.generatePlan(today, history, schedule)
+        val plan = planResult.steps
 
         if (plan.isEmpty()) {
             fail("Plan should not be empty")
