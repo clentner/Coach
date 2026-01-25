@@ -9,6 +9,7 @@ import com.chrislentner.coach.database.WorkoutLogEntry
 import com.chrislentner.coach.database.WorkoutRepository
 import com.chrislentner.coach.database.WorkoutSession
 import com.chrislentner.coach.planner.AdvancedWorkoutPlanner
+import com.chrislentner.coach.planner.Plan
 import com.chrislentner.coach.planner.WorkoutStep
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
@@ -205,7 +206,13 @@ class WorkoutViewModelTest {
             // Stub scheduleRepo to return a schedule so planner is used
             val schedule = ScheduleEntry(date = "2024-01-01", timeInMillis = 1000L, location = "Gym", durationMinutes = 60)
             whenever(scheduleRepo.getScheduleByDate(any())).thenReturn(schedule)
-            whenever(planner.generatePlan(any(), any(), any())).thenReturn(listOf(WorkoutStep("Test", 10, null, "Load")))
+            whenever(planner.generatePlan(any(), any(), any())).thenReturn(
+                Plan(
+                    steps = listOf(WorkoutStep("Test", 10, null, "Load")),
+                    logs = emptyList(),
+                    blocks = emptyList()
+                )
+            )
 
             viewModel = WorkoutViewModel(repository, scheduleRepo, planner)
             shadowOf(Looper.getMainLooper()).idle()
@@ -228,7 +235,13 @@ class WorkoutViewModelTest {
             val scheduleRepo = mock(ScheduleRepository::class.java)
             val schedule = ScheduleEntry(date = "2024-01-01", timeInMillis = 1000L, location = "Gym", durationMinutes = 60)
             whenever(scheduleRepo.getScheduleByDate(any())).thenReturn(schedule)
-            whenever(planner.generatePlan(any(), any(), any())).thenReturn(emptyList())
+            whenever(planner.generatePlan(any(), any(), any())).thenReturn(
+                Plan(
+                    steps = emptyList(),
+                    logs = emptyList(),
+                    blocks = emptyList()
+                )
+            )
 
             // Add a log for today and yesterday
             val now = System.currentTimeMillis()

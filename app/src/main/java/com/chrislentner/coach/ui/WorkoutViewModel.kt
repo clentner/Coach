@@ -125,7 +125,7 @@ class WorkoutViewModel(
                 cachedPlan = if (planner != null && scheduleRepository != null) {
                     val schedule = scheduleRepository.getScheduleByDate(todayStr)
                     if (schedule != null) {
-                        planner.generatePlan(now, historyForPlanning, schedule)
+                        planner.generatePlan(now, historyForPlanning, schedule).steps
                     } else {
                         emptyList()
                     }

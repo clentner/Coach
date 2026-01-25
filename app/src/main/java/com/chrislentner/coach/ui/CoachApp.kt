@@ -88,5 +88,15 @@ fun CoachApp(
             )
             EditExerciseScreen(navController = navController, viewModel = viewModel)
         }
+        composable("suggest_schedule") {
+            if (planner != null) {
+                val viewModel: SuggestScheduleViewModel = viewModel(
+                    factory = SuggestScheduleViewModelFactory(workoutRepository, repository, planner)
+                )
+                SuggestScheduleScreen(navController = navController, viewModel = viewModel)
+            } else {
+                androidx.compose.material3.Text("Planner configuration not found.")
+            }
+        }
     }
 }

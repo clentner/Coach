@@ -7,8 +7,19 @@ import com.chrislentner.coach.planner.model.CoachConfig
 import java.util.Date
 import kotlin.math.max
 
+data class BlockExecution(
+    val blockName: String,
+    val reduction: Double
+)
+
+data class Plan(
+    val steps: List<WorkoutStep>,
+    val logs: List<WorkoutLogEntry>,
+    val blocks: List<BlockExecution>
+)
+
 class AdvancedWorkoutPlanner(
-    private val config: CoachConfig,
+    val config: CoachConfig,
     private val historyAnalyzer: HistoryAnalyzer,
     private val progressionEngine: ProgressionEngine
 ) {
@@ -24,8 +35,9 @@ class AdvancedWorkoutPlanner(
         today: Date,
         history: List<WorkoutLogEntry>,
         schedule: ScheduleEntry
-    ): List<WorkoutStep> {
+    ): Plan {
         val plannedBlocks = mutableListOf<PlannedBlock>()
+        val executedBlocks = mutableListOf<BlockExecution>()
         var timeRemaining = schedule.durationMinutes ?: 60
 
         // Initial Deficits
@@ -49,17 +61,25 @@ class AdvancedWorkoutPlanner(
                 timeRemaining -= bestBlock.effectiveSizeMinutes
 
                 // Update deficits
+                var totalReduction = 0.0
                 bestBlock.block.contributesTo.forEach { contribution ->
                     val currentDeficit = deficits[contribution.target] ?: 0.0
                     val reduction = calculateReduction(bestBlock, contribution.target)
-                    deficits[contribution.target] = max(0.0, currentDeficit - reduction)
+                    val newDeficit = max(0.0, currentDeficit - reduction)
+                    totalReduction += (currentDeficit - newDeficit)
+                    deficits[contribution.target] = newDeficit
                 }
+                executedBlocks.add(BlockExecution(bestBlock.block.blockName, totalReduction))
             } else {
                 break
             }
         }
 
-        return plannedBlocks.flatMap { it.steps }
+        return Plan(
+            steps = plannedBlocks.flatMap { it.steps },
+            logs = plannedBlocks.flatMap { it.dummyLogs },
+            blocks = executedBlocks
+        )
     }
 
     private fun findBestBlock(
