@@ -23,9 +23,8 @@ import com.chrislentner.coach.ui.CoachApp
 import com.chrislentner.coach.ui.theme.CoachTheme
 import com.chrislentner.coach.worker.BootReceiver
 import kotlinx.coroutines.runBlocking
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 class MainActivity : ComponentActivity() {
 
@@ -78,7 +77,7 @@ class MainActivity : ComponentActivity() {
             startDestination = "survey"
         } else {
             // Check if we have a workout for today
-            val today = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
+            val today = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
             // We use runBlocking here for simplicity in onCreate to determine initial state.
             // In a larger app, we'd use a ViewModel and expose state, showing a Splash/Loading first.
             val todaysSchedule = runBlocking { repository.getScheduleByDate(today) }

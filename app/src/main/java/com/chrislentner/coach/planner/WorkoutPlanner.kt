@@ -1,8 +1,8 @@
 package com.chrislentner.coach.planner
 
 import com.chrislentner.coach.database.WorkoutLogEntry
-import java.util.Calendar
-import java.util.Date
+import java.time.LocalDate
+import java.time.ZoneId
 
 data class WorkoutStep(
     val exerciseName: String,

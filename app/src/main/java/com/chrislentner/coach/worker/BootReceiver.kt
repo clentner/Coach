@@ -6,7 +6,8 @@ import android.content.Intent
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
-import java.util.Calendar
+import java.time.Duration
+import java.time.ZonedDateTime
 import java.util.concurrent.TimeUnit
 
 class BootReceiver : BroadcastReceiver() {
@@ -22,17 +23,12 @@ class BootReceiver : BroadcastReceiver() {
             val workManager = WorkManager.getInstance(context)
 
             // Calculate initial delay for 9 AM
-            val currentDate = Calendar.getInstance()
-            val dueDate = Calendar.getInstance()
-            dueDate.set(Calendar.HOUR_OF_DAY, 9)
-            dueDate.set(Calendar.MINUTE, 0)
-            dueDate.set(Calendar.SECOND, 0)
-
-            if (dueDate.before(currentDate)) {
-                dueDate.add(Calendar.HOUR_OF_DAY, 24)
+            val now = ZonedDateTime.now()
+            var nineAm = now.withHour(9).withMinute(0).withSecond(0)
+            if (nineAm.isBefore(now)) {
+                nineAm = nineAm.plusDays(1)
             }
-
-            val timeDiff = dueDate.timeInMillis - currentDate.timeInMillis
+            val timeDiff = Duration.between(now, nineAm).toMillis()
 
             val dailyWorkRequest = PeriodicWorkRequestBuilder<DailySurveyWorker>(24, TimeUnit.HOURS)
                 .setInitialDelay(timeDiff, TimeUnit.MILLISECONDS)

@@ -3,7 +3,7 @@ package com.chrislentner.coach.planner
 import com.chrislentner.coach.database.WorkoutLogEntry
 import com.chrislentner.coach.planner.model.Block
 import com.chrislentner.coach.planner.model.CoachConfig
-import java.util.Date
+import java.time.Instant
 import java.util.concurrent.TimeUnit
 import kotlin.math.max
 
@@ -34,11 +34,12 @@ class HistoryAnalyzer(private val config: CoachConfig) {
         return map
     }
 
-    fun getAccumulatedFatigue(kind: String, windowHours: Int, now: Date, history: List<WorkoutLogEntry>): Double {
-        val cutoff = now.time - TimeUnit.HOURS.toMillis(windowHours.toLong())
+    fun getAccumulatedFatigue(kind: String, windowHours: Int, now: Instant, history: List<WorkoutLogEntry>): Double {
+        val cutoff = now.minusMillis(TimeUnit.HOURS.toMillis(windowHours.toLong())).toEpochMilli()
+        val nowMillis = now.toEpochMilli()
         var total = 0.0
 
-        history.filter { it.timestamp in cutoff..now.time }.forEach { log ->
+        history.filter { it.timestamp in cutoff..nowMillis }.forEach { log ->
             // Note: If multiple exercises match, we use the first fatigue def found (via map, last write wins if duplicates).
             // Assuming unique exercise names across config or consistent fatigue loads.
             val fatigueDef = exerciseFatigueMap[log.exerciseName]
@@ -58,26 +59,27 @@ class HistoryAnalyzer(private val config: CoachConfig) {
         return total
     }
 
-    fun getDeficit(targetId: String, windowDays: Int, now: Date, history: List<WorkoutLogEntry>): Double {
-         val targetConfig = config.targets.find { it.id == targetId } ?: return 0.0
-         val cutoff = now.time - TimeUnit.DAYS.toMillis(windowDays.toLong())
+    fun getDeficit(targetId: String, windowDays: Int, now: Instant, history: List<WorkoutLogEntry>): Double {
+        val targetConfig = config.targets.find { it.id == targetId } ?: return 0.0
+        val cutoff = now.minusMillis(TimeUnit.DAYS.toMillis(windowDays.toLong())).toEpochMilli()
+        val nowMillis = now.toEpochMilli()
 
-         val contributingExercises = targetContributingExercises[targetId] ?: emptySet()
+        val contributingExercises = targetContributingExercises[targetId] ?: emptySet()
 
-         var performed = 0.0
-         history.filter { it.timestamp in cutoff..now.time && contributingExercises.contains(it.exerciseName) }
-             .forEach { log ->
-                 if (!log.skipped) {
-                     if (targetConfig.type == "sets") {
-                         // Assume one log entry = one set
-                         performed += 1.0
-                     } else if (targetConfig.type == "minutes") {
-                         performed += (log.actualDurationSeconds ?: 0) / 60.0
-                     }
-                 }
-             }
+        var performed = 0.0
+        history.filter { it.timestamp in cutoff..nowMillis && contributingExercises.contains(it.exerciseName) }
+            .forEach { log ->
+                if (!log.skipped) {
+                    if (targetConfig.type == "sets") {
+                        // Assume one log entry = one set
+                        performed += 1.0
+                    } else if (targetConfig.type == "minutes") {
+                        performed += (log.actualDurationSeconds ?: 0) / 60.0
+                    }
+                }
+            }
 
-         return max(0.0, targetConfig.goal - performed)
+        return max(0.0, targetConfig.goal - performed)
     }
 
     fun getLastSatisfyingSessions(blockName: String, history: List<WorkoutLogEntry>): List<List<WorkoutLogEntry>> {

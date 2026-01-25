@@ -10,9 +10,8 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
-import java.text.SimpleDateFormat
-import java.util.Calendar
-import java.util.Locale
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 @RunWith(RobolectricTestRunner::class)
 class WeeklyPlannerViewModelTest {
@@ -51,8 +50,7 @@ class WeeklyPlannerViewModelTest {
         assertEquals(7, viewModel.days.size)
 
         // Verify dates are consecutive
-        val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US)
-        val today = dateFormat.format(java.util.Date())
+        val today = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
         assertEquals(today, viewModel.days[0].date)
     }
 
@@ -76,8 +74,7 @@ class WeeklyPlannerViewModelTest {
 
     @Test
     fun `toggleRestDay toggles existing entry`() {
-        val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US)
-        val today = dateFormat.format(java.util.Date())
+        val today = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
 
         dao.entries.add(ScheduleEntry(date = today, timeInMillis = null, durationMinutes = null, location = null, isRestDay = true))
 

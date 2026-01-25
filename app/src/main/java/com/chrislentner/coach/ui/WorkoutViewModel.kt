@@ -13,8 +13,9 @@ import com.chrislentner.coach.database.ScheduleRepository
 import com.chrislentner.coach.planner.AdvancedWorkoutPlanner
 import com.chrislentner.coach.planner.WorkoutStep
 import kotlinx.coroutines.launch
-import java.util.Calendar
-import java.util.Date
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
 
 sealed class WorkoutUiState {
     object Loading : WorkoutUiState()
@@ -89,8 +90,9 @@ class WorkoutViewModel(
 
     private fun initializeSession() {
         viewModelScope.launch {
-            val now = Date()
-            val todayStr = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(now)
+            val now = Instant.now()
+            val today = LocalDate.now()
+            val todayStr = today.toString()
 
             // 0. Get scheduled location
             var location: String? = null
@@ -100,26 +102,15 @@ class WorkoutViewModel(
             }
 
             // 1. Get or Create Session
-            val session = repository.getOrCreateSession(todayStr, now.time, location)
+            val session = repository.getOrCreateSession(todayStr, now.toEpochMilli(), location)
 
             // 2. Fetch History & Generate Plan (Only if not already cached)
             if (cachedPlan == null) {
-                // Planner needs broad history (last few days).
-                val weekAgo = Calendar.getInstance()
-                weekAgo.add(Calendar.DAY_OF_YEAR, -14)
-                val rawHistory = repository.getHistorySince(weekAgo.timeInMillis)
+                val historyCutoff = today.minusDays(14).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+                val rawHistory = repository.getHistorySince(historyCutoff)
+                val startOfToday = today.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
 
-                // Calculate start of today to exclude today's logs
-                val calendar = Calendar.getInstance(java.util.Locale.US)
-                calendar.time = now
-                calendar.set(Calendar.HOUR_OF_DAY, 0)
-                calendar.set(Calendar.MINUTE, 0)
-                calendar.set(Calendar.SECOND, 0)
-                calendar.set(Calendar.MILLISECOND, 0)
-                val startOfToday = calendar.timeInMillis
-
-                // The data model assumes 1 session per day. We exclude today's logs to ensure the plan
-                // remains consistent and doesn't change as the user logs sets during the session.
+                // Exclude today's logs for consistent planning
                 val historyForPlanning = rawHistory.filter { it.timestamp < startOfToday }
 
                 cachedPlan = if (planner != null && scheduleRepository != null) {
@@ -130,8 +121,7 @@ class WorkoutViewModel(
                         emptyList()
                     }
                 } else {
-                    // Fallback to legacy planner if new one not provided (e.g. tests)
-                    com.chrislentner.coach.planner.WorkoutPlanner.generatePlan(now, historyForPlanning)
+                    com.chrislentner.coach.planner.WorkoutPlanner.generatePlan(today, historyForPlanning)
                 }
             }
 

@@ -5,9 +5,8 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.chrislentner.coach.database.AppDatabase
 import com.chrislentner.coach.database.ScheduleRepository
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 class DailySurveyWorker(appContext: Context, workerParams: WorkerParameters):
     CoroutineWorker(appContext, workerParams) {
@@ -16,7 +15,7 @@ class DailySurveyWorker(appContext: Context, workerParams: WorkerParameters):
         val database = AppDatabase.getDatabase(applicationContext)
         val repository = ScheduleRepository(database.scheduleDao())
 
-        val today = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
+        val today = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
         val schedule = repository.getScheduleByDate(today)
 
         if (schedule != null && schedule.isRestDay) {
