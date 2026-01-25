@@ -24,10 +24,12 @@ import java.util.Locale
 @Composable
 fun SurveyScreen(
     navController: NavController,
-    repository: ScheduleRepository
+    repository: ScheduleRepository,
+    date: String? = null
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val targetDate = date ?: SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
 
     var isLoading by remember { mutableStateOf(true) }
     var initialHour by remember { mutableIntStateOf(8) }
@@ -35,20 +37,28 @@ fun SurveyScreen(
     var duration by remember { mutableFloatStateOf(60f) }
     var location by remember { mutableStateOf("Home") }
 
-    LaunchedEffect(Unit) {
-        val lastSchedule = repository.getLastSchedule()
-        if (lastSchedule != null) {
-            if (lastSchedule.timeInMillis != null) {
+    LaunchedEffect(targetDate) {
+        val specificSchedule = repository.getScheduleByDate(targetDate)
+        // If we have a specific schedule that is NOT a rest day, use it.
+        // Otherwise, fall back to the last schedule (any date) to populate defaults.
+        val sourceSchedule = if (specificSchedule != null && !specificSchedule.isRestDay) {
+            specificSchedule
+        } else {
+            repository.getLastSchedule()
+        }
+
+        if (sourceSchedule != null) {
+            if (sourceSchedule.timeInMillis != null) {
                 val cal = Calendar.getInstance()
-                cal.timeInMillis = lastSchedule.timeInMillis
+                cal.timeInMillis = sourceSchedule.timeInMillis
                 initialHour = cal.get(Calendar.HOUR_OF_DAY)
                 initialMinute = cal.get(Calendar.MINUTE)
             }
-            if (lastSchedule.durationMinutes != null) {
-                duration = lastSchedule.durationMinutes.toFloat()
+            if (sourceSchedule.durationMinutes != null) {
+                duration = sourceSchedule.durationMinutes.toFloat()
             }
-            if (lastSchedule.location != null) {
-                location = lastSchedule.location
+            if (sourceSchedule.location != null) {
+                location = sourceSchedule.location
             }
         }
         isLoading = false
@@ -71,7 +81,7 @@ fun SurveyScreen(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("Plan your workout", style = MaterialTheme.typography.headlineMedium)
+            Text("Plan for $targetDate", style = MaterialTheme.typography.headlineMedium)
 
             Spacer(modifier = Modifier.height(24.dp))
 
@@ -109,15 +119,22 @@ fun SurveyScreen(
                 onClick = {
                     scope.launch {
                         val calendar = Calendar.getInstance()
+                        val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+                        val dateObj = sdf.parse(targetDate)
+                        if (dateObj != null) {
+                            calendar.time = dateObj
+                        }
+
                         calendar.set(Calendar.HOUR_OF_DAY, timePickerState.hour)
                         calendar.set(Calendar.MINUTE, timePickerState.minute)
                         calendar.set(Calendar.SECOND, 0)
 
                         val entry = ScheduleEntry(
-                            date = SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date()),
+                            date = targetDate,
                             timeInMillis = calendar.timeInMillis,
                             durationMinutes = duration.toInt(),
-                            location = location
+                            location = location,
+                            isRestDay = false
                         )
                         repository.saveSchedule(entry)
 
@@ -137,8 +154,12 @@ fun SurveyScreen(
                              workManager.enqueue(reminderRequest)
                         }
 
-                        navController.navigate("home") {
-                            popUpTo("survey") { inclusive = true }
+                        if (date != null) {
+                            navController.popBackStack()
+                        } else {
+                            navController.navigate("home") {
+                                popUpTo("survey") { inclusive = true }
+                            }
                         }
                     }
                 }

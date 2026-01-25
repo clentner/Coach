@@ -26,8 +26,17 @@ fun CoachApp(
         composable("home") {
             HomeScreen(navController = navController, repository = repository)
         }
-        composable("survey") {
-            SurveyScreen(navController = navController, repository = repository)
+        composable(
+            "survey?date={date}",
+            arguments = listOf(
+                navArgument("date") {
+                    type = NavType.StringType
+                    nullable = true
+                }
+            )
+        ) { backStackEntry ->
+            val date = backStackEntry.arguments?.getString("date")
+            SurveyScreen(navController = navController, repository = repository, date = date)
         }
         composable("weekly_planner") {
             val viewModel: WeeklyPlannerViewModel = viewModel(

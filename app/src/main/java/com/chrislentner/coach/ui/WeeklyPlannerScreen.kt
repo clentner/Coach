@@ -12,6 +12,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.navigation.NavController
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -21,6 +24,19 @@ fun WeeklyPlannerScreen(
     viewModel: WeeklyPlannerViewModel
 ) {
     val days = viewModel.days
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    androidx.compose.runtime.DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                viewModel.refresh()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -43,7 +59,8 @@ fun WeeklyPlannerScreen(
             items(days) { day ->
                 PlannerDayRow(
                     day = day,
-                    onToggleRest = { viewModel.toggleRestDay(day) }
+                    onToggleRest = { viewModel.toggleRestDay(day) },
+                    onEdit = { navController.navigate("survey?date=${day.date}") }
                 )
                 Spacer(modifier = Modifier.height(8.dp))
             }
@@ -54,7 +71,8 @@ fun WeeklyPlannerScreen(
 @Composable
 fun PlannerDayRow(
     day: PlannerDayUiModel,
-    onToggleRest: () -> Unit
+    onToggleRest: () -> Unit,
+    onEdit: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -98,12 +116,22 @@ fun PlannerDayRow(
 
                 Spacer(modifier = Modifier.height(4.dp))
 
-                Button(
-                    onClick = onToggleRest,
-                    modifier = Modifier.height(36.dp),
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
-                ) {
-                    Text(if (day.isRestDay) "Set Active" else "Set Rest")
+                Row {
+                    Button(
+                        onClick = onEdit,
+                        modifier = Modifier.height(36.dp),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
+                    ) {
+                        Text("Edit")
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Button(
+                        onClick = onToggleRest,
+                        modifier = Modifier.height(36.dp),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
+                    ) {
+                        Text(if (day.isRestDay) "Set Active" else "Set Rest")
+                    }
                 }
             }
         }
