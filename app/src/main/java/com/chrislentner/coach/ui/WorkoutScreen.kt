@@ -17,8 +17,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.navigation.NavController
 import com.chrislentner.coach.planner.LoadLogic
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
 
 @Composable
 fun WorkoutScreen(
@@ -189,14 +187,7 @@ fun SessionScreenContent(
             lifecycleState == Lifecycle.State.RESUMED
         ) {
             val metronome = Metronome()
-            try {
-                while (isActive) {
-                    metronome.playClick()
-                    delay(1000)
-                }
-            } finally {
-                metronome.release()
-            }
+            metronome.start(effectiveTempo)
         }
     }
 
