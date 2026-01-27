@@ -4,7 +4,7 @@ import com.chrislentner.coach.database.ScheduleEntry
 import com.chrislentner.coach.database.WorkoutLogEntry
 import com.chrislentner.coach.planner.model.Block
 import com.chrislentner.coach.planner.model.CoachConfig
-import java.time.Instant
+import java.util.Date
 import kotlin.math.max
 
 data class BlockExecution(
@@ -32,7 +32,7 @@ class AdvancedWorkoutPlanner(
     )
 
     fun generatePlan(
-        today: Instant,
+        today: Date,
         history: List<WorkoutLogEntry>,
         schedule: ScheduleEntry
     ): Plan {
@@ -88,7 +88,7 @@ class AdvancedWorkoutPlanner(
         deficits: Map<String, Double>,
         history: List<WorkoutLogEntry>,
         plannedBlocks: List<PlannedBlock>,
-        today: Instant
+        today: Date
     ): PlannedBlock? {
         val plannedExercises = plannedBlocks.flatMap { it.steps.map { step -> step.exerciseName } }.toSet()
 
@@ -118,7 +118,7 @@ class AdvancedWorkoutPlanner(
 
                 val selectedSize = selectSize(fittingSizes, block, deficits)
 
-                val candidate = createPlannedBlock(block, selectedSize, progressionResult, today.toEpochMilli())
+                val candidate = createPlannedBlock(block, selectedSize, progressionResult, today.time)
 
                 if (checkFatigue(candidate, history, plannedBlocks, today)) {
                     return candidate
@@ -154,7 +154,7 @@ class AdvancedWorkoutPlanner(
         candidate: PlannedBlock,
         history: List<WorkoutLogEntry>,
         plannedBlocks: List<PlannedBlock>,
-        today: Instant
+        today: Date
     ): Boolean {
         val priorHistory = history + plannedBlocks.flatMap { it.dummyLogs }
         val combinedHistory = priorHistory + candidate.dummyLogs

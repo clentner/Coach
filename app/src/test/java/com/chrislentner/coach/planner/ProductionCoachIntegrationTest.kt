@@ -12,7 +12,7 @@ import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Test
 import java.io.File
-import java.time.Instant
+import java.util.Date
 
 class ProductionCoachIntegrationTest {
 
@@ -44,10 +44,10 @@ class ProductionCoachIntegrationTest {
 
     @Test
     fun `first scheduled exercise should be from top priority patellar_tendon`() {
-        val today = Instant.now()
+        val today = Date()
         val history = emptyList<WorkoutLogEntry>()
         // 60 minutes, Gym (Capitalized as per UI)
-        val schedule = ScheduleEntry("2024-01-01", today.toEpochMilli(), 60, "Gym")
+        val schedule = ScheduleEntry("2024-01-01", today.time, 60, "Gym")
 
         val planResult = planner.generatePlan(today, history, schedule)
         val plan = planResult.steps

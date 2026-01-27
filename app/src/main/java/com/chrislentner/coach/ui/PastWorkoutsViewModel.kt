@@ -9,10 +9,9 @@ import androidx.lifecycle.viewModelScope
 import com.chrislentner.coach.database.SessionSummary
 import com.chrislentner.coach.database.WorkoutRepository
 import kotlinx.coroutines.launch
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Date
 import java.util.Locale
 
 class PastWorkoutsViewModel(
@@ -36,9 +35,10 @@ class PastWorkoutsViewModel(
 
     fun createSession(millis: Long, onCreated: (Long) -> Unit) {
         viewModelScope.launch {
-            val instant = Instant.ofEpochMilli(millis)
-            val date = instant.atZone(ZoneId.of("UTC")).toLocalDate()
-            val dateStr = date.format(DateTimeFormatter.ISO_LOCAL_DATE)
+            val date = Date(millis)
+            val formatter = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+            formatter.timeZone = java.util.TimeZone.getTimeZone("UTC")
+            val dateStr = formatter.format(date)
 
             val session = repository.getOrCreateSession(dateStr, millis)
             onCreated(session.id)
@@ -49,11 +49,17 @@ class PastWorkoutsViewModel(
         // Input: YYYY-MM-DD
         // Output: "Oct 24" (current year) or "Oct 24, 2023" (other years)
         try {
-            val date = LocalDate.parse(dateStr)
-            val currentYear = LocalDate.now().year
+            val parser = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+            val date = parser.parse(dateStr) ?: return dateStr
+            val cal = Calendar.getInstance()
+            cal.time = date
+            val year = cal.get(Calendar.YEAR)
 
-            val pattern = if (date.year == currentYear) "MMM d" else "MMM d, yyyy"
-            return date.format(DateTimeFormatter.ofPattern(pattern, Locale.US))
+            val now = Calendar.getInstance()
+            val currentYear = now.get(Calendar.YEAR)
+
+            val pattern = if (year == currentYear) "MMM d" else "MMM d, yyyy"
+            return SimpleDateFormat(pattern, Locale.US).format(date)
         } catch (e: Exception) {
             return dateStr
         }

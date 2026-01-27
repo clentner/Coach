@@ -18,11 +18,12 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 
 data class SuggestedDayPlan(
-    val date: ZonedDateTime,
+    val date: Date,
     val isRestDay: Boolean,
     val location: String?,
     val steps: List<WorkoutStep>
@@ -49,29 +50,35 @@ class SuggestScheduleViewModel(
         viewModelScope.launch {
             withContext(dispatcher) {
                 // Fetch History
-                val historyCutoff = ZonedDateTime.now().minusDays(60).toInstant().toEpochMilli()
-                val history = repository.getHistorySince(historyCutoff).toMutableList()
+                val cal = Calendar.getInstance()
+                cal.add(Calendar.DAY_OF_YEAR, -60) // Safe margin of 60 days
+                val history = repository.getHistorySince(cal.timeInMillis).toMutableList()
 
                 val workingHistory = ArrayList(history)
                 val plans = mutableListOf<SuggestedDayPlan>()
 
-                var currentDateTime = ZonedDateTime.now()
+                val currentCal = Calendar.getInstance()
+                // Do not reset time here; start from "Now"
 
                 for (i in 0 until 7) {
-                    val dateStr = currentDateTime.format(DateTimeFormatter.ISO_LOCAL_DATE)
+                    val dateStr = java.text.SimpleDateFormat("yyyy-MM-dd", Locale.US).format(currentCal.time)
 
                     val schedule = scheduleRepository.getScheduleByDate(dateStr)
                         ?: ScheduleEntry(dateStr, isRestDay = false, timeInMillis = null, durationMinutes = 60, location = null)
 
                     // Adjust time if scheduled
                     if (schedule.timeInMillis != null) {
-                        val scheduleInstant = java.time.Instant.ofEpochMilli(schedule.timeInMillis)
-                        val scheduleTime = java.time.LocalTime.from(scheduleInstant.atZone(java.time.ZoneId.systemDefault()))
-                        currentDateTime = currentDateTime.withHour(scheduleTime.hour).withMinute(scheduleTime.minute)
+                        val scheduleCal = Calendar.getInstance()
+                        scheduleCal.timeInMillis = schedule.timeInMillis
+
+                        currentCal.set(Calendar.HOUR_OF_DAY, scheduleCal.get(Calendar.HOUR_OF_DAY))
+                        currentCal.set(Calendar.MINUTE, scheduleCal.get(Calendar.MINUTE))
                     }
 
+                    val currentDate = currentCal.time
+
                     if (schedule.isRestDay) {
-                        plans.add(SuggestedDayPlan(currentDateTime, true, null, emptyList()))
+                        plans.add(SuggestedDayPlan(currentDate, true, null, emptyList()))
                     } else {
                         // Location logic
                         val chosenPlan: Plan
@@ -79,14 +86,14 @@ class SuggestScheduleViewModel(
 
                         if (schedule.location != null) {
                             chosenLocation = schedule.location
-                            chosenPlan = planner.generatePlan(currentDateTime.toInstant(), workingHistory, schedule)
+                            chosenPlan = planner.generatePlan(currentDate, workingHistory, schedule)
                         } else {
                             // Compare Home vs Gym
                             val homeSchedule = schedule.copy(location = "Home")
                             val gymSchedule = schedule.copy(location = "Gym")
 
-                            val homePlan = planner.generatePlan(currentDateTime.toInstant(), workingHistory, homeSchedule)
-                            val gymPlan = planner.generatePlan(currentDateTime.toInstant(), workingHistory, gymSchedule)
+                            val homePlan = planner.generatePlan(currentDate, workingHistory, homeSchedule)
+                            val gymPlan = planner.generatePlan(currentDate, workingHistory, gymSchedule)
 
                             val winner = comparePlans(homePlan, gymPlan, planner.config)
                             chosenPlan = winner
@@ -94,11 +101,11 @@ class SuggestScheduleViewModel(
                         }
 
                         workingHistory.addAll(chosenPlan.logs)
-                        plans.add(SuggestedDayPlan(currentDateTime, false, chosenLocation, chosenPlan.steps))
+                        plans.add(SuggestedDayPlan(currentDate, false, chosenLocation, chosenPlan.steps))
                     }
 
                     // Advance to next day
-                    currentDateTime = currentDateTime.plusDays(1)
+                    currentCal.add(Calendar.DAY_OF_YEAR, 1)
                 }
 
                 withContext(Dispatchers.Main) {

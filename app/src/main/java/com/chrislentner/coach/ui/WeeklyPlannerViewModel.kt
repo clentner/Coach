@@ -9,10 +9,9 @@ import androidx.lifecycle.viewModelScope
 import com.chrislentner.coach.database.ScheduleEntry
 import com.chrislentner.coach.database.ScheduleRepository
 import kotlinx.coroutines.launch
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Date
 import java.util.Locale
 
 data class PlannerDayUiModel(
@@ -36,33 +35,52 @@ class WeeklyPlannerViewModel(
 
     fun refresh() {
         viewModelScope.launch {
-            val today = LocalDate.now()
-            val endDate = today.plusDays(6)
-            val entries = repository.getScheduleBetweenDates(today.toString(), endDate.toString())
+            val calendar = Calendar.getInstance()
+            val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+            val dayOfWeekFormat = SimpleDateFormat("EEEE", Locale.US)
+            val displayDateFormat = SimpleDateFormat("MMM d", Locale.US)
+
+            val startDate = dateFormat.format(calendar.time)
+
+            // Calculate end date (6 days from now)
+            val endCalendar = Calendar.getInstance()
+            endCalendar.add(Calendar.DAY_OF_YEAR, 6)
+            val endDate = dateFormat.format(endCalendar.time)
+
+            val entries = repository.getScheduleBetweenDates(startDate, endDate)
             val entriesMap = entries.associateBy { it.date }
 
-            val newDays = (0..6).map { i ->
-                val date = today.plusDays(i.toLong())
-                val dateStr = date.format(DateTimeFormatter.ISO_LOCAL_DATE)
+            val newDays = mutableListOf<PlannerDayUiModel>()
+
+            // Reset calendar to today for the loop
+            val loopCalendar = Calendar.getInstance()
+
+            for (i in 0..6) {
+                val dateStr = dateFormat.format(loopCalendar.time)
                 val entry = entriesMap[dateStr]
+
                 val isRestDay = entry?.isRestDay == true
 
                 val details = if (entry != null && !isRestDay && entry.timeInMillis != null) {
-                    val instant = Instant.ofEpochMilli(entry.timeInMillis)
-                    val time = instant.atZone(ZoneId.systemDefault()).toLocalTime()
-                    val timeStr = time.format(DateTimeFormatter.ofPattern("h:mm a", Locale.US))
+                    val timeCal = Calendar.getInstance()
+                    timeCal.timeInMillis = entry.timeInMillis
+                    val timeStr = SimpleDateFormat("h:mm a", Locale.US).format(timeCal.time)
                     "$timeStr - ${entry.location ?: "Unknown"}"
                 } else {
                     null
                 }
 
-                PlannerDayUiModel(
-                    date = dateStr,
-                    dayOfWeek = date.format(DateTimeFormatter.ofPattern("EEEE", Locale.US)),
-                    displayDate = date.format(DateTimeFormatter.ofPattern("MMM d", Locale.US)),
-                    isRestDay = isRestDay,
-                    details = details
+                newDays.add(
+                    PlannerDayUiModel(
+                        date = dateStr,
+                        dayOfWeek = dayOfWeekFormat.format(loopCalendar.time),
+                        displayDate = displayDateFormat.format(loopCalendar.time),
+                        isRestDay = isRestDay,
+                        details = details
+                    )
                 )
+
+                loopCalendar.add(Calendar.DAY_OF_YEAR, 1)
             }
 
             days = newDays
