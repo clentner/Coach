@@ -194,7 +194,7 @@ priorities:
             sets: 1
             reps: 3
             seconds_per_rep: 10
-          - exercise: pike_lift_cracrk
+          - exercise: pike_lift_cracr
             sets: 3
             reps: 5
             tempo: "5050"
