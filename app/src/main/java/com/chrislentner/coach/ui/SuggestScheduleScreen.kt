@@ -15,7 +15,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.chrislentner.coach.planner.WorkoutStep
-import java.text.SimpleDateFormat
+import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -54,7 +54,7 @@ fun SuggestScheduleScreen(
             ) {
                 items(
                     items = plans,
-                    key = { it.date.time }
+                    key = { it.date.toEpochDay() }
                 ) { plan ->
                     SuggestedDayRow(plan)
                     HorizontalDivider()
@@ -67,7 +67,7 @@ fun SuggestScheduleScreen(
 @Composable
 fun SuggestedDayRow(plan: SuggestedDayPlan) {
     var expanded by remember { mutableStateOf(false) }
-    val dateFormatter = remember { SimpleDateFormat("EEE, MMM d", Locale.US) }
+    val dateFormatter = remember { DateTimeFormatter.ofPattern("EEE, MMM d", Locale.US) }
 
     Column(
         modifier = Modifier
@@ -81,7 +81,7 @@ fun SuggestedDayRow(plan: SuggestedDayPlan) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = dateFormatter.format(plan.date),
+                text = plan.date.format(dateFormatter),
                 fontWeight = FontWeight.Bold,
                 style = MaterialTheme.typography.bodyLarge
             )

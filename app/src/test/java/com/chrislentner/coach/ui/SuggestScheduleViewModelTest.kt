@@ -21,7 +21,6 @@ import org.mockito.kotlin.any
 import org.mockito.kotlin.whenever
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
-import java.util.Date
 
 @RunWith(RobolectricTestRunner::class)
 class SuggestScheduleViewModelTest {

@@ -13,12 +13,16 @@ import com.chrislentner.coach.database.ScheduleRepository
 import com.chrislentner.coach.worker.ScheduleReminderWorker
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
-import java.util.Calendar
+import java.time.Duration
+import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalTime
+import java.time.ZoneId
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -29,7 +33,8 @@ fun SurveyScreen(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val targetDate = date ?: SimpleDateFormat("yyyy-MM-dd", Locale.US).format(Date())
+    val dateFormatter = remember { DateTimeFormatter.ofPattern("yyyy-MM-dd", Locale.US) }
+    val targetDate = date ?: LocalDate.now().format(dateFormatter)
 
     var isLoading by remember { mutableStateOf(true) }
     var initialHour by remember { mutableIntStateOf(8) }
@@ -49,10 +54,11 @@ fun SurveyScreen(
 
         if (sourceSchedule != null) {
             if (sourceSchedule.timeInMillis != null) {
-                val cal = Calendar.getInstance()
-                cal.timeInMillis = sourceSchedule.timeInMillis
-                initialHour = cal.get(Calendar.HOUR_OF_DAY)
-                initialMinute = cal.get(Calendar.MINUTE)
+                val time = Instant.ofEpochMilli(sourceSchedule.timeInMillis)
+                    .atZone(ZoneId.systemDefault())
+                    .toLocalTime()
+                initialHour = time.hour
+                initialMinute = time.minute
             }
             if (sourceSchedule.durationMinutes != null) {
                 duration = sourceSchedule.durationMinutes.toFloat()
@@ -118,20 +124,17 @@ fun SurveyScreen(
             Button(
                 onClick = {
                     scope.launch {
-                        val calendar = Calendar.getInstance()
-                        val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.US)
-                        val dateObj = sdf.parse(targetDate)
-                        if (dateObj != null) {
-                            calendar.time = dateObj
-                        }
-
-                        calendar.set(Calendar.HOUR_OF_DAY, timePickerState.hour)
-                        calendar.set(Calendar.MINUTE, timePickerState.minute)
-                        calendar.set(Calendar.SECOND, 0)
+                        val localDate = LocalDate.parse(targetDate, dateFormatter)
+                        val localTime = LocalTime.of(timePickerState.hour, timePickerState.minute)
+                        val scheduleDateTime = ZonedDateTime.of(
+                            localDate,
+                            localTime,
+                            ZoneId.systemDefault()
+                        ).withSecond(0).withNano(0)
 
                         val entry = ScheduleEntry(
                             date = targetDate,
-                            timeInMillis = calendar.timeInMillis,
+                            timeInMillis = scheduleDateTime.toInstant().toEpochMilli(),
                             durationMinutes = duration.toInt(),
                             location = location,
                             isRestDay = false
@@ -139,7 +142,8 @@ fun SurveyScreen(
                         repository.saveSchedule(entry)
 
                         // Schedule Reminder
-                        val delay = calendar.timeInMillis - System.currentTimeMillis() - (10 * 60 * 1000)
+                        val reminderTime = scheduleDateTime.minusMinutes(10)
+                        val delay = Duration.between(Instant.now(), reminderTime.toInstant()).toMillis()
                         if (delay > 0) {
                              val workManager = WorkManager.getInstance(context)
                              // Cancel old work by tag (cleanup)

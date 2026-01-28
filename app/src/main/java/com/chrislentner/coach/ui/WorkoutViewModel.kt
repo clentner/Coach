@@ -13,8 +13,10 @@ import com.chrislentner.coach.database.ScheduleRepository
 import com.chrislentner.coach.planner.AdvancedWorkoutPlanner
 import com.chrislentner.coach.planner.WorkoutStep
 import kotlinx.coroutines.launch
-import java.util.Calendar
-import java.util.Date
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 sealed class WorkoutUiState {
     object Loading : WorkoutUiState()
@@ -89,8 +91,9 @@ class WorkoutViewModel(
 
     private fun initializeSession() {
         viewModelScope.launch {
-            val now = Date()
-            val todayStr = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(now)
+            val now = Instant.now()
+            val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd", java.util.Locale.US)
+            val todayStr = LocalDate.now(ZoneId.systemDefault()).format(formatter)
 
             // 0. Get scheduled location
             var location: String? = null
@@ -100,23 +103,19 @@ class WorkoutViewModel(
             }
 
             // 1. Get or Create Session
-            val session = repository.getOrCreateSession(todayStr, now.time, location)
+            val session = repository.getOrCreateSession(todayStr, now.toEpochMilli(), location)
 
             // 2. Fetch History & Generate Plan (Only if not already cached)
             if (cachedPlan == null) {
                 // Planner needs broad history (last few days).
-                val weekAgo = Calendar.getInstance()
-                weekAgo.add(Calendar.DAY_OF_YEAR, -14)
-                val rawHistory = repository.getHistorySince(weekAgo.timeInMillis)
+                val weekAgo = now.minusSeconds(14L * 24 * 60 * 60)
+                val rawHistory = repository.getHistorySince(weekAgo.toEpochMilli())
 
                 // Calculate start of today to exclude today's logs
-                val calendar = Calendar.getInstance(java.util.Locale.US)
-                calendar.time = now
-                calendar.set(Calendar.HOUR_OF_DAY, 0)
-                calendar.set(Calendar.MINUTE, 0)
-                calendar.set(Calendar.SECOND, 0)
-                calendar.set(Calendar.MILLISECOND, 0)
-                val startOfToday = calendar.timeInMillis
+                val startOfToday = LocalDate.now(ZoneId.systemDefault())
+                    .atStartOfDay(ZoneId.systemDefault())
+                    .toInstant()
+                    .toEpochMilli()
 
                 // The data model assumes 1 session per day. We exclude today's logs to ensure the plan
                 // remains consistent and doesn't change as the user logs sets during the session.

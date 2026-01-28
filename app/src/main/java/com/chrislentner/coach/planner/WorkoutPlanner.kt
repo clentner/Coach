@@ -1,8 +1,9 @@
 package com.chrislentner.coach.planner
 
 import com.chrislentner.coach.database.WorkoutLogEntry
-import java.util.Calendar
-import java.util.Date
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
 
 data class WorkoutStep(
     val exerciseName: String,
@@ -33,7 +34,7 @@ object WorkoutPlanner {
     )
 
     fun generatePlan(
-        today: Date,
+        today: Instant,
         history: List<WorkoutLogEntry>
     ): List<WorkoutStep> {
         // Placeholder logic:
@@ -41,8 +42,8 @@ object WorkoutPlanner {
         // - else, if no CRACR in last 4 days, plan 2 sets of hamstring CRACR stretches today at 5 reps/leg
         // - else, plan 3 sets of 10 reps overhead press at 45 lbs
 
-        val cal = Calendar.getInstance()
-        cal.time = today
+        val zoneId = ZoneId.systemDefault()
+        val todayDate = today.atZone(zoneId).toLocalDate()
         // Strip time part for accurate date comparison if needed, but here we work with timestamps mostly.
 
         // "Yesterday" defined as [Today 00:00 - 24h, Today 00:00)
@@ -60,8 +61,8 @@ object WorkoutPlanner {
         // Or strictly "Yesterday's session".
         // Let's look for ANY squats in the history that have a timestamp within the "yesterday" calendar day.
 
-        val yesterdayStart = getStartOfDay(today, -1)
-        val yesterdayEnd = getStartOfDay(today, 0)
+        val yesterdayStart = getStartOfDay(todayDate, zoneId, -1)
+        val yesterdayEnd = getStartOfDay(todayDate, zoneId, 0)
 
         val squatsYesterday = history.any {
             it.timestamp in yesterdayStart until yesterdayEnd &&
@@ -82,7 +83,7 @@ object WorkoutPlanner {
         }
 
         // CRACR in last 4 days
-        val fourDaysAgoStart = getStartOfDay(today, -4)
+        val fourDaysAgoStart = getStartOfDay(todayDate, zoneId, -4)
         val cracrRecent = history.any {
             it.timestamp >= fourDaysAgoStart &&
             it.exerciseName.contains("CRACR", ignoreCase = true) &&
@@ -113,14 +114,10 @@ object WorkoutPlanner {
         }
     }
 
-    private fun getStartOfDay(date: Date, offsetDays: Int): Long {
-        val cal = Calendar.getInstance()
-        cal.time = date
-        cal.add(Calendar.DAY_OF_YEAR, offsetDays)
-        cal.set(Calendar.HOUR_OF_DAY, 0)
-        cal.set(Calendar.MINUTE, 0)
-        cal.set(Calendar.SECOND, 0)
-        cal.set(Calendar.MILLISECOND, 0)
-        return cal.timeInMillis
+    private fun getStartOfDay(date: LocalDate, zoneId: ZoneId, offsetDays: Int): Long {
+        return date.plusDays(offsetDays.toLong())
+            .atStartOfDay(zoneId)
+            .toInstant()
+            .toEpochMilli()
     }
 }
