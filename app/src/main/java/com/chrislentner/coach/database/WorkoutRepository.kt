@@ -71,4 +71,8 @@ class WorkoutRepository(private val workoutDao: WorkoutDao) {
         // 1000 unique exercise names is a reasonable upper bound for a personal app.
         return workoutDao.getRecentExerciseNames(1000)
     }
+
+    suspend fun getLastLogForExercise(exerciseName: String): WorkoutLogEntry? {
+        return workoutDao.getLastLogForExercise(exerciseName)
+    }
 }

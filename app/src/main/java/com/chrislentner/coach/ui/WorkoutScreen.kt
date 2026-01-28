@@ -45,6 +45,12 @@ fun WorkoutScreen(
         selectedExercise?.let {
             if (uiState is WorkoutUiState.FreeEntry) {
                 freeExercise = it
+                val lastLog = viewModel.getLastLogForExercise(it)
+                if (lastLog != null) {
+                    freeLoad = lastLog.loadDescription
+                    freeReps = lastLog.targetReps?.toString() ?: ""
+                    freeTempo = lastLog.tempo ?: ""
+                }
             } else {
                 viewModel.updateCurrentStepExercise(it)
             }
