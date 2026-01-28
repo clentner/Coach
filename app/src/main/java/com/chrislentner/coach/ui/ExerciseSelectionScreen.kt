@@ -14,7 +14,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.chrislentner.coach.database.WorkoutRepository
-import com.chrislentner.coach.planner.WorkoutPlanner
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

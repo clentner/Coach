@@ -130,7 +130,7 @@ class WorkoutViewModel(
                     }
                 } else {
                     // Fallback to legacy planner if new one not provided (e.g. tests)
-                    com.chrislentner.coach.planner.WorkoutPlanner.generatePlan(now, historyForPlanning)
+                    emptyList()
                 }
             }
 

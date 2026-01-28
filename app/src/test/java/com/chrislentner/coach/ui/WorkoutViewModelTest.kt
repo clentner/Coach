@@ -33,6 +33,8 @@ class WorkoutViewModelTest {
     private lateinit var viewModel: WorkoutViewModel
     private lateinit var dao: FakeWorkoutDao
     private lateinit var repository: WorkoutRepository
+    private lateinit var planner: AdvancedWorkoutPlanner
+    private lateinit var scheduleRepository: ScheduleRepository
 
     class FakeWorkoutDao : WorkoutDao {
         val sessions = mutableListOf<WorkoutSession>()
@@ -110,7 +112,23 @@ class WorkoutViewModelTest {
     fun setup() {
         dao = FakeWorkoutDao()
         repository = WorkoutRepository(dao)
-        viewModel = WorkoutViewModel(repository)
+        planner = mock(AdvancedWorkoutPlanner::class.java)
+        scheduleRepository = mock(ScheduleRepository::class.java)
+
+        // Default stubbing for Active state
+        runBlocking {
+            val schedule = ScheduleEntry(date = "2024-01-01", timeInMillis = 1000L, location = "Gym", durationMinutes = 60)
+            whenever(scheduleRepository.getScheduleByDate(any())).thenReturn(schedule)
+            whenever(planner.generatePlan(any(), any(), any())).thenReturn(
+                Plan(
+                    steps = listOf(WorkoutStep("Squats", 5, null, "100", "3030")),
+                    logs = emptyList(),
+                    blocks = emptyList()
+                )
+            )
+        }
+
+        viewModel = WorkoutViewModel(repository, scheduleRepository, planner)
         shadowOf(Looper.getMainLooper()).idle()
     }
 
