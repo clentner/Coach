@@ -37,6 +37,11 @@ object WorkoutPlanner {
         today: Instant,
         history: List<WorkoutLogEntry>
     ): List<WorkoutStep> {
+        // Placeholder logic:
+        // - if no squats in yesterday's session (or skipped yesterday): plan 3 sets of squats at 85 lbs and 3030 tempo for today
+        // - else, if no CRACR in last 4 days, plan 2 sets of hamstring CRACR stretches today at 5 reps/leg
+        // - else, plan 3 sets of 10 reps overhead press at 45 lbs
+
         val zoneId = ZoneId.systemDefault()
         val todayDate = today.atZone(zoneId).toLocalDate()
         // Strip time part for accurate date comparison if needed, but here we work with timestamps mostly.
