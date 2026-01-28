@@ -14,8 +14,12 @@ data class WorkoutStep(
 ) {
     init {
         if (tempo != null) {
-            require(tempo.matches(Regex("\\d{4}"))) { "Tempo must be a 4-digit string (e.g., '3030')" }
+            require(tempo.matches(TEMPO_REGEX)) { "Tempo must be a 4-digit string (e.g., '3030')" }
         }
+    }
+
+    companion object {
+        private val TEMPO_REGEX = Regex("\\d{4}")
     }
 }
 
