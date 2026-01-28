@@ -77,4 +77,7 @@ interface WorkoutDao {
 
     @Query("SELECT exerciseName FROM workout_logs GROUP BY exerciseName ORDER BY MAX(timestamp) DESC LIMIT :limit")
     suspend fun getRecentExerciseNames(limit: Int): List<String>
+
+    @Query("SELECT * FROM workout_logs WHERE exerciseName = :exerciseName ORDER BY timestamp DESC LIMIT 1")
+    suspend fun getLastLogForExercise(exerciseName: String): WorkoutLogEntry?
 }

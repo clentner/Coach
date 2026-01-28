@@ -100,6 +100,10 @@ class WorkoutViewModelTest {
         override fun getLogsForSessionFlow(sessionId: Long): Flow<List<WorkoutLogEntry>> {
             return flowOf(logs.filter { it.sessionId == sessionId }.sortedBy { it.timestamp })
         }
+
+        override suspend fun getLastLogForExercise(exerciseName: String): WorkoutLogEntry? {
+            return logs.filter { it.exerciseName == exerciseName }.maxByOrNull { it.timestamp }
+        }
     }
 
     @Before
@@ -262,5 +266,31 @@ class WorkoutViewModelTest {
             assertTrue("History should include yesterday's log", capturedHistory.any { it.id == yesterdayLog.id })
             assertFalse("History should NOT include today's log", capturedHistory.any { it.id == todayLog.id })
         }
+    }
+
+    @Test
+    fun `updateCurrentStepExercise pre-fills from last log`() {
+        val lastLog = WorkoutLogEntry(
+            id=10, sessionId=1, exerciseName="Overhead Press",
+            targetReps=8, targetDurationSeconds=null,
+            loadDescription="135", tempo="2020",
+            actualReps=8, actualDurationSeconds=null,
+            rpe=null, notes=null, skipped=false, timestamp=2000L
+        )
+        dao.logs.add(lastLog)
+
+        // Ensure we are in active state with a step
+        assertTrue(viewModel.uiState is WorkoutUiState.Active)
+
+        viewModel.updateCurrentStepExercise("Overhead Press")
+        shadowOf(Looper.getMainLooper()).idle()
+
+        val state = viewModel.uiState as WorkoutUiState.Active
+        val step = state.currentStep!!
+
+        assertEquals("Overhead Press", step.exerciseName)
+        assertEquals("135", step.loadDescription)
+        assertEquals(8, step.targetReps)
+        assertEquals("2020", step.tempo)
     }
 }

@@ -43,7 +43,7 @@ fun EditExerciseScreen(
 
     LaunchedEffect(selectedExercise) {
         selectedExercise?.let {
-            viewModel.exerciseName = it
+            viewModel.onExerciseSelected(it)
             savedStateHandle?.remove<String>("selected_exercise")
         }
     }

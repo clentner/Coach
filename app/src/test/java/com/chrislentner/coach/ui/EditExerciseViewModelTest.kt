@@ -50,6 +50,7 @@ class EditExerciseViewModelTest {
         override fun getSessionsWithSetCountsFlow(): Flow<List<SessionSummary>> = flowOf(emptyList())
         override suspend fun getRecentExerciseNames(limit: Int) = logs.sortedByDescending { it.timestamp }.map { it.exerciseName }.distinct().take(limit)
         override fun getLogsForSessionFlow(sessionId: Long): Flow<List<WorkoutLogEntry>> = flowOf(logs.filter { it.sessionId == sessionId })
+        override suspend fun getLastLogForExercise(exerciseName: String) = logs.filter { it.exerciseName == exerciseName }.maxByOrNull { it.timestamp }
     }
 
     @Before
@@ -122,5 +123,28 @@ class EditExerciseViewModelTest {
 
         assertTrue(successCalled)
         assertTrue(dao.logs.isEmpty())
+    }
+
+    @Test
+    fun `onExerciseSelected pre-fills from last log`() {
+        val lastLog = WorkoutLogEntry(
+            id=10, sessionId=1, exerciseName="Deadlift",
+            targetReps=3, targetDurationSeconds=null,
+            loadDescription="315", tempo="3010",
+            actualReps=3, actualDurationSeconds=null,
+            rpe=8, notes=null, skipped=false, timestamp=2000L
+        )
+        dao.logs.add(lastLog)
+
+        val viewModel = EditExerciseViewModel(repository, sessionId=1, logId=null)
+        shadowOf(Looper.getMainLooper()).idle()
+
+        viewModel.onExerciseSelected("Deadlift")
+        shadowOf(Looper.getMainLooper()).idle()
+
+        assertEquals("Deadlift", viewModel.exerciseName)
+        assertEquals("315", viewModel.load)
+        assertEquals("3", viewModel.reps)
+        assertEquals("3010", viewModel.tempo)
     }
 }

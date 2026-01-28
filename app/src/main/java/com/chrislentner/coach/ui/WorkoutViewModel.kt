@@ -261,9 +261,25 @@ class WorkoutViewModel(
     fun updateCurrentStepExercise(newName: String) {
         val state = uiState
         if (state is WorkoutUiState.Active && state.currentStep != null) {
-            val newStep = state.currentStep.copy(exerciseName = newName)
-            uiState = state.copy(currentStep = newStep)
+            viewModelScope.launch {
+                val lastLog = repository.getLastLogForExercise(newName)
+                val newStep = if (lastLog != null) {
+                    state.currentStep.copy(
+                        exerciseName = newName,
+                        loadDescription = lastLog.loadDescription,
+                        targetReps = lastLog.targetReps,
+                        tempo = lastLog.tempo
+                    )
+                } else {
+                    state.currentStep.copy(exerciseName = newName)
+                }
+                uiState = state.copy(currentStep = newStep)
+            }
         }
+    }
+
+    suspend fun getLastLogForExercise(name: String): WorkoutLogEntry? {
+        return repository.getLastLogForExercise(name)
     }
 
     fun updateCurrentStepLoad(newLoad: String) {

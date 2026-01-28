@@ -41,6 +41,20 @@ class EditExerciseViewModel(
         }
     }
 
+    fun onExerciseSelected(name: String) {
+        exerciseName = name
+        // Pre-fill from last log if not editing an existing log (or if we want to overwrite even when editing? Assuming overwrite is fine if user changes exercise)
+        // If we are editing, and we change the exercise, we probably want to pre-fill the stats for THAT exercise.
+        viewModelScope.launch {
+            val lastLog = repository.getLastLogForExercise(name)
+            if (lastLog != null) {
+                load = lastLog.loadDescription
+                reps = lastLog.targetReps?.toString() ?: ""
+                tempo = lastLog.tempo ?: ""
+            }
+        }
+    }
+
     fun save(onSuccess: () -> Unit) {
         viewModelScope.launch {
             val repsInt = reps.toIntOrNull()

@@ -53,6 +53,7 @@ class PastWorkoutsViewModelTest {
         override suspend fun getAllLogs() = emptyList<WorkoutLogEntry>()
         override suspend fun getLogsSince(timestamp: Long) = emptyList<WorkoutLogEntry>()
         override suspend fun getRecentExerciseNames(limit: Int) = emptyList<String>()
+        override suspend fun getLastLogForExercise(exerciseName: String): WorkoutLogEntry? = null
     }
 
     @Before
