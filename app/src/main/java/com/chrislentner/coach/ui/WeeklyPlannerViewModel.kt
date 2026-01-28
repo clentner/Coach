@@ -52,7 +52,6 @@ class WeeklyPlannerViewModel(
 
             val newDays = mutableListOf<PlannerDayUiModel>()
 
-            // Reset calendar to today for the loop
             var loopDate = startLocalDate
 
             for (i in 0..6) {
