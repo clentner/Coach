@@ -56,8 +56,6 @@ data class Block(
     val sizeMinutes: List<Int> = emptyList(), // Always normalized to a list
     val location: String,
     val tags: List<String> = emptyList(),
-    @JsonProperty("contributes_to")
-    val contributesTo: List<Contribution> = emptyList(),
     val prescription: List<Prescription>,
     val progression: Progression? = null
 )
@@ -82,7 +80,9 @@ data class Prescription(
     val secondsPerRep: Int? = null,
     val rpe: Int? = null,
     @JsonProperty("fatigue_loads")
-    val fatigueLoads: Map<String, Any> = emptyMap() // Can be Double or String
+    val fatigueLoads: Map<String, Any> = emptyMap(), // Can be Double or String
+    @JsonProperty("contributes_to")
+    val contributesTo: List<Contribution> = emptyList()
 )
 
 data class Progression(

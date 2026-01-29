@@ -68,7 +68,6 @@ class SuggestScheduleViewModelTest {
                 sizeMinutes = emptyList(),
                 location = "Home",
                 tags = emptyList(),
-                contributesTo = emptyList(),
                 prescription = emptyList(),
                 progression = null
             )

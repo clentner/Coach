@@ -89,13 +89,13 @@ priorities:
         size_minutes: 30
         location: gym
         tags: [rehab, strength, patellar_tendon, knee_heavy, compound_heavy]
-        contributes_to:
-          - { target: patellar_hsr_squat_sets }
         prescription:
           - exercise: squat
             sets: 4
             reps: 8
             tempo: "3030"
+            contributes_to:
+              - { target: patellar_hsr_squat_sets }
             fatigue_loads:
               knee: 1.0
               cns: 1.0
@@ -110,13 +110,13 @@ priorities:
         size_minutes: 30
         location: gym
         tags: [rehab, strength, patellar_tendon, knee_heavy]
-        contributes_to:
-          - { target: patellar_hsr_sl_press_sets }
         prescription:
           - exercise: single_leg_press
             sets: 4
             reps: 9
             tempo: "3030"
+            contributes_to:
+              - { target: patellar_hsr_sl_press_sets }
             fatigue_loads:
               knee: 1.0
               cns: 0.5
@@ -131,12 +131,12 @@ priorities:
         size_minutes: 20
         location: gym
         tags: [rehab, cardio, patellar_tendon, zone2, knee_light]
-        contributes_to:
-          - { target: patellar_stairmaster_minutes }
-          - { target: zone2_minutes }
         prescription:
           - exercise: stairmaster
             target: Z2
+            contributes_to:
+              - { target: patellar_stairmaster_minutes }
+              - { target: zone2_minutes }
             fatigue_loads:
               knee: "$performed_minutes * 0.5 / 20"
               cns: "$performed_minutes * 0.25 / 30"
@@ -153,22 +153,22 @@ priorities:
         size_minutes: 8
         location: anywhere
         tags: [rehab, hip_abductor]
-        contributes_to:
-          - { target: hip_abductor_sets }
         prescription:
           - exercise: banded_x_walks
             sets: 2
+            contributes_to:
+              - { target: hip_abductor_sets }
 
       - block_name: banded_clamshells
         size_minutes: 8
         location: anywhere
         tags: [rehab, hip_abductor]
-        contributes_to:
-          - { target: hip_abductor_sets }
         prescription:
           - exercise: banded_clamshells
             sets: 2
             per_side: true
+            contributes_to:
+              - { target: hip_abductor_sets }
 
   mobility:
     blocks:
@@ -176,29 +176,37 @@ priorities:
         size_minutes: 45
         location: anywhere
         tags: [mobility]
-        contributes_to:
-          - { target: mobility_minutes }
         prescription:
           - exercise: foot_foam_roll
             seconds: 90
             per_side: true
+            contributes_to:
+              - { target: mobility_minutes }
           - exercise: calf_stretch
             sets: 3
             per_side: true
+            contributes_to:
+              - { target: mobility_minutes }
           - exercise: sciatic_floss
             sets: 3
             reps: 8
             tempo: "3030"
             per_side: true
+            contributes_to:
+              - { target: mobility_minutes }
           - exercise: pike_block_crush
             sets: 1
             reps: 3
             seconds_per_rep: 10
+            contributes_to:
+              - { target: mobility_minutes }
           - exercise: pike_lift_cracr
             sets: 3
             reps: 5
             tempo: "5050"
             per_side: true
+            contributes_to:
+              - { target: mobility_minutes }
 
   fcu_rehab:
     blocks:
@@ -206,27 +214,29 @@ priorities:
         size_minutes: 10
         location: anywhere
         tags: [rehab, forearm]
-        contributes_to:
-          - { target: fcu_rehab_sets }
         prescription:
           - exercise: wrist_flexion_iso
             sets: 5
             seconds: 30
+            contributes_to:
+              - { target: fcu_rehab_sets }
           - exercise: wrist_extension_iso
             sets: 5
             seconds: 30
+            contributes_to:
+              - { target: fcu_rehab_sets }
 
       - block_name: wrist_flexion_eccentrics
         size_minutes: 10
         location: anywhere
         tags: [rehab, forearm]
-        contributes_to:
-          - { target: fcu_rehab_sets }
         prescription:
           - exercise: wrist_flexion_eccentric
             sets: 3
             reps: 15
             tempo: "4010"
+            contributes_to:
+              - { target: fcu_rehab_sets }
 
   hip_flexors:
     blocks:
@@ -234,24 +244,24 @@ priorities:
         size_minutes: 6
         location: anywhere
         tags: [maintenance, core, hip_flexor]
-        contributes_to:
-          - { target: hip_flexor_sets }
         prescription:
           - exercise: deadbug
             sets: 3
             reps: 10
+            contributes_to:
+              - { target: hip_flexor_sets }
 
       - block_name: straight_leg_raises
         size_minutes: 6
         location: anywhere
         tags: [maintenance, hip_flexor]
-        contributes_to:
-          - { target: hip_flexor_sets }
         prescription:
           - exercise: straight_leg_raise
             sets: 3
             reps: 10
             per_side: true
+            contributes_to:
+              - { target: hip_flexor_sets }
 
   cardio:
     blocks:
@@ -264,11 +274,11 @@ priorities:
         size_minutes: [20, 30, 45]
         location: anywhere
         tags: [cardio, zone2, knee_light]
-        contributes_to:
-          - { target: zone2_minutes }
         prescription:
           - exercise: bike_or_row_or_treadmill
             target: Z2
+            contributes_to:
+              - { target: zone2_minutes }
             fatigue_loads:
               knee: "$performed_minutes * 0.3 / 30"
               cns: "$performed_minutes * 0.25 / 30"
@@ -277,11 +287,11 @@ priorities:
         size_minutes: 20
         location: anywhere
         tags: [cardio, zone4, knee_light]
-        contributes_to:
-          - { target: zone4_minutes }
         prescription:
           - exercise: bike_preferred
             interval_protocol: "4x4"
+            contributes_to:
+              - { target: zone4_minutes }
             fatigue_loads:
               knee: "$performed_minutes * 0.4 / 20"
               cns: 1.0
@@ -292,13 +302,13 @@ priorities:
         size_minutes: 20
         location: gym
         tags: [strength, aesthetics, compound_heavy]
-        contributes_to:
-          - { target: full_body_strength_sets }
         prescription:
           - exercise: deadlift
             sets: 3
             reps: 5
             rpe: 7
+            contributes_to:
+              - { target: full_body_strength_sets }
             fatigue_loads:
               knee: 0.6
               cns: 1.0
@@ -307,13 +317,13 @@ priorities:
         size_minutes: 20
         location: gym
         tags: [strength, aesthetics, upper_body, compound_heavy]
-        contributes_to:
-          - { target: full_body_strength_sets }
         prescription:
           - exercise: bench_press
             sets: 3
             reps: 6
             rpe: 7
+            contributes_to:
+              - { target: full_body_strength_sets }
             fatigue_loads:
               knee: 0.0
               cns: 0.5
@@ -322,13 +332,13 @@ priorities:
         size_minutes: 20
         location: gym
         tags: [strength, aesthetics, upper_body, compound_heavy]
-        contributes_to:
-          - { target: full_body_strength_sets }
         prescription:
           - exercise: overhead_press
             sets: 3
             reps: 6
             rpe: 7
+            contributes_to:
+              - { target: full_body_strength_sets }
             fatigue_loads:
               knee: 0.0
               cns: 0.5

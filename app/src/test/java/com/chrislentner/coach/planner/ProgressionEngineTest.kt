@@ -79,7 +79,6 @@ class ProgressionEngineTest {
             blockName = "Unknown",
             sizeMinutes = listOf(10),
             location = "Gym",
-            contributesTo = emptyList(),
             prescription = emptyList(),
             progression = Progression(type = "magic_growth")
         )
@@ -96,7 +95,6 @@ class ProgressionEngineTest {
             blockName = "Linear",
             sizeMinutes = listOf(30),
             location = "Gym",
-            contributesTo = emptyList(),
             prescription = listOf(Prescription(exercise = "Squat")),
             progression = Progression(
                 type = "linear_load",
@@ -111,7 +109,6 @@ class ProgressionEngineTest {
             blockName = "Cardio",
             sizeMinutes = listOf(start),
             location = "Outside",
-            contributesTo = emptyList(),
             prescription = listOf(Prescription(exercise = "Run")),
             progression = Progression(
                 type = "per_session_minutes",

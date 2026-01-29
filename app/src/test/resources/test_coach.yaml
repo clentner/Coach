@@ -30,12 +30,12 @@ priorities:
         size_minutes: [10]
         location: anywhere
         tags: [knee_heavy]
-        contributes_to:
-          - { target: t1_sets }
         prescription:
           - exercise: ex_a
             sets: 2
             reps: 5
+            contributes_to:
+              - { target: t1_sets }
             fatigue_loads:
               knee: 0.5
         progression:
@@ -51,11 +51,11 @@ priorities:
         size_minutes: [10]
         location: anywhere
         tags: []
-        contributes_to:
-          - { target: t2_minutes }
         prescription:
           - exercise: ex_b
             target: Z2
+            contributes_to:
+              - { target: t2_minutes }
             fatigue_loads: {}
 
 selection:

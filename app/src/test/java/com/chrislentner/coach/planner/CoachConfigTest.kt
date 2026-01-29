@@ -39,11 +39,9 @@ class CoachConfigTest {
         val block = nordicSki!!.blocks.firstOrNull()
         assertNotNull(block)
 
-        // Check defaults are working (sizeMinutes empty, contributesTo empty)
+        // Check defaults are working (sizeMinutes empty)
         assertNotNull(block!!.sizeMinutes)
         assert(block.sizeMinutes.isEmpty())
-        assertNotNull(block.contributesTo)
-        assert(block.contributesTo.isEmpty())
 
         val prescription = block.prescription.firstOrNull()
         assertNotNull(prescription)

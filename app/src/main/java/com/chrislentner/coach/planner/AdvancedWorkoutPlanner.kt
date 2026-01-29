@@ -62,7 +62,8 @@ class AdvancedWorkoutPlanner(
 
                 // Update deficits
                 var totalReduction = 0.0
-                bestBlock.block.contributesTo.forEach { contribution ->
+                val allContributions = bestBlock.block.prescription.flatMap { it.contributesTo }.distinctBy { it.target }
+                allContributions.forEach { contribution ->
                     val currentDeficit = deficits[contribution.target] ?: 0.0
                     val reduction = calculateReduction(bestBlock, contribution.target)
                     val newDeficit = max(0.0, currentDeficit - reduction)
@@ -102,7 +103,9 @@ class AdvancedWorkoutPlanner(
                 val blockExercises = block.prescription.map { it.exercise }.toSet()
                 if (blockExercises.any { it in plannedExercises }) continue
 
-                val helpsDeficit = block.contributesTo.any { (deficits[it.target] ?: 0.0) > 0.0 }
+                val helpsDeficit = block.prescription.any { p ->
+                    p.contributesTo.any { (deficits[it.target] ?: 0.0) > 0.0 }
+                }
                 if (!helpsDeficit) continue
 
                 val progressionResult = progressionEngine.determineProgression(block, history)
@@ -129,9 +132,9 @@ class AdvancedWorkoutPlanner(
     }
 
     private fun selectSize(fittingSizes: List<Int>, block: Block, deficits: Map<String, Double>): Int {
-        val contributingTargets = block.contributesTo.mapNotNull { contrib ->
-            config.targets.find { it.id == contrib.target }
-        }
+        val contributingTargets = block.prescription.flatMap { it.contributesTo }
+            .mapNotNull { contrib -> config.targets.find { it.id == contrib.target } }
+            .distinct()
 
         val minutesTargets = contributingTargets.filter { it.type == "minutes" }
 
@@ -226,10 +229,22 @@ class AdvancedWorkoutPlanner(
 
     private fun calculateReduction(plannedBlock: PlannedBlock, targetId: String): Double {
          val targetConfig = config.targets.find { it.id == targetId } ?: return 0.0
+
+         // Find exercises in this block that contribute to this target
+         val contributingExercises = plannedBlock.block.prescription
+             .filter { p -> p.contributesTo.any { it.target == targetId } }
+             .map { it.exercise }
+             .toSet()
+
          if (targetConfig.type == "minutes") {
-             return plannedBlock.effectiveSizeMinutes.toDouble()
+             // Sum duration of dummy logs for contributing exercises
+             val relevantLogs = plannedBlock.dummyLogs.filter { it.exerciseName in contributingExercises }
+             val seconds = relevantLogs.sumOf { it.actualDurationSeconds ?: 0 }
+             return seconds / 60.0
          } else {
-             return plannedBlock.steps.size.toDouble()
+             // Count sets (steps) for contributing exercises
+             val relevantSteps = plannedBlock.steps.filter { it.exerciseName in contributingExercises }
+             return relevantSteps.size.toDouble()
          }
     }
 }
