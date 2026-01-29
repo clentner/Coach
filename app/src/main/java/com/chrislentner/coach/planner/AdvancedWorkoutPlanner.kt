@@ -20,7 +20,7 @@ data class Plan(
 
 class AdvancedWorkoutPlanner(
     val config: CoachConfig,
-    private val historyAnalyzer: HistoryAnalyzer,
+    val historyAnalyzer: HistoryAnalyzer,
     private val progressionEngine: ProgressionEngine
 ) {
 

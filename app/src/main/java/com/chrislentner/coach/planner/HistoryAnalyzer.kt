@@ -59,26 +59,31 @@ class HistoryAnalyzer(private val config: CoachConfig) {
         return total
     }
 
+    fun getPerformed(targetId: String, windowDays: Int, now: Instant, history: List<WorkoutLogEntry>): Double {
+        val targetConfig = config.targets.find { it.id == targetId } ?: return 0.0
+        val cutoff = now.minus(Duration.ofDays(windowDays.toLong())).toEpochMilli()
+        val nowMillis = now.toEpochMilli()
+
+        val contributingExercises = targetContributingExercises[targetId] ?: emptySet()
+
+        var performed = 0.0
+        history.filter { it.timestamp in cutoff..nowMillis && contributingExercises.contains(it.exerciseName) }
+            .forEach { log ->
+                if (!log.skipped) {
+                    if (targetConfig.type == "sets") {
+                        // Assume one log entry = one set
+                        performed += 1.0
+                    } else if (targetConfig.type == "minutes") {
+                        performed += (log.actualDurationSeconds ?: 0) / 60.0
+                    }
+                }
+            }
+        return performed
+    }
+
     fun getDeficit(targetId: String, windowDays: Int, now: Instant, history: List<WorkoutLogEntry>): Double {
          val targetConfig = config.targets.find { it.id == targetId } ?: return 0.0
-         val cutoff = now.minus(Duration.ofDays(windowDays.toLong())).toEpochMilli()
-         val nowMillis = now.toEpochMilli()
-
-         val contributingExercises = targetContributingExercises[targetId] ?: emptySet()
-
-         var performed = 0.0
-         history.filter { it.timestamp in cutoff..nowMillis && contributingExercises.contains(it.exerciseName) }
-             .forEach { log ->
-                 if (!log.skipped) {
-                     if (targetConfig.type == "sets") {
-                         // Assume one log entry = one set
-                         performed += 1.0
-                     } else if (targetConfig.type == "minutes") {
-                         performed += (log.actualDurationSeconds ?: 0) / 60.0
-                     }
-                 }
-             }
-
+         val performed = getPerformed(targetId, windowDays, now, history)
          return max(0.0, targetConfig.goal - performed)
     }
 

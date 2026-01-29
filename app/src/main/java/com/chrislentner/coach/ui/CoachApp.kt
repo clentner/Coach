@@ -98,5 +98,15 @@ fun CoachApp(
                 androidx.compose.material3.Text("Planner configuration not found.")
             }
         }
+        composable("status") {
+            if (planner != null) {
+                val viewModel: StatusViewModel = viewModel(
+                    factory = StatusViewModelFactory(workoutRepository, planner)
+                )
+                StatusScreen(navController = navController, viewModel = viewModel)
+            } else {
+                androidx.compose.material3.Text("Planner configuration not found.")
+            }
+        }
     }
 }
