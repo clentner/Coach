@@ -26,9 +26,10 @@ class HistoryAnalyzer(private val config: CoachConfig) {
     private fun buildTargetContributors(): Map<String, Set<String>> {
         val map = mutableMapOf<String, MutableSet<String>>()
         allBlocks.forEach { block ->
-            block.contributesTo.forEach { contribution ->
-                val exercises = block.prescription.map { it.exercise }.toSet()
-                map.getOrPut(contribution.target) { mutableSetOf() }.addAll(exercises)
+            block.prescription.forEach { prescription ->
+                prescription.contributesTo.forEach { contribution ->
+                    map.getOrPut(contribution.target) { mutableSetOf() }.add(prescription.exercise)
+                }
             }
         }
         return map
@@ -89,28 +90,14 @@ class HistoryAnalyzer(private val config: CoachConfig) {
 
     fun getLastSatisfyingSessions(blockName: String, history: List<WorkoutLogEntry>): List<List<WorkoutLogEntry>> {
         val block = allBlocks.find { it.blockName == blockName } ?: return emptyList()
+        val blockExercises = block.prescription.map { it.exercise }.toSet()
 
         val sessions = history.groupBy { it.sessionId }
         // Sort by timestamp descending
         val sortedSessions = sessions.values.sortedByDescending { it.maxOfOrNull { l -> l.timestamp } ?: 0L }
 
-        return sortedSessions.filter { isBlockSatisfied(block, it) }
-    }
-
-    private fun isBlockSatisfied(block: Block, logs: List<WorkoutLogEntry>): Boolean {
-        val blockExercises = block.prescription.map { it.exercise }.toSet()
-        val matchingLogs = logs.filter { it.exerciseName in blockExercises }
-
-        if (matchingLogs.isEmpty()) return false
-
-        val prescribedSets = block.prescription.sumOf { it.sets ?: 1 }
-
-        if (prescribedSets > 0) {
-            val actualSets = matchingLogs.count { !it.skipped }
-            return actualSets.toDouble() >= (prescribedSets * 0.5)
-        } else {
-             val totalDuration = matchingLogs.sumOf { it.actualDurationSeconds ?: 0 }
-             return totalDuration > 0
+        return sortedSessions.filter { session ->
+            session.any { it.exerciseName in blockExercises && !it.skipped }
         }
     }
 }
