@@ -172,13 +172,28 @@ priorities:
 
   pike_lift_cracr:
     blocks:
-      - block_name: pike_lift_cracr_work
-        size_minutes: 15
+      - block_name: full_mobility
+        size_minutes: 45
         location: anywhere
         tags: [mobility]
         prescription:
+          - exercise: foot_foam_roll
+            seconds: 90
+            per_side: true
+          - exercise: calf_stretch
+            sets: 3
+            per_side: true
+          - exercise: sciatic_floss
+            sets: 3
+            reps: 8
+            tempo: "3030"
+            per_side: true
+          - exercise: pike_block_crush
+            sets: 1
+            reps: 3
+            seconds_per_rep: 10
           - exercise: pike_lift_cracr
-            sets: 4
+            sets: 3
             reps: 5
             tempo: "5050"
             per_side: true
