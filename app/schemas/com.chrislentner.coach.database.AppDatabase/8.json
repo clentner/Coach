@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 8,
-    "identityHash": "5d4270268d2fc44f06ab5d739a6d1f45",
+    "identityHash": "57a911e61f386b99eb0c5f492d9dc9db",
     "entities": [
       {
         "tableName": "User",
@@ -237,6 +237,15 @@
             ],
             "orders": [],
             "createSql": "CREATE INDEX IF NOT EXISTS `index_workout_logs_timestamp` ON `${TABLE_NAME}` (`timestamp`)"
+          },
+          {
+            "name": "index_workout_logs_exerciseName",
+            "unique": false,
+            "columnNames": [
+              "exerciseName"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_workout_logs_exerciseName` ON `${TABLE_NAME}` (`exerciseName`)"
           }
         ],
         "foreignKeys": [
@@ -257,7 +266,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '5d4270268d2fc44f06ab5d739a6d1f45')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '57a911e61f386b99eb0c5f492d9dc9db')"
     ]
   }
 }

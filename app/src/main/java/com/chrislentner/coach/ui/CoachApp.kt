@@ -108,5 +108,45 @@ fun CoachApp(
                 androidx.compose.material3.Text("Planner configuration not found.")
             }
         }
+        composable(
+            "status/target/{targetId}",
+            arguments = listOf(navArgument("targetId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            if (planner != null) {
+                val targetId = backStackEntry.arguments?.getString("targetId") ?: ""
+                val viewModel: StatusDetailViewModel = viewModel(
+                    factory = StatusDetailViewModelFactory(
+                        workoutRepository,
+                        planner,
+                        StatusDetailType.Target(targetId)
+                    )
+                )
+                StatusDetailScreen(navController = navController, viewModel = viewModel)
+            } else {
+                androidx.compose.material3.Text("Planner configuration not found.")
+            }
+        }
+        composable(
+            "status/fatigue/{kind}/{windowHours}",
+            arguments = listOf(
+                navArgument("kind") { type = NavType.StringType },
+                navArgument("windowHours") { type = NavType.IntType }
+            )
+        ) { backStackEntry ->
+            if (planner != null) {
+                val kind = backStackEntry.arguments?.getString("kind") ?: ""
+                val windowHours = backStackEntry.arguments?.getInt("windowHours") ?: 0
+                val viewModel: StatusDetailViewModel = viewModel(
+                    factory = StatusDetailViewModelFactory(
+                        workoutRepository,
+                        planner,
+                        StatusDetailType.Fatigue(kind, windowHours)
+                    )
+                )
+                StatusDetailScreen(navController = navController, viewModel = viewModel)
+            } else {
+                androidx.compose.material3.Text("Planner configuration not found.")
+            }
+        }
     }
 }

@@ -1,5 +1,6 @@
 package com.chrislentner.coach.ui
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -59,7 +60,9 @@ fun StatusScreen(
                 }
 
                 items(state.targets) { target ->
-                    TargetItem(target)
+                    TargetItem(target) {
+                        navController.navigate("status/target/${target.id}")
+                    }
                 }
 
                 item {
@@ -72,7 +75,9 @@ fun StatusScreen(
                 }
 
                 items(state.fatigues) { fatigue ->
-                    FatigueItem(fatigue)
+                    FatigueItem(fatigue) {
+                        navController.navigate("status/fatigue/${fatigue.kind}/${fatigue.windowHours}")
+                    }
                 }
             }
         }
@@ -80,10 +85,10 @@ fun StatusScreen(
 }
 
 @Composable
-fun TargetItem(target: TargetStatus) {
+fun TargetItem(target: TargetStatus, onClick: () -> Unit) {
     Card(
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
@@ -130,10 +135,10 @@ fun TargetItem(target: TargetStatus) {
 }
 
 @Composable
-fun FatigueItem(fatigue: FatigueStatus) {
+fun FatigueItem(fatigue: FatigueStatus, onClick: () -> Unit) {
     Card(
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick),
         colors = CardDefaults.cardColors(
             containerColor = if (fatigue.isOk) MaterialTheme.colorScheme.surfaceContainer else MaterialTheme.colorScheme.errorContainer.copy(alpha=0.2f)
         )
