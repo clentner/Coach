@@ -7,6 +7,16 @@ import java.time.Duration
 import java.time.Instant
 import kotlin.math.max
 
+data class TargetContribution(
+    val log: WorkoutLogEntry,
+    val value: Double // sets or minutes
+)
+
+data class FatigueContribution(
+    val log: WorkoutLogEntry,
+    val load: Double
+)
+
 class HistoryAnalyzer(private val config: CoachConfig) {
 
     private val allBlocks: List<Block> = config.priorities.values.flatMap { it.blocks }
@@ -35,51 +45,63 @@ class HistoryAnalyzer(private val config: CoachConfig) {
         return map
     }
 
-    fun getAccumulatedFatigue(kind: String, windowHours: Int, now: Instant, history: List<WorkoutLogEntry>): Double {
-        val cutoff = now.minus(Duration.ofHours(windowHours.toLong())).toEpochMilli()
-        val nowMillis = now.toEpochMilli()
-        var total = 0.0
-
-        history.filter { it.timestamp in cutoff..nowMillis }.forEach { log ->
-            // Note: If multiple exercises match, we use the first fatigue def found (via map, last write wins if duplicates).
-            // Assuming unique exercise names across config or consistent fatigue loads.
-            val fatigueDef = exerciseFatigueMap[log.exerciseName]
-            if (fatigueDef != null && fatigueDef.containsKey(kind)) {
-                val valOrFormula = fatigueDef[kind]
-                val load = if (valOrFormula is Number) {
-                    valOrFormula.toDouble()
-                } else if (valOrFormula is String) {
-                    val minutes = (log.actualDurationSeconds ?: 0) / 60.0
-                    MathEvaluator.evaluate(valOrFormula, mapOf("performed_minutes" to minutes, "\$performed_minutes" to minutes))
-                } else {
-                    0.0
-                }
-                total += load
+    private fun calculateFatigueLoad(log: WorkoutLogEntry, kind: String): Double? {
+        val fatigueDef = exerciseFatigueMap[log.exerciseName]
+        if (fatigueDef != null && fatigueDef.containsKey(kind)) {
+            val valOrFormula = fatigueDef[kind]
+            return if (valOrFormula is Number) {
+                valOrFormula.toDouble()
+            } else if (valOrFormula is String) {
+                val minutes = (log.actualDurationSeconds ?: 0) / 60.0
+                MathEvaluator.evaluate(valOrFormula, mapOf("performed_minutes" to minutes, "\$performed_minutes" to minutes))
+            } else {
+                0.0
             }
         }
-        return total
+        return null
     }
 
-    fun getPerformed(targetId: String, windowDays: Int, now: Instant, history: List<WorkoutLogEntry>): Double {
-        val targetConfig = config.targets.find { it.id == targetId } ?: return 0.0
+    fun getFatigueContributions(kind: String, windowHours: Int, now: Instant, history: List<WorkoutLogEntry>): List<FatigueContribution> {
+        val cutoff = now.minus(Duration.ofHours(windowHours.toLong())).toEpochMilli()
+        val nowMillis = now.toEpochMilli()
+
+        return history.filter { it.timestamp in cutoff..nowMillis }
+            .mapNotNull { log ->
+                val load = calculateFatigueLoad(log, kind)
+                if (load != null) {
+                    FatigueContribution(log, load)
+                } else {
+                    null
+                }
+            }
+    }
+
+    fun getAccumulatedFatigue(kind: String, windowHours: Int, now: Instant, history: List<WorkoutLogEntry>): Double {
+        return getFatigueContributions(kind, windowHours, now, history).sumOf { it.load }
+    }
+
+    fun getTargetContributions(targetId: String, windowDays: Int, now: Instant, history: List<WorkoutLogEntry>): List<TargetContribution> {
+        val targetConfig = config.targets.find { it.id == targetId } ?: return emptyList()
         val cutoff = now.minus(Duration.ofDays(windowDays.toLong())).toEpochMilli()
         val nowMillis = now.toEpochMilli()
 
         val contributingExercises = targetContributingExercises[targetId] ?: emptySet()
 
-        var performed = 0.0
-        history.filter { it.timestamp in cutoff..nowMillis && contributingExercises.contains(it.exerciseName) }
-            .forEach { log ->
-                if (!log.skipped) {
-                    if (targetConfig.type == "sets") {
-                        // Assume one log entry = one set
-                        performed += 1.0
-                    } else if (targetConfig.type == "minutes") {
-                        performed += (log.actualDurationSeconds ?: 0) / 60.0
-                    }
+        return history.filter { it.timestamp in cutoff..nowMillis && contributingExercises.contains(it.exerciseName) && !it.skipped }
+            .map { log ->
+                val value = if (targetConfig.type == "sets") {
+                    1.0
+                } else if (targetConfig.type == "minutes") {
+                    (log.actualDurationSeconds ?: 0) / 60.0
+                } else {
+                    0.0
                 }
+                TargetContribution(log, value)
             }
-        return performed
+    }
+
+    fun getPerformed(targetId: String, windowDays: Int, now: Instant, history: List<WorkoutLogEntry>): Double {
+        return getTargetContributions(targetId, windowDays, now, history).sumOf { it.value }
     }
 
     fun getDeficit(targetId: String, windowDays: Int, now: Instant, history: List<WorkoutLogEntry>): Double {
