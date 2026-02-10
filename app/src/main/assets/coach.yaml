@@ -26,10 +26,10 @@ targets:
     type: sets
     goal: 6
 
-  - id: mobility_minutes
-    window_days: 5
-    type: minutes
-    goal: 45
+  - id: pike_lift_cracr_sets
+    window_days: 7
+    type: sets
+    goal: 4
 
   - id: fcu_rehab_sets
     window_days: 7
@@ -76,7 +76,7 @@ fatigue_constraints:
 priority_order:
   - patellar_tendon
   - hip_abductors
-  - mobility
+  - pike_lift_cracr
   - fcu_rehab
   - hip_flexors
   - cardio
@@ -170,7 +170,7 @@ priorities:
             contributes_to:
               - { target: hip_abductor_sets }
 
-  mobility:
+  pike_lift_cracr:
     blocks:
       - block_name: full_mobility
         size_minutes: 45
@@ -180,33 +180,25 @@ priorities:
           - exercise: foot_foam_roll
             seconds: 90
             per_side: true
-            contributes_to:
-              - { target: mobility_minutes }
           - exercise: calf_stretch
             sets: 3
             per_side: true
-            contributes_to:
-              - { target: mobility_minutes }
           - exercise: sciatic_floss
             sets: 3
             reps: 8
             tempo: "3030"
             per_side: true
-            contributes_to:
-              - { target: mobility_minutes }
           - exercise: pike_block_crush
             sets: 1
             reps: 3
             seconds_per_rep: 10
-            contributes_to:
-              - { target: mobility_minutes }
           - exercise: pike_lift_cracr
             sets: 3
             reps: 5
             tempo: "5050"
             per_side: true
             contributes_to:
-              - { target: mobility_minutes }
+              - { target: pike_lift_cracr_sets }
 
   fcu_rehab:
     blocks:
