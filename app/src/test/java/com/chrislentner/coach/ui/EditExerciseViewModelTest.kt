@@ -14,6 +14,8 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
+import java.time.LocalDate
+import java.time.ZoneId
 
 @RunWith(RobolectricTestRunner::class)
 class EditExerciseViewModelTest {
@@ -60,10 +62,8 @@ class EditExerciseViewModelTest {
     }
 
     @Test
-    fun `save creates new log with session timestamp`() {
-        // Setup session
-        val sessionTimestamp = 1000L
-        val session = WorkoutSession(id=1, date="2023-01-01", startTimeInMillis=sessionTimestamp, isCompleted=false)
+    fun `save creates new log with local midnight timestamp from session date`() {
+        val session = WorkoutSession(id=1, date="2023-01-01", startTimeInMillis=1000L, isCompleted=false)
         dao.sessions.add(session)
 
         val viewModel = EditExerciseViewModel(repository, sessionId=1, logId=null)
@@ -79,7 +79,11 @@ class EditExerciseViewModelTest {
         assertEquals(1, dao.logs.size)
         val log = dao.logs.first()
         assertEquals("Squat", log.exerciseName)
-        assertEquals(sessionTimestamp, log.timestamp)
+        val expectedTimestamp = LocalDate.parse("2023-01-01")
+            .atStartOfDay(ZoneId.systemDefault())
+            .toInstant()
+            .toEpochMilli()
+        assertEquals(expectedTimestamp, log.timestamp)
     }
 
     @Test
