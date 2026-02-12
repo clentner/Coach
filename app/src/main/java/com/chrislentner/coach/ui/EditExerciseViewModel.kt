@@ -9,6 +9,8 @@ import androidx.lifecycle.viewModelScope
 import com.chrislentner.coach.database.WorkoutLogEntry
 import com.chrislentner.coach.database.WorkoutRepository
 import kotlinx.coroutines.launch
+import java.time.LocalDate
+import java.time.ZoneId
 
 class EditExerciseViewModel(
     private val repository: WorkoutRepository,
@@ -71,20 +73,15 @@ class EditExerciseViewModel(
                 )
                 repository.updateLog(updated)
             } else {
-                // Create new
-                // Need session timestamp
                 val session = repository.getSessionById(sessionId)
-                val timestamp = session?.startTimeInMillis ?: System.currentTimeMillis()
-
-                // Add a small offset to ensure it appears at the end if added now?
-                // No, just use session start time. Order is by timestamp.
-                // If multiple logs have same timestamp, order is undefined or by ID?
-                // Log ID is auto-inc, so insertion order might matter if sorted by ID, but Query sorts by timestamp.
-                // If timestamp is identical, order is unstable.
-                // Maybe add current time offset?
-                // session.startTime + (System.now - session.startTime) ? No that's now.
-                // session.startTime + 1 hour?
-                // Let's just use session.startTimeInMillis.
+                val timestamp = if (session != null) {
+                    LocalDate.parse(session.date)
+                        .atStartOfDay(ZoneId.systemDefault())
+                        .toInstant()
+                        .toEpochMilli()
+                } else {
+                    System.currentTimeMillis()
+                }
 
                 val newEntry = WorkoutLogEntry(
                     sessionId = sessionId,
