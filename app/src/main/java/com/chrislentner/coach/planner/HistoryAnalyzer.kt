@@ -19,7 +19,7 @@ data class FatigueContribution(
 
 class HistoryAnalyzer(private val config: CoachConfig) {
 
-    private val allBlocks: List<Block> = config.priorities.values.flatMap { it.blocks }
+    private val allBlocks: List<Block> = config.priorities.values.flatMap { it.blocks } + config.library.values.flatMap { it.blocks }
     private val exerciseFatigueMap: Map<String, Map<String, Any>> = buildFatigueMap()
     private val targetContributingExercises: Map<String, Set<String>> = buildTargetContributors()
 
