@@ -167,4 +167,56 @@ class HistoryAnalyzerTest {
 
         assertEquals(0, contributions.size)
     }
+
+    @Test
+    fun `HistoryAnalyzer is case-insensitive for exercise names`() {
+        val now = Instant.now()
+        val recent = now.minus(1, ChronoUnit.HOURS).toEpochMilli()
+
+        val kind = "CNS"
+        // Config uses lowercase
+        val exerciseName = "deadlift"
+        // Log uses Mixed Case
+        val logExerciseName = "Deadlift"
+
+        // Mock Config
+        val prescription = Prescription(
+            exercise = exerciseName,
+            fatigueLoads = mapOf(kind to 5.0),
+            contributesTo = listOf(Contribution("target_sets"))
+        )
+        val block = Block(
+            blockName = "Leg Day",
+            location = "Gym",
+            prescription = listOf(prescription)
+        )
+        val priorities = mapOf("P1" to PriorityGroup(listOf(block)))
+
+        val config = CoachConfig(
+            version = 1,
+            targets = listOf(Target("target_sets", 7, "sets", 10)),
+            fatigueConstraints = emptyMap(),
+            priorityOrder = emptyList(),
+            priorities = priorities,
+            selection = SelectionStrategy("default")
+        )
+
+        val analyzer = HistoryAnalyzer(config)
+
+        val log = WorkoutLogEntry(
+            sessionId = 1, exerciseName = logExerciseName,
+            targetReps = 5, targetDurationSeconds = null, loadDescription = "315lbs",
+            actualReps = 5, actualDurationSeconds = null, rpe = 9, notes = null,
+            skipped = false,
+            timestamp = recent
+        )
+
+        // Check Fatigue
+        val fatigue = analyzer.getAccumulatedFatigue(kind, 24, now, listOf(log))
+        assertEquals(5.0, fatigue, 0.001)
+
+        // Check Deficit (Performed)
+        val performed = analyzer.getPerformed("target_sets", 7, now, listOf(log))
+        assertEquals(1.0, performed, 0.001)
+    }
 }
