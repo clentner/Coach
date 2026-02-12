@@ -123,4 +123,48 @@ class HistoryAnalyzerTest {
         assertEquals(log, contributions[0].log)
         assertEquals(5.0, contributions[0].load, 0.001)
     }
+
+    @Test
+    fun `getFatigueContributions ignores skipped logs`() {
+        val now = Instant.now()
+        val recent = now.minus(1, ChronoUnit.HOURS).toEpochMilli()
+
+        val kind = "CNS"
+        val exerciseName = "Deadlift"
+
+        // Mock Config
+        val prescription = Prescription(
+            exercise = exerciseName,
+            fatigueLoads = mapOf(kind to 5.0)
+        )
+        val block = Block(
+            blockName = "Leg Day",
+            location = "Gym",
+            prescription = listOf(prescription)
+        )
+        val priorities = mapOf("P1" to PriorityGroup(listOf(block)))
+
+        val config = CoachConfig(
+            version = 1,
+            targets = emptyList(),
+            fatigueConstraints = emptyMap(),
+            priorityOrder = emptyList(),
+            priorities = priorities,
+            selection = SelectionStrategy("default")
+        )
+
+        val analyzer = HistoryAnalyzer(config)
+
+        val log = WorkoutLogEntry(
+            sessionId = 1, exerciseName = exerciseName,
+            targetReps = 5, targetDurationSeconds = null, loadDescription = "315lbs",
+            actualReps = 5, actualDurationSeconds = null, rpe = 9, notes = null,
+            skipped = true,
+            timestamp = recent
+        )
+
+        val contributions = analyzer.getFatigueContributions(kind, 24, now, listOf(log))
+
+        assertEquals(0, contributions.size)
+    }
 }

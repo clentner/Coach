@@ -65,7 +65,7 @@ class HistoryAnalyzer(private val config: CoachConfig) {
         val cutoff = now.minus(Duration.ofHours(windowHours.toLong())).toEpochMilli()
         val nowMillis = now.toEpochMilli()
 
-        return history.filter { it.timestamp in cutoff..nowMillis }
+        return history.filter { it.timestamp in cutoff..nowMillis && !it.skipped }
             .mapNotNull { log ->
                 val load = calculateFatigueLoad(log, kind)
                 if (load != null) {

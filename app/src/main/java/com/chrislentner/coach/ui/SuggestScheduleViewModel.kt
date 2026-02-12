@@ -54,7 +54,8 @@ class SuggestScheduleViewModel(
             withContext(dispatcher) {
                 // Fetch History
                 val zoneId = ZoneId.systemDefault()
-                val historyStart = Instant.now().minusSeconds(60L * 24 * 60 * 60)
+                // Use 14 days to match StatusViewModel and WorkoutViewModel for consistency
+                val historyStart = Instant.now().minusSeconds(14L * 24 * 60 * 60)
                 val history = repository.getHistorySince(historyStart.toEpochMilli()).toMutableList()
 
                 val workingHistory = ArrayList(history)
