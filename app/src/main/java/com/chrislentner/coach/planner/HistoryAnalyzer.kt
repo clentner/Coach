@@ -27,7 +27,7 @@ class HistoryAnalyzer(private val config: CoachConfig) {
         val map = mutableMapOf<String, Map<String, Any>>()
         allBlocks.flatMap { it.prescription }.forEach {
             if (it.fatigueLoads.isNotEmpty()) {
-                map[it.exercise] = it.fatigueLoads
+                map[it.exercise.trim().lowercase()] = it.fatigueLoads
             }
         }
         return map
@@ -38,7 +38,7 @@ class HistoryAnalyzer(private val config: CoachConfig) {
         allBlocks.forEach { block ->
             block.prescription.forEach { prescription ->
                 prescription.contributesTo.forEach { contribution ->
-                    map.getOrPut(contribution.target) { mutableSetOf() }.add(prescription.exercise)
+                    map.getOrPut(contribution.target) { mutableSetOf() }.add(prescription.exercise.trim().lowercase())
                 }
             }
         }
@@ -46,7 +46,7 @@ class HistoryAnalyzer(private val config: CoachConfig) {
     }
 
     private fun calculateFatigueLoad(log: WorkoutLogEntry, kind: String): Double? {
-        val fatigueDef = exerciseFatigueMap[log.exerciseName]
+        val fatigueDef = exerciseFatigueMap[log.exerciseName.trim().lowercase()]
         if (fatigueDef != null && fatigueDef.containsKey(kind)) {
             val valOrFormula = fatigueDef[kind]
             return if (valOrFormula is Number) {
@@ -87,7 +87,7 @@ class HistoryAnalyzer(private val config: CoachConfig) {
 
         val contributingExercises = targetContributingExercises[targetId] ?: emptySet()
 
-        return history.filter { it.timestamp in cutoff..nowMillis && contributingExercises.contains(it.exerciseName) && !it.skipped }
+        return history.filter { it.timestamp in cutoff..nowMillis && contributingExercises.contains(it.exerciseName.trim().lowercase()) && !it.skipped }
             .map { log ->
                 val value = if (targetConfig.type == "sets") {
                     1.0
@@ -112,14 +112,14 @@ class HistoryAnalyzer(private val config: CoachConfig) {
 
     fun getLastSatisfyingSessions(blockName: String, history: List<WorkoutLogEntry>): List<List<WorkoutLogEntry>> {
         val block = allBlocks.find { it.blockName == blockName } ?: return emptyList()
-        val blockExercises = block.prescription.map { it.exercise }.toSet()
+        val blockExercises = block.prescription.map { it.exercise.trim().lowercase() }.toSet()
 
         val sessions = history.groupBy { it.sessionId }
         // Sort by timestamp descending
         val sortedSessions = sessions.values.sortedByDescending { it.maxOfOrNull { l -> l.timestamp } ?: 0L }
 
         return sortedSessions.filter { session ->
-            session.any { it.exerciseName in blockExercises && !it.skipped }
+            session.any { it.exerciseName.trim().lowercase() in blockExercises && !it.skipped }
         }
     }
 }
