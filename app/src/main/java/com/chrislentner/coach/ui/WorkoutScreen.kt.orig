@@ -39,7 +39,6 @@ fun WorkoutScreen(
     var freeExercise by remember { mutableStateOf("") }
     var freeLoad by remember { mutableStateOf("") }
     var freeReps by remember { mutableStateOf("") }
-    var freeDuration by remember { mutableStateOf("") }
     var freeTempo by remember { mutableStateOf("") }
 
     LaunchedEffect(selectedExercise) {
@@ -50,7 +49,6 @@ fun WorkoutScreen(
                 if (lastLog != null) {
                     freeLoad = lastLog.loadDescription
                     freeReps = lastLog.targetReps?.toString() ?: ""
-                    freeDuration = lastLog.targetDurationSeconds?.let { (it / 60).toString() } ?: ""
                     freeTempo = lastLog.tempo ?: ""
                 }
             } else {

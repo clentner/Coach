@@ -22,8 +22,6 @@ fun ExerciseEntryForm(
     onLoadChange: (String) -> Unit,
     reps: String,
     onRepsChange: (String) -> Unit,
-    duration: String,
-    onDurationChange: (String) -> Unit,
     tempo: String,
     onTempoChange: (String) -> Unit,
     modifier: Modifier = Modifier
@@ -62,13 +60,6 @@ fun ExerciseEntryForm(
                 value = reps,
                 onValueChange = onRepsChange,
                 label = { Text("Reps") },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                modifier = Modifier.weight(1f)
-            )
-            OutlinedTextField(
-                value = duration,
-                onValueChange = onDurationChange,
-                label = { Text("Duration (min)") },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.weight(1f)
             )

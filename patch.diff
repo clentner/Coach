@@ -1,0 +1,57 @@
+--- app/src/main/java/com/chrislentner/coach/ui/EditExerciseViewModel.kt
++++ app/src/main/java/com/chrislentner/coach/ui/EditExerciseViewModel.kt
+@@ -19,6 +19,7 @@
+     var exerciseName by mutableStateOf("")
+     var load by mutableStateOf("")
+     var reps by mutableStateOf("")
++    var durationMinutes by mutableStateOf("")
+     var tempo by mutableStateOf("")
+
+     val isEditing: Boolean
+@@ -34,6 +35,7 @@
+                     exerciseName = log.exerciseName
+                     load = log.loadDescription
+                     reps = log.targetReps?.toString() ?: ""
++                    durationMinutes = log.targetDurationSeconds?.let { (it / 60).toString() } ?: ""
+                     tempo = log.tempo ?: ""
+                 }
+             }
+@@ -48,6 +50,7 @@
+             if (lastLog != null) {
+                 load = lastLog.loadDescription
+                 reps = lastLog.targetReps?.toString() ?: ""
++                durationMinutes = lastLog.targetDurationSeconds?.let { (it / 60).toString() } ?: ""
+                 tempo = lastLog.tempo ?: ""
+             }
+         }
+@@ -56,6 +59,7 @@
+     fun save(onSuccess: () -> Unit) {
+         viewModelScope.launch {
+             val repsInt = reps.toIntOrNull()
++            val durationSecondsInt = durationMinutes.toIntOrNull()?.let { it * 60 }
+             val validTempo = if (tempo.length == 4 && tempo.all { it.isDigit() }) tempo else null
+
+             if (existingLog != null) {
+@@ -65,6 +69,8 @@
+                     loadDescription = load,
+                     targetReps = repsInt,
+                     actualReps = repsInt,
++                    targetDurationSeconds = durationSecondsInt,
++                    actualDurationSeconds = durationSecondsInt,
+                     tempo = validTempo
+                 )
+                 repository.updateLog(updated)
+@@ -83,11 +89,11 @@
+                     sessionId = sessionId,
+                     exerciseName = exerciseName,
+                     targetReps = repsInt,
+-                    targetDurationSeconds = null,
++                    targetDurationSeconds = durationSecondsInt,
+                     loadDescription = load,
+                     tempo = validTempo,
+                     actualReps = repsInt,
+-                    actualDurationSeconds = null,
++                    actualDurationSeconds = durationSecondsInt,
+                     rpe = null,
+                     notes = "Manual Entry",
+                     skipped = false,
