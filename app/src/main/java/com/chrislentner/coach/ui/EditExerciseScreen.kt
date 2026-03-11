@@ -73,6 +73,8 @@ fun EditExerciseScreen(
                 onLoadChange = { viewModel.load = it },
                 reps = viewModel.reps,
                 onRepsChange = { viewModel.reps = it },
+                duration = viewModel.durationMinutes,
+                onDurationChange = { viewModel.durationMinutes = it },
                 tempo = viewModel.tempo,
                 onTempoChange = {
                     if (it.length <= 4 && it.all { c -> c.isDigit() }) {

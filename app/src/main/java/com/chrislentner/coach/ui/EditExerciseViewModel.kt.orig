@@ -21,7 +21,6 @@ class EditExerciseViewModel(
     var exerciseName by mutableStateOf("")
     var load by mutableStateOf("")
     var reps by mutableStateOf("")
-    var durationMinutes by mutableStateOf("")
     var tempo by mutableStateOf("")
 
     val isEditing: Boolean
@@ -38,7 +37,6 @@ class EditExerciseViewModel(
                     exerciseName = log.exerciseName
                     load = log.loadDescription
                     reps = log.targetReps?.toString() ?: ""
-                    durationMinutes = log.targetDurationSeconds?.let { (it / 60).toString() } ?: ""
                     tempo = log.tempo ?: ""
                 }
             }
@@ -54,7 +52,6 @@ class EditExerciseViewModel(
             if (lastLog != null) {
                 load = lastLog.loadDescription
                 reps = lastLog.targetReps?.toString() ?: ""
-                durationMinutes = lastLog.targetDurationSeconds?.let { (it / 60).toString() } ?: ""
                 tempo = lastLog.tempo ?: ""
             }
         }
@@ -63,7 +60,6 @@ class EditExerciseViewModel(
     fun save(onSuccess: () -> Unit) {
         viewModelScope.launch {
             val repsInt = reps.toIntOrNull()
-            val durationSecondsInt = durationMinutes.toIntOrNull()?.let { it * 60 }
             val validTempo = if (tempo.length == 4 && tempo.all { it.isDigit() }) tempo else null
 
             if (existingLog != null) {
@@ -73,8 +69,6 @@ class EditExerciseViewModel(
                     loadDescription = load,
                     targetReps = repsInt,
                     actualReps = repsInt,
-                    targetDurationSeconds = durationSecondsInt,
-                    actualDurationSeconds = durationSecondsInt,
                     tempo = validTempo
                 )
                 repository.updateLog(updated)
@@ -93,11 +87,11 @@ class EditExerciseViewModel(
                     sessionId = sessionId,
                     exerciseName = exerciseName,
                     targetReps = repsInt,
-                    targetDurationSeconds = durationSecondsInt,
+                    targetDurationSeconds = null,
                     loadDescription = load,
                     tempo = validTempo,
                     actualReps = repsInt,
-                    actualDurationSeconds = durationSecondsInt,
+                    actualDurationSeconds = null,
                     rpe = null,
                     notes = "Manual Entry",
                     skipped = false,

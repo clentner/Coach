@@ -133,9 +133,9 @@ class EditExerciseViewModelTest {
     fun `onExerciseSelected pre-fills from last log`() {
         val lastLog = WorkoutLogEntry(
             id=10, sessionId=1, exerciseName="Deadlift",
-            targetReps=3, targetDurationSeconds=120,
+            targetReps=3, targetDurationSeconds=null,
             loadDescription="315", tempo="3010",
-            actualReps=3, actualDurationSeconds=120,
+            actualReps=3, actualDurationSeconds=null,
             rpe=8, notes=null, skipped=false, timestamp=2000L
         )
         dao.logs.add(lastLog)
@@ -150,6 +150,5 @@ class EditExerciseViewModelTest {
         assertEquals("315", viewModel.load)
         assertEquals("3", viewModel.reps)
         assertEquals("3010", viewModel.tempo)
-        assertEquals("2", viewModel.durationMinutes)
     }
 }

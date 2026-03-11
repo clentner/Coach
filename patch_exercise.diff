@@ -1,0 +1,25 @@
+--- app/src/main/java/com/chrislentner/coach/ui/ExerciseEntryForm.kt
++++ app/src/main/java/com/chrislentner/coach/ui/ExerciseEntryForm.kt
+@@ -20,6 +20,8 @@
+     onLoadChange: (String) -> Unit,
+     reps: String,
+     onRepsChange: (String) -> Unit,
++    duration: String,
++    onDurationChange: (String) -> Unit,
+     tempo: String,
+     onTempoChange: (String) -> Unit,
+     modifier: Modifier = Modifier
+@@ -51,6 +53,13 @@
+                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                 modifier = Modifier.weight(1f)
+             )
++            OutlinedTextField(
++                value = duration,
++                onValueChange = onDurationChange,
++                label = { Text("Duration (min)") },
++                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
++                modifier = Modifier.weight(1f)
++            )
+         }
+
+         OutlinedTextField(

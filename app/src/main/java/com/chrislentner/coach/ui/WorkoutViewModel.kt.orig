@@ -215,17 +215,15 @@ class WorkoutViewModel(
         }
     }
 
-    fun logFreeEntry(exerciseName: String, load: String, reps: String, duration: String, tempo: String?) {
+    fun logFreeEntry(exerciseName: String, load: String, reps: String, tempo: String?) {
         val state = uiState
         if (state is WorkoutUiState.FreeEntry) {
              viewModelScope.launch {
-                val durationSecondsInt = duration.toIntOrNull()?.let { it * 60 }
-                val repsInt = reps.toIntOrNull()
                 val entry = WorkoutLogEntry(
                     sessionId = state.session.id,
                     exerciseName = exerciseName,
-                    targetReps = repsInt,
-                    targetDurationSeconds = durationSecondsInt,
+                    targetReps = reps.toIntOrNull(),
+                    targetDurationSeconds = null,
                     loadDescription = load,
                     tempo = tempo,
                     actualReps = reps.toIntOrNull(),
