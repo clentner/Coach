@@ -84,7 +84,7 @@ fun CoachApp(
             val logId = if (logIdArg == -1L) null else logIdArg
 
             val viewModel: EditExerciseViewModel = viewModel(
-                factory = EditExerciseViewModelFactory(workoutRepository, sessionId, logId)
+                factory = EditExerciseViewModelFactory(workoutRepository, sessionId, logId, planner)
             )
             EditExerciseScreen(navController = navController, viewModel = viewModel)
         }
