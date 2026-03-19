@@ -65,6 +65,10 @@ class SuggestScheduleViewModel(
                 val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd", Locale.US)
                 // Do not reset time here; start from "Now"
 
+                val priorityBlocksCache = planner.config.priorityOrder.associateWith { groupName ->
+                    planner.config.priorities[groupName]?.blocks?.map { it.blockName }?.toSet() ?: emptySet()
+                }
+
                 for (i in 0 until 7) {
                     val dateStr = currentDateTime.toLocalDate().format(dateFormatter)
 
@@ -100,7 +104,7 @@ class SuggestScheduleViewModel(
                             val homePlan = planner.generatePlan(currentInstant, workingHistory, homeSchedule)
                             val gymPlan = planner.generatePlan(currentInstant, workingHistory, gymSchedule)
 
-                            val winner = comparePlans(homePlan, gymPlan, planner.config)
+                            val winner = comparePlans(homePlan, gymPlan, planner.config, priorityBlocksCache)
                             chosenPlan = winner
                             chosenLocation = if (winner === homePlan) "Home" else "Gym"
                         }
@@ -121,9 +125,9 @@ class SuggestScheduleViewModel(
         }
     }
 
-    private fun comparePlans(home: Plan, gym: Plan, config: CoachConfig): Plan {
+    private fun comparePlans(home: Plan, gym: Plan, config: CoachConfig, cache: Map<String, Set<String>>): Plan {
         for (groupName in config.priorityOrder) {
-            val blocksInGroup = config.priorities[groupName]?.blocks?.map { it.blockName }?.toSet() ?: emptySet()
+            val blocksInGroup = cache[groupName] ?: emptySet()
 
             val homeScore = home.blocks.filter { it.blockName in blocksInGroup }.sumOf { it.reduction }
             val gymScore = gym.blocks.filter { it.blockName in blocksInGroup }.sumOf { it.reduction }
