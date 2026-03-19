@@ -35,7 +35,9 @@ data class WorkoutLogEntry(
     val rpe: Int?, // 1-10
     val notes: String?,
     val skipped: Boolean = false,
-    val timestamp: Long
+    val timestamp: Long,
+    val customTargets: String? = null,
+    val customFatigue: String? = null
 ) {
     init {
         if (tempo != null) {

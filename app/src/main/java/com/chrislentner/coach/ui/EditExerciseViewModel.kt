@@ -7,15 +7,21 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.chrislentner.coach.database.WorkoutLogEntry
+import androidx.compose.runtime.mutableStateMapOf
 import com.chrislentner.coach.database.WorkoutRepository
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.ZoneId
 
+import com.chrislentner.coach.planner.AdvancedWorkoutPlanner
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
+
 class EditExerciseViewModel(
     private val repository: WorkoutRepository,
     private val sessionId: Long,
-    private val logId: Long?
+    private val logId: Long?,
+    val planner: AdvancedWorkoutPlanner?
 ) : ViewModel() {
 
     var exerciseName by mutableStateOf("")
@@ -24,10 +30,19 @@ class EditExerciseViewModel(
     var durationMinutes by mutableStateOf("")
     var tempo by mutableStateOf("")
 
+    val customTargets = mutableStateMapOf<String, Double>()
+    val customFatigue = mutableStateMapOf<String, Double>()
+
     val isEditing: Boolean
         get() = logId != null && logId != -1L
 
     private var existingLog: WorkoutLogEntry? = null
+
+    val allTargetIds: List<String>
+        get() = planner?.config?.targets?.map { it.id } ?: emptyList()
+
+    val allFatigueKinds: List<String>
+        get() = planner?.config?.fatigueConstraints?.keys?.toList() ?: emptyList()
 
     init {
         if (isEditing) {
@@ -40,6 +55,20 @@ class EditExerciseViewModel(
                     reps = log.targetReps?.toString() ?: ""
                     durationMinutes = log.targetDurationSeconds?.let { (it / 60).toString() } ?: ""
                     tempo = log.tempo ?: ""
+
+                    try {
+                        val mapper = jacksonObjectMapper()
+                        if (!log.customTargets.isNullOrBlank()) {
+                            val targets: Map<String, Double> = mapper.readValue(log.customTargets)
+                            customTargets.putAll(targets)
+                        }
+                        if (!log.customFatigue.isNullOrBlank()) {
+                            val fatigue: Map<String, Double> = mapper.readValue(log.customFatigue)
+                            customFatigue.putAll(fatigue)
+                        }
+                    } catch (e: Exception) {
+                        // ignore parse errors
+                    }
                 }
             }
         }
@@ -60,11 +89,42 @@ class EditExerciseViewModel(
         }
     }
 
+    fun addTarget(id: String, value: Double) {
+        customTargets[id] = value
+    }
+
+    fun removeTarget(id: String) {
+        customTargets.remove(id)
+    }
+
+    fun addFatigue(kind: String, value: Double) {
+        customFatigue[kind] = value
+    }
+
+    fun removeFatigue(kind: String) {
+        customFatigue.remove(kind)
+    }
+
+    fun getDefaultTargetValue(id: String): Double {
+        val target = planner?.config?.targets?.find { it.id == id }
+        return target?.goal?.toDouble() ?: 0.0
+    }
+
+    fun getDefaultFatigueValue(kind: String): Double {
+        // Fallback to first constraint if exercise doesn't have a default
+        val constraint = planner?.config?.fatigueConstraints?.get(kind)?.firstOrNull()
+        return constraint?.threshold ?: 1.0
+    }
+
     fun save(onSuccess: () -> Unit) {
         viewModelScope.launch {
             val repsInt = reps.toIntOrNull()
             val durationSecondsInt = durationMinutes.toIntOrNull()?.let { it * 60 }
             val validTempo = if (tempo.length == 4 && tempo.all { it.isDigit() }) tempo else null
+
+            val mapper = jacksonObjectMapper()
+            val customTargetsStr = if (customTargets.isNotEmpty()) mapper.writeValueAsString(customTargets) else null
+            val customFatigueStr = if (customFatigue.isNotEmpty()) mapper.writeValueAsString(customFatigue) else null
 
             if (existingLog != null) {
                 // Update existing
@@ -75,7 +135,9 @@ class EditExerciseViewModel(
                     actualReps = repsInt,
                     targetDurationSeconds = durationSecondsInt,
                     actualDurationSeconds = durationSecondsInt,
-                    tempo = validTempo
+                    tempo = validTempo,
+                    customTargets = customTargetsStr,
+                    customFatigue = customFatigueStr
                 )
                 repository.updateLog(updated)
             } else {
@@ -101,7 +163,9 @@ class EditExerciseViewModel(
                     rpe = null,
                     notes = "Manual Entry",
                     skipped = false,
-                    timestamp = timestamp
+                    timestamp = timestamp,
+                    customTargets = customTargetsStr,
+                    customFatigue = customFatigueStr
                 )
                 repository.logSet(newEntry)
             }
@@ -122,12 +186,13 @@ class EditExerciseViewModel(
 class EditExerciseViewModelFactory(
     private val repository: WorkoutRepository,
     private val sessionId: Long,
-    private val logId: Long?
+    private val logId: Long?,
+    private val planner: AdvancedWorkoutPlanner?
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(EditExerciseViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return EditExerciseViewModel(repository, sessionId, logId) as T
+            return EditExerciseViewModel(repository, sessionId, logId, planner) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

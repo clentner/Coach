@@ -3,6 +3,8 @@ package com.chrislentner.coach.planner
 import com.chrislentner.coach.database.WorkoutLogEntry
 import com.chrislentner.coach.planner.model.Block
 import com.chrislentner.coach.planner.model.CoachConfig
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import java.time.Duration
 import java.time.Instant
 import kotlin.math.max
@@ -46,6 +48,19 @@ class HistoryAnalyzer(private val config: CoachConfig) {
     }
 
     private fun calculateFatigueLoad(log: WorkoutLogEntry, kind: String): Double? {
+        val customFatigueStr = log.customFatigue
+        if (customFatigueStr != null && customFatigueStr.isNotBlank()) {
+            try {
+                val mapper = jacksonObjectMapper()
+                val customMap: Map<String, Double> = mapper.readValue(customFatigueStr)
+                if (customMap.containsKey(kind)) {
+                    return customMap[kind]
+                }
+            } catch (e: Exception) {
+                // Ignore parse errors, fallback to default
+            }
+        }
+
         val fatigueDef = exerciseFatigueMap[log.exerciseName]
         if (fatigueDef != null && fatigueDef.containsKey(kind)) {
             val valOrFormula = fatigueDef[kind]
@@ -80,6 +95,22 @@ class HistoryAnalyzer(private val config: CoachConfig) {
         return getFatigueContributions(kind, windowHours, now, history).sumOf { it.load }
     }
 
+    private fun getCustomTargetValue(log: WorkoutLogEntry, targetId: String): Double? {
+        val customTargetsStr = log.customTargets
+        if (customTargetsStr != null && customTargetsStr.isNotBlank()) {
+            try {
+                val mapper = jacksonObjectMapper()
+                val customMap: Map<String, Double> = mapper.readValue(customTargetsStr)
+                if (customMap.containsKey(targetId)) {
+                    return customMap[targetId]
+                }
+            } catch (e: Exception) {
+                // Ignore parse errors, return null
+            }
+        }
+        return null
+    }
+
     fun getTargetContributions(targetId: String, windowDays: Int, now: Instant, history: List<WorkoutLogEntry>): List<TargetContribution> {
         val targetConfig = config.targets.find { it.id == targetId } ?: return emptyList()
         val cutoff = now.minus(Duration.ofDays(windowDays.toLong())).toEpochMilli()
@@ -87,16 +118,23 @@ class HistoryAnalyzer(private val config: CoachConfig) {
 
         val contributingExercises = targetContributingExercises[targetId] ?: emptySet()
 
-        return history.filter { it.timestamp in cutoff..nowMillis && contributingExercises.contains(it.exerciseName) && !it.skipped }
-            .map { log ->
-                val value = if (targetConfig.type == "sets") {
-                    1.0
-                } else if (targetConfig.type == "minutes") {
-                    (log.actualDurationSeconds ?: 0) / 60.0
+        return history.filter { it.timestamp in cutoff..nowMillis && !it.skipped }
+            .mapNotNull { log ->
+                val customValue = getCustomTargetValue(log, targetId)
+                if (customValue != null) {
+                    TargetContribution(log, customValue)
+                } else if (contributingExercises.contains(log.exerciseName)) {
+                    val value = if (targetConfig.type == "sets") {
+                        1.0
+                    } else if (targetConfig.type == "minutes") {
+                        (log.actualDurationSeconds ?: 0) / 60.0
+                    } else {
+                        0.0
+                    }
+                    TargetContribution(log, value)
                 } else {
-                    0.0
+                    null
                 }
-                TargetContribution(log, value)
             }
     }
 

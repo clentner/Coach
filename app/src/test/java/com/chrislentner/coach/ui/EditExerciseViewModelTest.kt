@@ -66,7 +66,7 @@ class EditExerciseViewModelTest {
         val session = WorkoutSession(id=1, date="2023-01-01", startTimeInMillis=1000L, isCompleted=false)
         dao.sessions.add(session)
 
-        val viewModel = EditExerciseViewModel(repository, sessionId=1, logId=null)
+        val viewModel = EditExerciseViewModel(repository, sessionId=1, logId=null, planner=null)
         viewModel.exerciseName = "Squat"
         viewModel.load = "100"
         viewModel.reps = "5"
@@ -94,7 +94,7 @@ class EditExerciseViewModelTest {
         val existingLog = WorkoutLogEntry(id=1, sessionId=1, exerciseName="Squat", targetReps=5, targetDurationSeconds=null, loadDescription="100", timestamp=1000L, actualReps=5, actualDurationSeconds=null, rpe=null, notes=null)
         dao.logs.add(existingLog)
 
-        val viewModel = EditExerciseViewModel(repository, sessionId=1, logId=1)
+        val viewModel = EditExerciseViewModel(repository, sessionId=1, logId=1, planner=null)
         shadowOf(Looper.getMainLooper()).idle() // let init run
 
         assertEquals("Squat", viewModel.exerciseName)
@@ -118,7 +118,7 @@ class EditExerciseViewModelTest {
         val existingLog = WorkoutLogEntry(id=1, sessionId=1, exerciseName="Squat", targetReps=5, targetDurationSeconds=null, loadDescription="100", timestamp=1000L, actualReps=5, actualDurationSeconds=null, rpe=null, notes=null)
         dao.logs.add(existingLog)
 
-        val viewModel = EditExerciseViewModel(repository, sessionId=1, logId=1)
+        val viewModel = EditExerciseViewModel(repository, sessionId=1, logId=1, planner=null)
         shadowOf(Looper.getMainLooper()).idle() // let init run
 
         var successCalled = false
@@ -140,7 +140,7 @@ class EditExerciseViewModelTest {
         )
         dao.logs.add(lastLog)
 
-        val viewModel = EditExerciseViewModel(repository, sessionId=1, logId=null)
+        val viewModel = EditExerciseViewModel(repository, sessionId=1, logId=null, planner=null)
         shadowOf(Looper.getMainLooper()).idle()
 
         viewModel.onExerciseSelected("Deadlift")
