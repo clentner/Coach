@@ -41,8 +41,20 @@ class SuggestScheduleViewModelTest {
 
         // Mock Config
         config = mock(CoachConfig::class.java)
+
+        val mockBlock = com.chrislentner.coach.planner.model.Block(
+            blockName = "BlockA",
+            sizeMinutes = emptyList(),
+            location = "Home",
+            tags = emptyList(),
+            prescription = emptyList(),
+            progression = null
+        )
+        val pGroup = PriorityGroup(listOf(mockBlock))
+
         whenever(planner.config).thenReturn(config)
         whenever(config.priorityOrder).thenReturn(listOf("P1"))
+        whenever(config.priorities).thenReturn(mapOf("P1" to pGroup))
     }
 
     @Test
@@ -60,28 +72,13 @@ class SuggestScheduleViewModelTest {
                 )
             )
 
-            // Setup fake block lookup
-            // We need a real Block object or mocked one
-            // Block is a data class, so we can instantiate it easily if we pass empty lists
-            val mockBlock = com.chrislentner.coach.planner.model.Block(
-                blockName = "BlockA",
-                sizeMinutes = emptyList(),
-                location = "Home",
-                tags = emptyList(),
-                prescription = emptyList(),
-                progression = null
-            )
-            val pGroup = PriorityGroup(listOf(mockBlock))
-            whenever(config.priorities).thenReturn(mapOf("P1" to pGroup))
+            viewModel = SuggestScheduleViewModel(repository, scheduleRepository, planner, Dispatchers.Unconfined)
 
-            viewModel = SuggestScheduleViewModel(repository, scheduleRepository, planner, Dispatchers.Main)
+            // Wait for coroutines
             shadowOf(Looper.getMainLooper()).idle()
 
             assertEquals(7, viewModel.suggestedPlans.size)
-            assertTrue(viewModel.suggestedPlans.all { !it.isRestDay }) // Since we returned null schedule, default is 60 min workout?
-            // Wait, SuggestScheduleViewModel uses:
-            // ?: ScheduleEntry(dateStr, isRestDay = false, timeInMillis = null, durationMinutes = 60, location = null)
-            // So yes, workout days.
+            assertTrue(viewModel.suggestedPlans.all { !it.isRestDay })
         }
     }
 }
