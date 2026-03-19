@@ -125,9 +125,9 @@ class SuggestScheduleViewModel(
         }
     }
 
-    private fun comparePlans(home: Plan, gym: Plan, config: CoachConfig, cache: Map<String, Set<String>>): Plan {
+    private fun comparePlans(home: Plan, gym: Plan, config: CoachConfig, priorityBlocksCache: Map<String, Set<String>>): Plan {
         for (groupName in config.priorityOrder) {
-            val blocksInGroup = cache[groupName] ?: emptySet()
+            val blocksInGroup = priorityBlocksCache[groupName] ?: emptySet()
 
             val homeScore = home.blocks.filter { it.blockName in blocksInGroup }.sumOf { it.reduction }
             val gymScore = gym.blocks.filter { it.blockName in blocksInGroup }.sumOf { it.reduction }
