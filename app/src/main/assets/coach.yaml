@@ -31,11 +31,6 @@ targets:
     type: sets
     goal: 4
 
-  - id: fcu_rehab_sets
-    window_days: 7
-    type: sets
-    goal: 18
-
   - id: zone2_minutes
     window_days: 7
     type: minutes
@@ -77,7 +72,6 @@ priority_order:
   - patellar_tendon
   - hip_abductors
   - pike_lift_cracr
-  - fcu_rehab
   - hip_flexors
   - cardio
   - strength_full_body
@@ -199,36 +193,6 @@ priorities:
             per_side: true
             contributes_to:
               - { target: pike_lift_cracr_sets }
-
-  fcu_rehab:
-    blocks:
-      - block_name: wrist_isometrics
-        size_minutes: 10
-        location: anywhere
-        tags: [rehab, forearm]
-        prescription:
-          - exercise: wrist_flexion_iso
-            sets: 5
-            seconds: 30
-            contributes_to:
-              - { target: fcu_rehab_sets }
-          - exercise: wrist_extension_iso
-            sets: 5
-            seconds: 30
-            contributes_to:
-              - { target: fcu_rehab_sets }
-
-      - block_name: wrist_flexion_eccentrics
-        size_minutes: 10
-        location: anywhere
-        tags: [rehab, forearm]
-        prescription:
-          - exercise: wrist_flexion_eccentric
-            sets: 3
-            reps: 15
-            tempo: "4010"
-            contributes_to:
-              - { target: fcu_rehab_sets }
 
   hip_flexors:
     blocks:
