@@ -68,6 +68,13 @@ fatigue_constraints:
       applies_to_blocks_with_tag: [compound_heavy]
       reason: "Heavy compounds only if CNS load (72h) < 2.0"
 
+  hamstring_stretch:
+    - kind: prior_load_lt
+      window_hours: 48
+      threshold: 1.0
+      applies_to_blocks_with_tag: [mobility]
+      reason: "Mobility only if hamstring stretch load (48h) < 1.0"
+
 priority_order:
   - patellar_tendon
   - hip_abductors
@@ -193,6 +200,8 @@ priorities:
             per_side: true
             contributes_to:
               - { target: pike_lift_cracr_sets }
+            fatigue_loads:
+              hamstring_stretch: 1.0
 
   hip_flexors:
     blocks:
