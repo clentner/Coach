@@ -12,7 +12,7 @@ android {
 
     defaultConfig {
         applicationId = "com.chrislentner.coach"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 34
         versionCode = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 1
         versionName = "1.0"
@@ -87,6 +87,9 @@ dependencies {
 
     // Navigation
     implementation(libs.androidx.navigation.compose)
+
+    // Health Connect
+    implementation(libs.health.connect.client)
 
     // Jackson YAML
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.15.2")

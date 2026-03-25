@@ -89,6 +89,12 @@ fun HomeScreen(
             Button(onClick = { navController.navigate("past_workouts") }) {
                 Text("Past Workouts")
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Button(onClick = { navController.navigate("health_connect_debug") }) {
+                Text("Health Connect Debug")
+            }
         }
     }
 }
