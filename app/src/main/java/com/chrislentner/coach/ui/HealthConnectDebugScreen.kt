@@ -21,6 +21,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.ui.Alignment
+import androidx.health.connect.client.HealthConnectClient
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
@@ -246,10 +247,18 @@ fun HeaderSection(
     onRequestPermissions: () -> Unit,
     onRefresh: () -> Unit
 ) {
+    val context = LocalContext.current
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text("Status", style = MaterialTheme.typography.titleMedium)
-            Text("Available: ${state.isAvailable}")
+
+            val statusText = when (state.sdkStatus) {
+                HealthConnectClient.SDK_AVAILABLE -> "Available"
+                HealthConnectClient.SDK_UNAVAILABLE -> "Unavailable on this device"
+                HealthConnectClient.SDK_UNAVAILABLE_PROVIDER_UPDATE_REQUIRED -> "Provider Update Required"
+                else -> "Unknown (${state.sdkStatus})"
+            }
+            Text("Provider Status: $statusText")
             Text("Permissions Granted: ${state.hasPermissions}")
 
             if (state.error != null) {
@@ -261,7 +270,13 @@ fun HeaderSection(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                if (state.isAvailable && !state.hasPermissions) {
+                if (state.sdkStatus == HealthConnectClient.SDK_UNAVAILABLE_PROVIDER_UPDATE_REQUIRED) {
+                    Button(onClick = {
+                        context.startActivity(HealthConnectManager.getUpdateIntent(context))
+                    }) {
+                        Text("Update/Install Provider")
+                    }
+                } else if (state.isAvailable && !state.hasPermissions) {
                     Button(onClick = onRequestPermissions) {
                         Text("Request Permissions")
                     }

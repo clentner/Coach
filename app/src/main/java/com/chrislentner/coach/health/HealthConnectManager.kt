@@ -9,6 +9,8 @@ import androidx.health.connect.client.records.ExerciseSessionRecord
 import androidx.health.connect.client.records.HeartRateRecord
 import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.time.TimeRangeFilter
+import android.content.Intent
+import android.net.Uri
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 
@@ -53,6 +55,15 @@ object HealthConnectManager {
 
     fun isAvailable(context: Context): Boolean {
         return getAvailabilityStatus(context) == HealthConnectClient.SDK_AVAILABLE
+    }
+
+    fun getUpdateIntent(context: Context): Intent {
+        val uri = Uri.parse("market://details?id=com.google.android.apps.healthdata&url=healthconnect%3A%2F%2Fonboarding")
+        return Intent(Intent.ACTION_VIEW, uri).apply {
+            setPackage("com.android.vending")
+            putExtra("overlay", true)
+            putExtra("callerId", context.packageName)
+        }
     }
 
     fun getClient(context: Context): HealthConnectClient {

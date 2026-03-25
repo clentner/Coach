@@ -19,6 +19,7 @@ import java.time.temporal.ChronoUnit
 
 data class HealthConnectState(
     val isAvailable: Boolean = false,
+    val sdkStatus: Int = 2, // Default SDK_UNAVAILABLE
     val hasPermissions: Boolean = false,
     val isLoading: Boolean = false,
     val error: String? = null,
@@ -51,6 +52,7 @@ class HealthConnectDebugViewModel(application: Application) : AndroidViewModel(a
     fun checkStatusAndPermissions() {
         val context = getApplication<Application>()
         viewModelScope.launch {
+            val status = HealthConnectManager.getAvailabilityStatus(context)
             val isAvail = HealthConnectManager.isAvailable(context)
             val hasPerms = if (isAvail) {
                 HealthConnectManager.checkPermissionsGranted(context)
@@ -61,6 +63,7 @@ class HealthConnectDebugViewModel(application: Application) : AndroidViewModel(a
             _state.update {
                 it.copy(
                     isAvailable = isAvail,
+                    sdkStatus = status,
                     hasPermissions = hasPerms
                 )
             }
