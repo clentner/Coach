@@ -126,6 +126,10 @@ fun CoachApp(
                 androidx.compose.material3.Text("Planner configuration not found.")
             }
         }
+        composable("health_connect_debug") {
+            val viewModel: HealthConnectDebugViewModel = viewModel()
+            HealthConnectDebugScreen(navController = navController, viewModel = viewModel)
+        }
         composable(
             "status/fatigue/{kind}/{windowHours}",
             arguments = listOf(
