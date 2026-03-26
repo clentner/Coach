@@ -12,6 +12,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.chrislentner.coach.health.HealthConnectLabels
 import com.chrislentner.coach.health.HealthConnectManager
 import com.chrislentner.coach.health.FlattenedHrSample
 import com.chrislentner.coach.health.ZoneResult
@@ -109,7 +110,7 @@ fun SessionDebugCard(
             val session = model.session
             val duration = ChronoUnit.MINUTES.between(session.startTime, session.endTime)
             Text("Session: ${dtf.format(session.startTime)}", style = MaterialTheme.typography.titleMedium)
-            Text("Type: ${session.exerciseType} | Duration: $duration min")
+            Text("Type: ${HealthConnectLabels.exerciseTypeLabelWithCode(session.exerciseType)} | Duration: $duration min")
             Text("Source: ${session.metadata.dataOrigin.packageName}")
 
             // Warning badges
