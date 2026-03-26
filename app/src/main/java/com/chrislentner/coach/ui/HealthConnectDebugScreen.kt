@@ -225,9 +225,9 @@ fun SessionDetailSection(model: SessionDebugModel, maxHrInput: String) {
     Text("--- Computed Zone Results ---", style = MaterialTheme.typography.labelMedium)
     Text("Max HR Input Used: $maxHrInput")
     if (zones != null) {
-        Text("Session Duration: ${zones.sessionDurationSecs}s")
-        Text("Covered Duration: ${zones.coveredDurationSecs}s")
-        Text("Uncovered Duration: ${maxOf(0, zones.sessionDurationSecs - zones.coveredDurationSecs)}s")
+        Text("Session Duration: ${formatDuration(zones.sessionDurationSecs)}")
+        Text("Covered Duration: ${formatDuration(zones.coveredDurationSecs)}")
+        Text("Uncovered Duration: ${formatDuration(maxOf(0, zones.sessionDurationSecs - zones.coveredDurationSecs))}")
         Text("Tail Rule Applied: ${zones.tailRuleApplied ?: "None"}", style = MaterialTheme.typography.bodySmall)
 
         Spacer(modifier = Modifier.height(4.dp))
@@ -235,11 +235,17 @@ fun SessionDetailSection(model: SessionDebugModel, maxHrInput: String) {
         for (z in 5 downTo 1) {
             val d = zones.durationsPerZone[z] ?: 0L
             val pct = (d / totalCovered) * 100.0
-            Text(String.format("Zone %d: %ds (%.1f%%)", z, d, pct))
+            Text(String.format("Zone %d: %s (%.1f%%)", z, formatDuration(d), pct))
         }
     } else {
         Text("Zone computation not available. Ensure Max HR is valid.")
     }
+}
+
+private fun formatDuration(seconds: Long): String {
+    val mins = seconds / 60
+    val secs = seconds % 60
+    return if (mins > 0) "${mins}m ${secs}s" else "${secs}s"
 }
 
 @Composable
