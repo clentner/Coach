@@ -13,7 +13,7 @@ class WorkoutRepository(private val workoutDao: WorkoutDao) {
     }
 
     suspend fun getOrCreateSession(date: String, timestamp: Long, location: String? = null): WorkoutSession {
-        val existing = workoutDao.getSessionByDate(date)
+        val existing = workoutDao.getInProgressSessionByDate(date)
         if (existing != null) return existing
 
         val newSession = WorkoutSession(
@@ -74,5 +74,9 @@ class WorkoutRepository(private val workoutDao: WorkoutDao) {
 
     suspend fun getLastLogForExercise(exerciseName: String): WorkoutLogEntry? {
         return workoutDao.getLastLogForExercise(exerciseName)
+    }
+
+    suspend fun markSessionCompleted(sessionId: Long, endTimeInMillis: Long = System.currentTimeMillis()) {
+        workoutDao.markSessionCompleted(sessionId, endTimeInMillis)
     }
 }

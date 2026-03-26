@@ -48,6 +48,10 @@ class WorkoutViewModelTest {
             return sessions.find { it.date == date }
         }
 
+        override suspend fun getInProgressSessionByDate(date: String): WorkoutSession? {
+            return sessions.find { it.date == date && !it.isCompleted }
+        }
+
         override suspend fun insertLogEntry(entry: WorkoutLogEntry): Long {
             val id = (logs.size + 1).toLong()
             logs.add(entry.copy(id = id))
@@ -103,6 +107,13 @@ class WorkoutViewModelTest {
 
         override suspend fun getLastLogForExercise(exerciseName: String): WorkoutLogEntry? {
             return logs.filter { it.exerciseName == exerciseName }.maxByOrNull { it.timestamp }
+        }
+
+        override suspend fun markSessionCompleted(sessionId: Long, endTimeInMillis: Long) {
+            val index = sessions.indexOfFirst { it.id == sessionId }
+            if (index != -1) {
+                sessions[index] = sessions[index].copy(isCompleted = true, endTimeInMillis = endTimeInMillis)
+            }
         }
     }
 

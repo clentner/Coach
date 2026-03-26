@@ -260,6 +260,26 @@ class WorkoutViewModel(
         }
     }
 
+    fun finishWorkout(onFinished: () -> Unit) {
+        val state = uiState
+        val sessionId = when (state) {
+            is WorkoutUiState.Active -> state.session.id
+            is WorkoutUiState.FreeEntry -> state.session.id
+            WorkoutUiState.Loading -> null
+        }
+
+        if (sessionId == null) {
+            onFinished()
+            return
+        }
+
+        viewModelScope.launch {
+            repository.markSessionCompleted(sessionId)
+            resetTimer()
+            onFinished()
+        }
+    }
+
     fun updateCurrentStepExercise(newName: String) {
         val state = uiState
         if (state is WorkoutUiState.Active && state.currentStep != null) {

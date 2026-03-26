@@ -33,6 +33,7 @@ class EditExerciseViewModelTest {
             return id
         }
         override suspend fun getSessionByDate(date: String) = sessions.find { it.date == date }
+        override suspend fun getInProgressSessionByDate(date: String) = sessions.find { it.date == date && !it.isCompleted }
         override suspend fun insertLogEntry(entry: WorkoutLogEntry): Long {
             val id = (logs.size + 1).toLong()
             logs.add(entry.copy(id = id))
@@ -53,6 +54,7 @@ class EditExerciseViewModelTest {
         override suspend fun getRecentExerciseNames(limit: Int) = logs.sortedByDescending { it.timestamp }.map { it.exerciseName }.distinct().take(limit)
         override fun getLogsForSessionFlow(sessionId: Long): Flow<List<WorkoutLogEntry>> = flowOf(logs.filter { it.sessionId == sessionId })
         override suspend fun getLastLogForExercise(exerciseName: String) = logs.filter { it.exerciseName == exerciseName }.maxByOrNull { it.timestamp }
+        override suspend fun markSessionCompleted(sessionId: Long, endTimeInMillis: Long) {}
     }
 
     @Before

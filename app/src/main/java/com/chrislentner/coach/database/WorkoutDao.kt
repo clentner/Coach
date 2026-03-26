@@ -21,6 +21,13 @@ interface WorkoutDao {
     @Query("SELECT * FROM workout_sessions WHERE date = :date LIMIT 1")
     suspend fun getSessionByDate(date: String): WorkoutSession?
 
+    @Query(
+        "SELECT * FROM workout_sessions " +
+            "WHERE date = :date AND isCompleted = 0 " +
+            "ORDER BY startTimeInMillis DESC LIMIT 1"
+    )
+    suspend fun getInProgressSessionByDate(date: String): WorkoutSession?
+
     @Query("SELECT * FROM workout_sessions WHERE id = :id LIMIT 1")
     suspend fun getSessionById(id: Long): WorkoutSession?
 
@@ -80,4 +87,7 @@ interface WorkoutDao {
 
     @Query("SELECT * FROM workout_logs WHERE exerciseName = :exerciseName ORDER BY timestamp DESC LIMIT 1")
     suspend fun getLastLogForExercise(exerciseName: String): WorkoutLogEntry?
+
+    @Query("UPDATE workout_sessions SET isCompleted = 1, endTimeInMillis = :endTimeInMillis WHERE id = :sessionId")
+    suspend fun markSessionCompleted(sessionId: Long, endTimeInMillis: Long)
 }
