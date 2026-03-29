@@ -18,13 +18,17 @@ interface WorkoutDao {
     @Insert
     suspend fun insertSession(session: WorkoutSession): Long
 
-    @Query("SELECT * FROM workout_sessions WHERE date = :date LIMIT 1")
+    @Query(
+        "SELECT * FROM workout_sessions " +
+            "WHERE date = :date " +
+            "ORDER BY startTimeInMillis DESC, id DESC LIMIT 1"
+    )
     suspend fun getSessionByDate(date: String): WorkoutSession?
 
     @Query(
         "SELECT * FROM workout_sessions " +
             "WHERE date = :date AND isCompleted = 0 " +
-            "ORDER BY startTimeInMillis DESC LIMIT 1"
+            "ORDER BY startTimeInMillis DESC, id DESC LIMIT 1"
     )
     suspend fun getInProgressSessionByDate(date: String): WorkoutSession?
 
@@ -65,7 +69,7 @@ interface WorkoutDao {
         FROM workout_sessions s
         LEFT JOIN workout_logs l ON s.id = l.sessionId
         GROUP BY s.id
-        ORDER BY s.date DESC
+        ORDER BY s.date DESC, s.startTimeInMillis DESC, s.id DESC
     """)
     suspend fun getSessionsWithSetCounts(): List<SessionSummary>
 
@@ -78,7 +82,7 @@ interface WorkoutDao {
         FROM workout_sessions s
         LEFT JOIN workout_logs l ON s.id = l.sessionId
         GROUP BY s.id
-        ORDER BY s.date DESC
+        ORDER BY s.date DESC, s.startTimeInMillis DESC, s.id DESC
     """)
     fun getSessionsWithSetCountsFlow(): Flow<List<SessionSummary>>
 
