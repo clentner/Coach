@@ -102,8 +102,8 @@ class WorkoutViewModel(
                 location = schedule?.location
             }
 
-            // 1. Get or Create Session
-            val session = repository.getOrCreateSession(todayStr, now.toEpochMilli(), location)
+            // 1. Resume in-progress session or create a new one for workout flow
+            val session = repository.getOrCreateInProgressSession(todayStr, now.toEpochMilli(), location)
 
             // 2. Fetch History & Generate Plan (Only if not already cached)
             if (cachedPlan == null) {

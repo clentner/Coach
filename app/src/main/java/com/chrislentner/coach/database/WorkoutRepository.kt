@@ -13,8 +13,22 @@ class WorkoutRepository(private val workoutDao: WorkoutDao) {
     }
 
     suspend fun getOrCreateSession(date: String, timestamp: Long, location: String? = null): WorkoutSession {
-        val existing = workoutDao.getInProgressSessionByDate(date)
+        val existing = workoutDao.getSessionByDate(date)
         if (existing != null) return existing
+
+        val newSession = WorkoutSession(
+            date = date,
+            startTimeInMillis = timestamp,
+            isCompleted = false,
+            location = location
+        )
+        val id = workoutDao.insertSession(newSession)
+        return newSession.copy(id = id)
+    }
+
+    suspend fun getOrCreateInProgressSession(date: String, timestamp: Long, location: String? = null): WorkoutSession {
+        val existingInProgress = workoutDao.getInProgressSessionByDate(date)
+        if (existingInProgress != null) return existingInProgress
 
         val newSession = WorkoutSession(
             date = date,
