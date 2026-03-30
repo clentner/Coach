@@ -111,15 +111,9 @@ class WorkoutViewModel(
                 val weekAgo = now.minusSeconds(14L * 24 * 60 * 60)
                 val rawHistory = repository.getHistorySince(weekAgo.toEpochMilli())
 
-                // Calculate start of today to exclude today's logs
-                val startOfToday = LocalDate.now(ZoneId.systemDefault())
-                    .atStartOfDay(ZoneId.systemDefault())
-                    .toInstant()
-                    .toEpochMilli()
-
-                // The data model assumes 1 session per day. We exclude today's logs to ensure the plan
-                // remains consistent and doesn't change as the user logs sets during the session.
-                val historyForPlanning = rawHistory.filter { it.timestamp < startOfToday }
+                // Exclude logs from the currently active session so the plan remains stable while sets
+                // are being recorded. This still allows logs from earlier sessions on the same day.
+                val historyForPlanning = rawHistory.filter { it.timestamp < session.startTimeInMillis }
 
                 cachedPlan = if (planner != null && scheduleRepository != null) {
                     val schedule = scheduleRepository.getScheduleByDate(todayStr)
