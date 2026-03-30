@@ -26,6 +26,9 @@ import org.mockito.kotlin.argumentCaptor
 import org.mockito.kotlin.whenever
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows.shadowOf
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 @RunWith(RobolectricTestRunner::class)
 class WorkoutViewModelTest {
@@ -46,6 +49,10 @@ class WorkoutViewModelTest {
 
         override suspend fun getSessionByDate(date: String): WorkoutSession? {
             return sessions.find { it.date == date }
+        }
+
+        override suspend fun getInProgressSessionByDate(date: String): WorkoutSession? {
+            return sessions.find { it.date == date && !it.isCompleted }
         }
 
         override suspend fun insertLogEntry(entry: WorkoutLogEntry): Long {
@@ -103,6 +110,13 @@ class WorkoutViewModelTest {
 
         override suspend fun getLastLogForExercise(exerciseName: String): WorkoutLogEntry? {
             return logs.filter { it.exerciseName == exerciseName }.maxByOrNull { it.timestamp }
+        }
+
+        override suspend fun markSessionCompleted(sessionId: Long, endTimeInMillis: Long) {
+            val index = sessions.indexOfFirst { it.id == sessionId }
+            if (index != -1) {
+                sessions[index] = sessions[index].copy(isCompleted = true, endTimeInMillis = endTimeInMillis)
+            }
         }
     }
 
@@ -233,7 +247,7 @@ class WorkoutViewModelTest {
     }
 
     @Test
-    fun `generatePlan excludes logs from today`() {
+    fun `generatePlan excludes all current-session logs and keeps earlier same-day logs from other sessions`() {
         runBlocking {
             val planner = mock(AdvancedWorkoutPlanner::class.java)
             val scheduleRepo = mock(ScheduleRepository::class.java)
@@ -247,14 +261,67 @@ class WorkoutViewModelTest {
                 )
             )
 
-            // Add a log for today and yesterday
             val now = System.currentTimeMillis()
-            val yesterday = now - 24 * 60 * 60 * 1000
-            val todayLog = WorkoutLogEntry(id=1, sessionId=1, exerciseName="Squats", targetReps=5, targetDurationSeconds=null, loadDescription="100", actualReps=5, actualDurationSeconds=null, rpe=null, notes=null, timestamp=now)
-            val yesterdayLog = WorkoutLogEntry(id=2, sessionId=2, exerciseName="Squats", targetReps=5, targetDurationSeconds=null, loadDescription="100", actualReps=5, actualDurationSeconds=null, rpe=null, notes=null, timestamp=yesterday)
+            val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd", java.util.Locale.US)
+            val todayStr = LocalDate.now(ZoneId.systemDefault()).format(formatter)
+            val sessionStart = now - 60_000L
 
-            dao.logs.add(todayLog)
-            dao.logs.add(yesterdayLog)
+            dao.sessions.clear()
+            dao.logs.clear()
+
+            // Force WorkoutViewModel to resume this in-progress session
+            dao.sessions.add(
+                WorkoutSession(
+                    id = 10,
+                    date = todayStr,
+                    startTimeInMillis = sessionStart,
+                    isCompleted = false
+                )
+            )
+
+            val earlierSameDayLog = WorkoutLogEntry(
+                id = 1,
+                sessionId = 99,
+                exerciseName = "Squats",
+                targetReps = 5,
+                targetDurationSeconds = null,
+                loadDescription = "100",
+                actualReps = 5,
+                actualDurationSeconds = null,
+                rpe = null,
+                notes = null,
+                timestamp = sessionStart - 1_000L
+            )
+            val currentSessionLog = WorkoutLogEntry(
+                id = 2,
+                sessionId = 10,
+                exerciseName = "Bench",
+                targetReps = 5,
+                targetDurationSeconds = null,
+                loadDescription = "100",
+                actualReps = 5,
+                actualDurationSeconds = null,
+                rpe = null,
+                notes = null,
+                timestamp = sessionStart + 1_000L
+            )
+            val currentSessionBackdatedLog = WorkoutLogEntry(
+                id = 3,
+                sessionId = 10,
+                exerciseName = "Row",
+                targetReps = 8,
+                targetDurationSeconds = null,
+                loadDescription = "80",
+                actualReps = 8,
+                actualDurationSeconds = null,
+                rpe = null,
+                notes = "Manual edit",
+                timestamp = sessionStart - 2_000L
+            )
+
+            dao.logs.add(earlierSameDayLog)
+            dao.logs.add(currentSessionLog)
+            dao.logs.add(currentSessionBackdatedLog)
 
             viewModel = WorkoutViewModel(repository, scheduleRepo, planner)
             shadowOf(Looper.getMainLooper()).idle()
@@ -263,8 +330,12 @@ class WorkoutViewModelTest {
             verify(planner).generatePlan(any(), captor.capture(), any())
 
             val capturedHistory = captor.firstValue
-            assertTrue("History should include yesterday's log", capturedHistory.any { it.id == yesterdayLog.id })
-            assertFalse("History should NOT include today's log", capturedHistory.any { it.id == todayLog.id })
+            assertTrue("History should include earlier same-day log", capturedHistory.any { it.id == earlierSameDayLog.id })
+            assertFalse("History should NOT include current-session log", capturedHistory.any { it.id == currentSessionLog.id })
+            assertFalse(
+                "History should NOT include backdated current-session log",
+                capturedHistory.any { it.id == currentSessionBackdatedLog.id }
+            )
         }
     }
 

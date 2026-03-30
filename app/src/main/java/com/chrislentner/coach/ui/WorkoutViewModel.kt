@@ -102,8 +102,8 @@ class WorkoutViewModel(
                 location = schedule?.location
             }
 
-            // 1. Get or Create Session
-            val session = repository.getOrCreateSession(todayStr, now.toEpochMilli(), location)
+            // 1. Resume in-progress session or create a new one for workout flow
+            val session = repository.getOrCreateInProgressSession(todayStr, now.toEpochMilli(), location)
 
             // 2. Fetch History & Generate Plan (Only if not already cached)
             if (cachedPlan == null) {
@@ -111,15 +111,9 @@ class WorkoutViewModel(
                 val weekAgo = now.minusSeconds(14L * 24 * 60 * 60)
                 val rawHistory = repository.getHistorySince(weekAgo.toEpochMilli())
 
-                // Calculate start of today to exclude today's logs
-                val startOfToday = LocalDate.now(ZoneId.systemDefault())
-                    .atStartOfDay(ZoneId.systemDefault())
-                    .toInstant()
-                    .toEpochMilli()
-
-                // The data model assumes 1 session per day. We exclude today's logs to ensure the plan
-                // remains consistent and doesn't change as the user logs sets during the session.
-                val historyForPlanning = rawHistory.filter { it.timestamp < startOfToday }
+                // Exclude logs from the currently active session so the plan remains stable while sets
+                // are being recorded, including any backdated/manual edits for this same session.
+                val historyForPlanning = rawHistory.filter { it.sessionId != session.id }
 
                 cachedPlan = if (planner != null && scheduleRepository != null) {
                     val schedule = scheduleRepository.getScheduleByDate(todayStr)
@@ -257,6 +251,26 @@ class WorkoutViewModel(
                 repository.deleteLog(lastLog)
                 initializeSession()
             }
+        }
+    }
+
+    fun finishWorkout(onFinished: () -> Unit) {
+        val state = uiState
+        val sessionId = when (state) {
+            is WorkoutUiState.Active -> state.session.id
+            is WorkoutUiState.FreeEntry -> state.session.id
+            WorkoutUiState.Loading -> null
+        }
+
+        if (sessionId == null) {
+            onFinished()
+            return
+        }
+
+        viewModelScope.launch {
+            repository.markSessionCompleted(sessionId)
+            resetTimer()
+            onFinished()
         }
     }
 

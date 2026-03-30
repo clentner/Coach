@@ -43,6 +43,7 @@ class PastWorkoutsViewModelTest {
 
         // Unused methods stubbed
         override suspend fun getSessionByDate(date: String) = null
+        override suspend fun getInProgressSessionByDate(date: String) = null
         override suspend fun getSessionById(id: Long) = null
         override suspend fun getLogById(id: Long) = null
         override suspend fun insertLogEntry(entry: WorkoutLogEntry) = 0L
@@ -54,6 +55,7 @@ class PastWorkoutsViewModelTest {
         override suspend fun getLogsSince(timestamp: Long) = emptyList<WorkoutLogEntry>()
         override suspend fun getRecentExerciseNames(limit: Int) = emptyList<String>()
         override suspend fun getLastLogForExercise(exerciseName: String): WorkoutLogEntry? = null
+        override suspend fun markSessionCompleted(sessionId: Long, endTimeInMillis: Long) {}
     }
 
     @Before

@@ -26,6 +26,20 @@ class WorkoutRepository(private val workoutDao: WorkoutDao) {
         return newSession.copy(id = id)
     }
 
+    suspend fun getOrCreateInProgressSession(date: String, timestamp: Long, location: String? = null): WorkoutSession {
+        val existingInProgress = workoutDao.getInProgressSessionByDate(date)
+        if (existingInProgress != null) return existingInProgress
+
+        val newSession = WorkoutSession(
+            date = date,
+            startTimeInMillis = timestamp,
+            isCompleted = false,
+            location = location
+        )
+        val id = workoutDao.insertSession(newSession)
+        return newSession.copy(id = id)
+    }
+
     suspend fun getSessionsWithSetCounts(): List<SessionSummary> {
         return workoutDao.getSessionsWithSetCounts()
     }
@@ -74,5 +88,9 @@ class WorkoutRepository(private val workoutDao: WorkoutDao) {
 
     suspend fun getLastLogForExercise(exerciseName: String): WorkoutLogEntry? {
         return workoutDao.getLastLogForExercise(exerciseName)
+    }
+
+    suspend fun markSessionCompleted(sessionId: Long, endTimeInMillis: Long = System.currentTimeMillis()) {
+        workoutDao.markSessionCompleted(sessionId, endTimeInMillis)
     }
 }

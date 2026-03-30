@@ -117,7 +117,11 @@ fun WorkoutScreen(
             onSkipStep = { viewModel.skipCurrentStep() },
             onUndo = { viewModel.undoLastStep() },
             canUndo = (uiState is WorkoutUiState.Active && uiState.completedStepsCount > 0) || (uiState is WorkoutUiState.FreeEntry),
-            onFinishWorkout = { navController.navigate("home") { popUpTo("home") { inclusive = true } } },
+            onFinishWorkout = {
+                viewModel.finishWorkout {
+                    navController.navigate("home") { popUpTo("home") { inclusive = true } }
+                }
+            },
             // Free Entry Data
             freeExercise = freeExercise,
             freeLoad = freeLoad,
