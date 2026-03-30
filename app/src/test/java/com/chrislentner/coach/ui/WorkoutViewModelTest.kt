@@ -247,7 +247,7 @@ class WorkoutViewModelTest {
     }
 
     @Test
-    fun `generatePlan excludes logs from current session and keeps earlier same-day logs`() {
+    fun `generatePlan excludes all current-session logs and keeps earlier same-day logs from other sessions`() {
         runBlocking {
             val planner = mock(AdvancedWorkoutPlanner::class.java)
             val scheduleRepo = mock(ScheduleRepository::class.java)
@@ -305,9 +305,23 @@ class WorkoutViewModelTest {
                 notes = null,
                 timestamp = sessionStart + 1_000L
             )
+            val currentSessionBackdatedLog = WorkoutLogEntry(
+                id = 3,
+                sessionId = 10,
+                exerciseName = "Row",
+                targetReps = 8,
+                targetDurationSeconds = null,
+                loadDescription = "80",
+                actualReps = 8,
+                actualDurationSeconds = null,
+                rpe = null,
+                notes = "Manual edit",
+                timestamp = sessionStart - 2_000L
+            )
 
             dao.logs.add(earlierSameDayLog)
             dao.logs.add(currentSessionLog)
+            dao.logs.add(currentSessionBackdatedLog)
 
             viewModel = WorkoutViewModel(repository, scheduleRepo, planner)
             shadowOf(Looper.getMainLooper()).idle()
@@ -318,6 +332,10 @@ class WorkoutViewModelTest {
             val capturedHistory = captor.firstValue
             assertTrue("History should include earlier same-day log", capturedHistory.any { it.id == earlierSameDayLog.id })
             assertFalse("History should NOT include current-session log", capturedHistory.any { it.id == currentSessionLog.id })
+            assertFalse(
+                "History should NOT include backdated current-session log",
+                capturedHistory.any { it.id == currentSessionBackdatedLog.id }
+            )
         }
     }
 

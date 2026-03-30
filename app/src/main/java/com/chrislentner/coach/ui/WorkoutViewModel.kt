@@ -112,8 +112,8 @@ class WorkoutViewModel(
                 val rawHistory = repository.getHistorySince(weekAgo.toEpochMilli())
 
                 // Exclude logs from the currently active session so the plan remains stable while sets
-                // are being recorded. This still allows logs from earlier sessions on the same day.
-                val historyForPlanning = rawHistory.filter { it.timestamp < session.startTimeInMillis }
+                // are being recorded, including any backdated/manual edits for this same session.
+                val historyForPlanning = rawHistory.filter { it.sessionId != session.id }
 
                 cachedPlan = if (planner != null && scheduleRepository != null) {
                     val schedule = scheduleRepository.getScheduleByDate(todayStr)
