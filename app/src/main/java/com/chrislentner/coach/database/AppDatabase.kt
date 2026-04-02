@@ -14,11 +14,12 @@ data class User(
     val lastName: String?
 )
 
-@Database(entities = [User::class, ScheduleEntry::class, WorkoutSession::class, WorkoutLogEntry::class], version = 9, exportSchema = true)
+@Database(entities = [User::class, ScheduleEntry::class, WorkoutSession::class, WorkoutLogEntry::class, UserSettings::class], version = 10, exportSchema = true)
 abstract class AppDatabase : RoomDatabase() {
     // abstract fun userDao(): UserDao
     abstract fun scheduleDao(): ScheduleDao
     abstract fun workoutDao(): WorkoutDao
+    abstract fun userSettingsDao(): UserSettingsDao
 
     companion object {
         @Volatile
@@ -31,6 +32,12 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_9_10 = object : Migration(9, 10) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("CREATE TABLE IF NOT EXISTS `user_settings` (`id` INTEGER NOT NULL, `maxHeartRate` INTEGER, PRIMARY KEY(`id`))")
+            }
+        }
+
         fun getDatabase(context: android.content.Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = androidx.room.Room.databaseBuilder(
@@ -38,7 +45,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "coach-database"
                 )
-                    .addMigrations(MIGRATION_8_9)
+                    .addMigrations(MIGRATION_8_9, MIGRATION_9_10)
                     .build()
                 INSTANCE = instance
                 instance

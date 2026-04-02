@@ -10,12 +10,14 @@ import androidx.navigation.NavType
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.chrislentner.coach.database.ScheduleRepository
 import com.chrislentner.coach.database.WorkoutRepository
+import com.chrislentner.coach.database.UserSettingsRepository
 import com.chrislentner.coach.planner.AdvancedWorkoutPlanner
 
 @Composable
 fun CoachApp(
     repository: ScheduleRepository,
     workoutRepository: WorkoutRepository,
+    userSettingsRepository: UserSettingsRepository,
     planner: AdvancedWorkoutPlanner?,
     configExercises: List<String> = emptyList(),
     startDestination: String = "home"
@@ -129,6 +131,12 @@ fun CoachApp(
         composable("health_connect_debug") {
             val viewModel: HealthConnectDebugViewModel = viewModel()
             HealthConnectDebugScreen(navController = navController, viewModel = viewModel)
+        }
+        composable("user_settings") {
+            val viewModel: UserSettingsViewModel = viewModel(
+                factory = UserSettingsViewModelFactory(userSettingsRepository)
+            )
+            UserSettingsScreen(navController = navController, viewModel = viewModel)
         }
         composable(
             "status/fatigue/{kind}/{windowHours}",
