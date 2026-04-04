@@ -2,40 +2,8 @@
   "formatVersion": 1,
   "database": {
     "version": 10,
-    "identityHash": "598df33072d8c699bbe162d27a1f1dc3",
+    "identityHash": "99dd14538cd6f638e37ab77843a69862",
     "entities": [
-      {
-        "tableName": "User",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`uid` INTEGER NOT NULL, `firstName` TEXT, `lastName` TEXT, PRIMARY KEY(`uid`))",
-        "fields": [
-          {
-            "fieldPath": "uid",
-            "columnName": "uid",
-            "affinity": "INTEGER",
-            "notNull": true
-          },
-          {
-            "fieldPath": "firstName",
-            "columnName": "firstName",
-            "affinity": "TEXT",
-            "notNull": false
-          },
-          {
-            "fieldPath": "lastName",
-            "columnName": "lastName",
-            "affinity": "TEXT",
-            "notNull": false
-          }
-        ],
-        "primaryKey": {
-          "autoGenerate": false,
-          "columnNames": [
-            "uid"
-          ]
-        },
-        "indices": [],
-        "foreignKeys": []
-      },
       {
         "tableName": "schedule_entries",
         "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`date` TEXT NOT NULL, `timeInMillis` INTEGER, `durationMinutes` INTEGER, `location` TEXT, `isRestDay` INTEGER NOT NULL, PRIMARY KEY(`date`))",
@@ -304,7 +272,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '598df33072d8c699bbe162d27a1f1dc3')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '99dd14538cd6f638e37ab77843a69862')"
     ]
   }
 }

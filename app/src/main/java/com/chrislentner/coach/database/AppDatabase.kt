@@ -7,16 +7,8 @@ import androidx.room.PrimaryKey
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Entity
-data class User(
-    @PrimaryKey val uid: Int,
-    val firstName: String?,
-    val lastName: String?
-)
-
-@Database(entities = [User::class, ScheduleEntry::class, WorkoutSession::class, WorkoutLogEntry::class, UserSettings::class], version = 10, exportSchema = true)
+@Database(entities = [ScheduleEntry::class, WorkoutSession::class, WorkoutLogEntry::class, UserSettings::class], version = 10, exportSchema = true)
 abstract class AppDatabase : RoomDatabase() {
-    // abstract fun userDao(): UserDao
     abstract fun scheduleDao(): ScheduleDao
     abstract fun workoutDao(): WorkoutDao
     abstract fun userSettingsDao(): UserSettingsDao
@@ -35,6 +27,7 @@ abstract class AppDatabase : RoomDatabase() {
         private val MIGRATION_9_10 = object : Migration(9, 10) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("CREATE TABLE IF NOT EXISTS `user_settings` (`id` INTEGER NOT NULL, `maxHeartRate` INTEGER, PRIMARY KEY(`id`))")
+                db.execSQL("DROP TABLE IF EXISTS `User`")
             }
         }
 
