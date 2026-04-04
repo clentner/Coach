@@ -15,6 +15,7 @@ import androidx.core.content.ContextCompat
 import com.chrislentner.coach.database.AppDatabase
 import com.chrislentner.coach.database.ScheduleRepository
 import com.chrislentner.coach.database.WorkoutRepository
+import com.chrislentner.coach.database.UserSettingsRepository
 import com.chrislentner.coach.planner.AdvancedWorkoutPlanner
 import com.chrislentner.coach.planner.ConfigLoader
 import com.chrislentner.coach.planner.HistoryAnalyzer
@@ -32,6 +33,7 @@ class MainActivity : ComponentActivity() {
     private val database by lazy { AppDatabase.getDatabase(applicationContext) }
     private val repository by lazy { ScheduleRepository(database.scheduleDao()) }
     private val workoutRepository by lazy { WorkoutRepository(database.workoutDao()) }
+    private val userSettingsRepository by lazy { UserSettingsRepository(database.userSettingsDao()) }
 
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -97,6 +99,7 @@ class MainActivity : ComponentActivity() {
                     CoachApp(
                         repository = repository,
                         workoutRepository = workoutRepository,
+                        userSettingsRepository = userSettingsRepository,
                         planner = planner,
                         configExercises = configExercises,
                         startDestination = startDestination
