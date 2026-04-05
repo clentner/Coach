@@ -39,7 +39,7 @@ class HealthConnectSyncRoutine(
             emit("Error: Valid Max HR not found in user settings. Required for zone computation. Exiting.")
             return@flow
         }
-        emit("Loaded Max HR: \$maxHr")
+        emit("Loaded Max HR: $maxHr")
 
         val config = ConfigLoader.load(context)
         val zoneTargets = config.targets
@@ -64,7 +64,7 @@ class HealthConnectSyncRoutine(
         val allActivities = HealthConnectManager.readExerciseSessions(client, thirtyDaysAgo, now)
 
         val filteredActivities = allActivities.filter { it.exerciseType in TARGET_EXERCISE_TYPES }
-        emit("Found \${allActivities.size} total activities, \${filteredActivities.size} match target types.")
+        emit("Found ${allActivities.size} total activities, ${filteredActivities.size} match target types.")
 
         if (filteredActivities.isEmpty()) {
             emit("No target activities found. Sync complete.")
@@ -78,7 +78,7 @@ class HealthConnectSyncRoutine(
             val durationSecs = ChronoUnit.SECONDS.between(startInstant, endInstant)
             val startMillis = startInstant.toEpochMilli()
 
-            emit("--- Processing Activity: \$typeLabel at \$startInstant, duration: \${durationSecs}s ---")
+            emit("--- Processing Activity: $typeLabel at $startInstant, duration: ${durationSecs}s ---")
 
             // Check for duplicate log
             val localDate = startInstant.atZone(ZoneId.systemDefault()).toLocalDate()
@@ -191,7 +191,7 @@ class HealthConnectSyncRoutine(
             )
 
             workoutRepository.logSet(newLog)
-            emit("Inserted new workout log entry for \$typeLabel.")
+            emit("Inserted new workout log entry for $typeLabel.")
         }
 
         emit("Sync Routine Complete.")
