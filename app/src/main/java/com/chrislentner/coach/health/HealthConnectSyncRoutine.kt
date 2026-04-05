@@ -124,9 +124,9 @@ class HealthConnectSyncRoutine(
                 }
             }
 
-            val customTargetsMap = mutableMapOf<String, Int>()
+            val customTargetsMap = mutableMapOf<String, Double>()
             for ((tgt, secs) in customTargetsMapSecs) {
-                val mins = (secs / 60).toInt()
+                val mins = secs / 60.0
                 if (mins > 0) {
                     customTargetsMap[tgt] = mins
                 }
