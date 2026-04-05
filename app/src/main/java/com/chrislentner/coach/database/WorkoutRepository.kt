@@ -12,6 +12,23 @@ class WorkoutRepository(private val workoutDao: WorkoutDao) {
         return workoutDao.getSessionById(id)
     }
 
+    suspend fun getSessionByDate(date: String): WorkoutSession? {
+        return workoutDao.getSessionByDate(date)
+    }
+
+    suspend fun getAllSessionsByDate(date: String): List<WorkoutSession> {
+        return workoutDao.getAllSessionsByDate(date)
+    }
+
+    suspend fun getInProgressSessionByDate(date: String): WorkoutSession? {
+        return workoutDao.getInProgressSessionByDate(date)
+    }
+
+    suspend fun createSession(session: WorkoutSession): WorkoutSession {
+        val id = workoutDao.insertSession(session)
+        return session.copy(id = id)
+    }
+
     suspend fun getOrCreateSession(date: String, timestamp: Long, location: String? = null): WorkoutSession {
         val existing = workoutDao.getSessionByDate(date)
         if (existing != null) return existing

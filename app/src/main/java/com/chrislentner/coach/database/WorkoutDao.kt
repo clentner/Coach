@@ -27,6 +27,13 @@ interface WorkoutDao {
 
     @Query(
         "SELECT * FROM workout_sessions " +
+            "WHERE date = :date " +
+            "ORDER BY startTimeInMillis DESC, id DESC"
+    )
+    suspend fun getAllSessionsByDate(date: String): List<WorkoutSession>
+
+    @Query(
+        "SELECT * FROM workout_sessions " +
             "WHERE date = :date AND isCompleted = 0 " +
             "ORDER BY startTimeInMillis DESC, id DESC LIMIT 1"
     )

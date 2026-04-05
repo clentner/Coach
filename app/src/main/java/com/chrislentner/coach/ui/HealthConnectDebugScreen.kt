@@ -26,6 +26,8 @@ import androidx.health.connect.client.HealthConnectClient
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -77,6 +79,13 @@ fun HealthConnectDebugScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            SyncSection(
+                state = state,
+                onSyncClick = { viewModel.runSync() }
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             LazyColumn {
                 if (state.isLoading) {
                     item { Text("Loading sessions...") }
@@ -88,6 +97,39 @@ fun HealthConnectDebugScreen(
                         onToggleExpand = { viewModel.toggleSessionExpanded(it) }
                     )
                     Spacer(modifier = Modifier.height(8.dp))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun SyncSection(
+    state: HealthConnectState,
+    onSyncClick: () -> Unit
+) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text("Sync Activities", style = MaterialTheme.typography.titleMedium)
+            Text("Manually sync new cardio activities into your workout logs.", style = MaterialTheme.typography.bodySmall)
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Button(
+                onClick = onSyncClick,
+                enabled = !state.isSyncing && state.isAvailable && state.hasPermissions
+            ) {
+                Text(if (state.isSyncing) "Syncing..." else "Sync Now")
+            }
+
+            if (state.syncLog.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(8.dp))
+                val scrollState = rememberScrollState()
+                Box(modifier = Modifier.fillMaxWidth().heightIn(min = 100.dp, max = 200.dp)) {
+                    Text(
+                        text = state.syncLog,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.verticalScroll(scrollState)
+                    )
                 }
             }
         }

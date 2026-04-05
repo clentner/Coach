@@ -24,6 +24,8 @@ class EditExerciseViewModelTest {
     private lateinit var repository: WorkoutRepository
 
     class FakeWorkoutDao : WorkoutDao {
+    override suspend fun getAllSessionsByDate(date: String): List<WorkoutSession> = emptyList()
+
         val sessions = mutableListOf<WorkoutSession>()
         val logs = mutableListOf<WorkoutLogEntry>()
 

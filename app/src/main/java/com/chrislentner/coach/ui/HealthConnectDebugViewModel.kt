@@ -16,6 +16,10 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.temporal.ChronoUnit
+import com.chrislentner.coach.health.HealthConnectSyncRoutine
+import com.chrislentner.coach.database.AppDatabase
+import com.chrislentner.coach.database.WorkoutRepository
+import com.chrislentner.coach.database.UserSettingsRepository
 
 data class HealthConnectState(
     val isAvailable: Boolean = false,
@@ -23,7 +27,9 @@ data class HealthConnectState(
     val hasPermissions: Boolean = false,
     val isLoading: Boolean = false,
     val error: String? = null,
-    val maxHrInput: String = "180" // Default input as string for text field
+    val maxHrInput: String = "180", // Default input as string for text field
+    val syncLog: String = "",
+    val isSyncing: Boolean = false
 )
 
 data class SessionDebugModel(
@@ -179,6 +185,30 @@ class HealthConnectDebugViewModel(application: Application) : AndroidViewModel(a
         if (index != -1) {
             _sessions.value = currentSessions.toMutableList().apply {
                 set(index, mutator(this[index]))
+            }
+        }
+    }
+
+    fun runSync() {
+        if (_state.value.isSyncing) return
+        val context = getApplication<Application>()
+        _state.update { it.copy(isSyncing = true, syncLog = "") }
+
+        viewModelScope.launch {
+            try {
+                val client = HealthConnectManager.getClient(context)
+                val db = AppDatabase.getDatabase(context)
+                val workoutRepo = WorkoutRepository(db.workoutDao())
+                val userSettingsRepo = UserSettingsRepository(db.userSettingsDao())
+
+                val routine = HealthConnectSyncRoutine(context, client, workoutRepo, userSettingsRepo)
+                routine.runSync().collect { logMsg ->
+                    _state.update { it.copy(syncLog = it.syncLog + logMsg + "\n") }
+                }
+            } catch (e: Exception) {
+                _state.update { it.copy(syncLog = it.syncLog + "Sync Failed: ${e.message}\n") }
+            } finally {
+                _state.update { it.copy(isSyncing = false) }
             }
         }
     }
