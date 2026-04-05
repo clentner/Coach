@@ -24,6 +24,12 @@ import com.chrislentner.coach.ui.CoachApp
 import com.chrislentner.coach.ui.theme.CoachTheme
 import com.chrislentner.coach.worker.BootReceiver
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import androidx.lifecycle.lifecycleScope
+import com.chrislentner.coach.health.HealthConnectManager
+import com.chrislentner.coach.health.HealthConnectSyncRoutine
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -104,6 +110,28 @@ class MainActivity : ComponentActivity() {
                         configExercises = configExercises,
                         startDestination = startDestination
                     )
+                }
+            }
+        }
+    }
+
+    private var syncJob: Job? = null
+
+    override fun onResume() {
+        super.onResume()
+        if (syncJob?.isActive == true) return
+
+        syncJob = lifecycleScope.launch(Dispatchers.IO) {
+            val context = applicationContext
+            if (HealthConnectManager.isAvailable(context) && HealthConnectManager.hasAllPermissions(context)) {
+                try {
+                    val client = HealthConnectManager.getClient(context)
+                    val routine = HealthConnectSyncRoutine(context, client, workoutRepository, userSettingsRepository)
+                    routine.runSync().collect {
+                        // Drop logs
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
                 }
             }
         }
