@@ -23,6 +23,8 @@ class PastWorkoutsViewModelTest {
     private lateinit var viewModel: PastWorkoutsViewModel
 
     class FakeWorkoutDao : WorkoutDao {
+    override suspend fun getAllSessionsByDate(date: String): List<WorkoutSession> = emptyList()
+
         val sessionsFlow = MutableStateFlow<List<SessionSummary>>(emptyList())
         val sessions = mutableListOf<SessionSummary>()
 
