@@ -166,7 +166,7 @@ class WorkoutViewModel(
                     rpe = null,
                     notes = null,
                     skipped = false,
-                    timestamp = state.session.startTimeInMillis
+                    timestamp = System.currentTimeMillis()
                 )
                 repository.logSet(entry)
 
@@ -198,7 +198,7 @@ class WorkoutViewModel(
                     rpe = null,
                     notes = null,
                     skipped = true,
-                    timestamp = state.session.startTimeInMillis
+                    timestamp = System.currentTimeMillis()
                 )
                 repository.logSet(entry)
 
@@ -227,7 +227,7 @@ class WorkoutViewModel(
                     rpe = null,
                     notes = "Free Entry",
                     skipped = false,
-                    timestamp = state.session.startTimeInMillis
+                    timestamp = System.currentTimeMillis()
                 )
                 repository.logSet(entry)
                 // Stay in Free Entry mode, maybe show a toast or clear inputs?
