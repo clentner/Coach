@@ -35,15 +35,19 @@ class PastWorkoutsViewModel(
         }
     }
 
-    fun createSession(millis: Long, onCreated: (Long) -> Unit) {
+    fun createSession(dateMillis: Long, hour: Int, minute: Int, onCreated: (Long) -> Unit) {
         viewModelScope.launch {
             val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd", Locale.US)
-            val dateStr = Instant.ofEpochMilli(millis)
+            val localDate = Instant.ofEpochMilli(dateMillis)
                 .atZone(ZoneOffset.UTC)
                 .toLocalDate()
-                .format(formatter)
+            val dateStr = localDate.format(formatter)
 
-            val session = repository.getOrCreateSession(dateStr, millis)
+            val localTime = java.time.LocalTime.of(hour, minute)
+            val localDateTime = java.time.LocalDateTime.of(localDate, localTime)
+            val timestamp = localDateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
+
+            val session = repository.getOrCreateSession(dateStr, timestamp)
             onCreated(session.id)
         }
     }

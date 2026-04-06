@@ -22,7 +22,9 @@ fun PastWorkoutsScreen(
     viewModel: PastWorkoutsViewModel
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
+    var showTimePicker by remember { mutableStateOf(false) }
     val datePickerState = rememberDatePickerState()
+    val timePickerState = rememberTimePickerState(initialHour = 12, initialMinute = 0)
 
     if (showDatePicker) {
         DatePickerDialog(
@@ -30,16 +32,13 @@ fun PastWorkoutsScreen(
             confirmButton = {
                 TextButton(
                     onClick = {
-                        val selectedDate = datePickerState.selectedDateMillis
-                        if (selectedDate != null) {
-                            viewModel.createSession(selectedDate) { sessionId ->
-                                showDatePicker = false
-                                navController.navigate("workout_detail/$sessionId")
-                            }
+                        if (datePickerState.selectedDateMillis != null) {
+                            showDatePicker = false
+                            showTimePicker = true
                         }
                     }
                 ) {
-                    Text("OK")
+                    Text("Next")
                 }
             },
             dismissButton = {
@@ -50,6 +49,42 @@ fun PastWorkoutsScreen(
         ) {
             DatePicker(state = datePickerState)
         }
+    }
+
+    if (showTimePicker) {
+        AlertDialog(
+            onDismissRequest = { showTimePicker = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val selectedDate = datePickerState.selectedDateMillis
+                        if (selectedDate != null) {
+                            viewModel.createSession(
+                                dateMillis = selectedDate,
+                                hour = timePickerState.hour,
+                                minute = timePickerState.minute
+                            ) { sessionId ->
+                                showTimePicker = false
+                                navController.navigate("workout_detail/$sessionId")
+                            }
+                        }
+                    }
+                ) {
+                    Text("OK")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showTimePicker = false }) {
+                    Text("Cancel")
+                }
+            },
+            title = { Text("Select Time") },
+            text = {
+                Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxWidth()) {
+                    TimeInput(state = timePickerState)
+                }
+            }
+        )
     }
 
     Scaffold(
