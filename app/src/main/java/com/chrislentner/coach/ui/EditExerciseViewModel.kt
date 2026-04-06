@@ -142,14 +142,7 @@ class EditExerciseViewModel(
                 repository.updateLog(updated)
             } else {
                 val session = repository.getSessionById(sessionId)
-                val timestamp = if (session != null) {
-                    LocalDate.parse(session.date)
-                        .atStartOfDay(ZoneId.systemDefault())
-                        .toInstant()
-                        .toEpochMilli()
-                } else {
-                    System.currentTimeMillis()
-                }
+                val timestamp = session?.startTimeInMillis ?: System.currentTimeMillis()
 
                 val newEntry = WorkoutLogEntry(
                     sessionId = sessionId,

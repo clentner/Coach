@@ -66,8 +66,9 @@ class EditExerciseViewModelTest {
     }
 
     @Test
-    fun `save creates new log with local midnight timestamp from session date`() {
-        val session = WorkoutSession(id=1, date="2023-01-01", startTimeInMillis=1000L, isCompleted=false)
+    fun `save creates new log with session start timestamp`() {
+        val expectedTimestamp = 1672531200000L
+        val session = WorkoutSession(id=1, date="2023-01-01", startTimeInMillis=expectedTimestamp, isCompleted=false)
         dao.sessions.add(session)
 
         val viewModel = EditExerciseViewModel(repository, sessionId=1, logId=null, planner=null)
@@ -83,10 +84,6 @@ class EditExerciseViewModelTest {
         assertEquals(1, dao.logs.size)
         val log = dao.logs.first()
         assertEquals("Squat", log.exerciseName)
-        val expectedTimestamp = LocalDate.parse("2023-01-01")
-            .atStartOfDay(ZoneId.systemDefault())
-            .toInstant()
-            .toEpochMilli()
         assertEquals(expectedTimestamp, log.timestamp)
     }
 
