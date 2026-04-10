@@ -107,6 +107,9 @@ class EditExerciseViewModel(
 
     fun getDefaultTargetValue(id: String): Double {
         val target = planner?.config?.targets?.find { it.id == id }
+        if (target != null && (target.type.endsWith("sets", ignoreCase = true) || target.type.endsWith("set", ignoreCase = true))) {
+            return 1.0
+        }
         return target?.goal?.toDouble() ?: 0.0
     }
 

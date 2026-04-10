@@ -156,4 +156,41 @@ class EditExerciseViewModelTest {
         assertEquals("3010", viewModel.tempo)
         assertEquals("2", viewModel.durationMinutes)
     }
+
+    @Test
+    fun `getDefaultTargetValue defaults to 1_0 when target type is sets`() {
+        val targetSets = com.chrislentner.coach.planner.model.Target("test_sets", 7, "sets", 5)
+        val targetMinutes = com.chrislentner.coach.planner.model.Target("test_minutes", 7, "minutes", 20)
+
+        val config = com.chrislentner.coach.planner.model.CoachConfig(
+            version = 3,
+            targets = listOf(targetSets, targetMinutes),
+            fatigueConstraints = emptyMap(),
+            priorityOrder = emptyList(),
+            priorities = emptyMap(),
+            library = emptyMap(),
+            selection = com.chrislentner.coach.planner.model.SelectionStrategy("round_robin")
+        )
+        val historyAnalyzer = com.chrislentner.coach.planner.HistoryAnalyzer(config)
+        val planner = com.chrislentner.coach.planner.AdvancedWorkoutPlanner(config, historyAnalyzer, com.chrislentner.coach.planner.ProgressionEngine(historyAnalyzer))
+        val viewModel = EditExerciseViewModel(repository, sessionId = 1, logId = null, planner = planner)
+
+        assertEquals(1.0, viewModel.getDefaultTargetValue("test_sets"), 0.0)
+        assertEquals(20.0, viewModel.getDefaultTargetValue("test_minutes"), 0.0)
+
+        val targetSetsAlt = com.chrislentner.coach.planner.model.Target("test_set", 7, "set", 5)
+        val configAlt = com.chrislentner.coach.planner.model.CoachConfig(
+            version = 3,
+            targets = listOf(targetSetsAlt),
+            fatigueConstraints = emptyMap(),
+            priorityOrder = emptyList(),
+            priorities = emptyMap(),
+            library = emptyMap(),
+            selection = com.chrislentner.coach.planner.model.SelectionStrategy("round_robin")
+        )
+        val historyAnalyzerAlt = com.chrislentner.coach.planner.HistoryAnalyzer(configAlt)
+        val plannerAlt = com.chrislentner.coach.planner.AdvancedWorkoutPlanner(configAlt, historyAnalyzerAlt, com.chrislentner.coach.planner.ProgressionEngine(historyAnalyzerAlt))
+        val viewModelAlt = EditExerciseViewModel(repository, sessionId = 1, logId = null, planner = plannerAlt)
+        assertEquals(1.0, viewModelAlt.getDefaultTargetValue("test_set"), 0.0)
+    }
 }
