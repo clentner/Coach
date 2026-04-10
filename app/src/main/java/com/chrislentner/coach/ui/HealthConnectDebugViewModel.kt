@@ -15,11 +15,22 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 import com.chrislentner.coach.health.HealthConnectSyncRoutine
 import com.chrislentner.coach.database.AppDatabase
 import com.chrislentner.coach.database.WorkoutRepository
 import com.chrislentner.coach.database.UserSettingsRepository
+
+data class DailyStepModel(
+    val date: LocalDate,
+    val totalSteps: Long?,
+    val error: String?,
+    val startInstant: Instant,
+    val endInstant: Instant,
+    val isExpanded: Boolean = false
+)
 
 data class HealthConnectState(
     val isAvailable: Boolean = false,
@@ -29,7 +40,9 @@ data class HealthConnectState(
     val error: String? = null,
     val maxHrInput: String = "180", // Default input as string for text field
     val syncLog: String = "",
-    val isSyncing: Boolean = false
+    val isSyncing: Boolean = false,
+    val dailySteps: List<DailyStepModel> = emptyList(),
+    val isLoadingSteps: Boolean = false
 )
 
 data class SessionDebugModel(
@@ -76,7 +89,60 @@ class HealthConnectDebugViewModel(application: Application) : AndroidViewModel(a
 
             if (isAvail && hasPerms) {
                 loadSessions()
+                loadDailySteps()
             }
+        }
+    }
+
+    private fun loadDailySteps() {
+        val context = getApplication<Application>()
+        viewModelScope.launch {
+            _state.update { it.copy(isLoadingSteps = true) }
+            val client = HealthConnectManager.getClient(context)
+            val zoneId = ZoneId.systemDefault()
+            val today = LocalDate.now(zoneId)
+
+            val stepsList = mutableListOf<DailyStepModel>()
+
+            for (i in 0..29) {
+                val d = today.minusDays(i.toLong())
+                val start = d.atStartOfDay(zoneId).toInstant()
+                val end = d.plusDays(1).atStartOfDay(zoneId).toInstant()
+
+                try {
+                    val total = HealthConnectManager.readDailyGarminSteps(client, start, end)
+                    stepsList.add(
+                        DailyStepModel(
+                            date = d,
+                            totalSteps = total,
+                            error = null,
+                            startInstant = start,
+                            endInstant = end
+                        )
+                    )
+                } catch (e: Exception) {
+                    stepsList.add(
+                        DailyStepModel(
+                            date = d,
+                            totalSteps = null,
+                            error = e.message ?: "Unknown error",
+                            startInstant = start,
+                            endInstant = end
+                        )
+                    )
+                }
+            }
+
+            _state.update { it.copy(isLoadingSteps = false, dailySteps = stepsList) }
+        }
+    }
+
+    fun toggleStepExpanded(date: LocalDate) {
+        _state.update { currentState ->
+            val updatedSteps = currentState.dailySteps.map {
+                if (it.date == date) it.copy(isExpanded = !it.isExpanded) else it
+            }
+            currentState.copy(dailySteps = updatedSteps)
         }
     }
 
