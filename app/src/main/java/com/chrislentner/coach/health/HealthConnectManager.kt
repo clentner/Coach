@@ -7,6 +7,9 @@ import androidx.health.connect.client.PermissionController
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.ExerciseSessionRecord
 import androidx.health.connect.client.records.HeartRateRecord
+import androidx.health.connect.client.records.StepsRecord
+import androidx.health.connect.client.records.metadata.DataOrigin
+import androidx.health.connect.client.request.AggregateRequest
 import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.time.TimeRangeFilter
 import android.content.Intent
@@ -73,7 +76,8 @@ object HealthConnectManager {
     fun getRequiredPermissions(): Set<String> {
         return setOf(
             HealthPermission.getReadPermission(ExerciseSessionRecord::class),
-            HealthPermission.getReadPermission(HeartRateRecord::class)
+            HealthPermission.getReadPermission(HeartRateRecord::class),
+            HealthPermission.getReadPermission(StepsRecord::class)
         )
     }
 
@@ -115,6 +119,20 @@ object HealthConnectManager {
         )
         val response = client.readRecords(request)
         return response.records
+    }
+
+    suspend fun readDailyGarminSteps(
+        client: HealthConnectClient,
+        startInstant: Instant,
+        endInstant: Instant
+    ): Long? {
+        val request = AggregateRequest(
+            metrics = setOf(StepsRecord.COUNT_TOTAL),
+            timeRangeFilter = TimeRangeFilter.between(startInstant, endInstant),
+            dataOriginFilter = setOf(DataOrigin("com.garmin.android.apps.connectmobile"))
+        )
+        val response = client.aggregate(request)
+        return response[StepsRecord.COUNT_TOTAL]
     }
 
     fun flattenHeartRateSamples(records: List<HeartRateRecord>): List<FlattenedHrSample> {

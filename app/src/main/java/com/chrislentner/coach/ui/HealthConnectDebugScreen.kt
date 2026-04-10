@@ -22,6 +22,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.ui.Alignment
+import androidx.compose.foundation.clickable
 import androidx.health.connect.client.HealthConnectClient
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -75,6 +76,13 @@ fun HealthConnectDebugScreen(
             ZoneConfigSection(
                 maxHrInput = state.maxHrInput,
                 onMaxHrChange = { viewModel.updateMaxHr(it) }
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            DailyStepsSection(
+                state = state,
+                onToggleExpanded = { viewModel.toggleStepExpanded(it) }
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -185,6 +193,76 @@ fun SessionDebugCard(
             } else {
                 if (model.computedZones != null) {
                     Text("Samples: ${model.computedZones.sampleCount} | Avg HR: ${model.computedZones.avgHr ?: "N/A"}")
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun DailyStepsSection(state: HealthConnectState, onToggleExpanded: (java.time.LocalDate) -> Unit) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text("Daily Steps (Garmin)", style = MaterialTheme.typography.titleMedium)
+            Spacer(modifier = Modifier.height(8.dp))
+
+            if (!state.hasPermissions) {
+                Text("Missing READ_STEPS permission.", color = MaterialTheme.colorScheme.error)
+                return@Column
+            }
+
+            if (state.isLoadingSteps) {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+                return@Column
+            }
+
+            val steps = state.dailySteps
+            if (steps.isEmpty()) {
+                Text("No data available.")
+                return@Column
+            }
+
+            val hasAnyData = steps.any { it.totalSteps != null && it.totalSteps > 0 }
+            if (!hasAnyData && steps.all { it.error == null }) {
+                Text("No Garmin step data detected", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+
+            Column(modifier = Modifier.fillMaxWidth().heightIn(max = 300.dp)) {
+                LazyColumn {
+                    items(steps) { step ->
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onToggleExpanded(step.date) }
+                                .padding(vertical = 4.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(step.date.toString(), style = MaterialTheme.typography.bodyMedium)
+                                if (step.error != null) {
+                                    Text("Error", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
+                                } else {
+                                    Text(step.totalSteps?.toString() ?: "0", style = MaterialTheme.typography.bodyMedium)
+                                }
+                            }
+                            if (step.isExpanded) {
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Column(modifier = Modifier.padding(start = 16.dp)) {
+                                    if (step.error != null) {
+                                        Text("Error: ${step.error}", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                                    }
+                                    Text("Start: ${step.startInstant}", style = MaterialTheme.typography.bodySmall)
+                                    Text("End:   ${step.endInstant}", style = MaterialTheme.typography.bodySmall)
+                                    Text("Raw Aggregate Value: ${step.totalSteps}", style = MaterialTheme.typography.bodySmall)
+                                    Text("Filter: com.garmin.android.apps.connectmobile", style = MaterialTheme.typography.bodySmall)
+                                }
+                            }
+                            HorizontalDivider(modifier = Modifier.padding(top = 4.dp))
+                        }
+                    }
                 }
             }
         }
