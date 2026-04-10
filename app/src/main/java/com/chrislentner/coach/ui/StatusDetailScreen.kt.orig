@@ -2,7 +2,6 @@ package com.chrislentner.coach.ui
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -58,15 +57,11 @@ fun StatusDetailScreen(
             ) {
                 if (state.targetContributions.isNotEmpty()) {
                     items(state.targetContributions) { contribution ->
-                        TargetContributionItem(contribution, state.type) {
-                            navController.navigate("edit_exercise/${contribution.log.sessionId}?logId=${contribution.log.id}")
-                        }
+                        TargetContributionItem(contribution, state.type)
                     }
                 } else if (state.fatigueContributions.isNotEmpty()) {
                     items(state.fatigueContributions) { contribution ->
-                        FatigueContributionItem(contribution) {
-                            navController.navigate("edit_exercise/${contribution.log.sessionId}?logId=${contribution.log.id}")
-                        }
+                        FatigueContributionItem(contribution)
                     }
                 } else {
                     item {
@@ -83,10 +78,10 @@ fun StatusDetailScreen(
 }
 
 @Composable
-fun TargetContributionItem(contribution: TargetContribution, type: String, onClick: () -> Unit) {
+fun TargetContributionItem(contribution: TargetContribution, type: String) {
     Card(
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick)
+        modifier = Modifier.fillMaxWidth()
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             val date = formatTimestamp(contribution.log.timestamp)
@@ -129,10 +124,10 @@ fun TargetContributionItem(contribution: TargetContribution, type: String, onCli
 }
 
 @Composable
-fun FatigueContributionItem(contribution: FatigueContribution, onClick: () -> Unit) {
+fun FatigueContributionItem(contribution: FatigueContribution) {
     Card(
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick)
+        modifier = Modifier.fillMaxWidth()
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             val date = formatTimestamp(contribution.log.timestamp)
